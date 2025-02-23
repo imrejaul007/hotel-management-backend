@@ -1,0 +1,239 @@
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>User Details</h2>
+        <div>
+            <a href="/admin/users" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Users
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Profile -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {{#if user.profileImage}}
+                    <img src="{{user.profileImage}}" class="rounded-circle mb-3" width="150" height="150" alt="Profile">
+                    {{else}}
+                    <div class="bg-secondary rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 150px; height: 150px;">
+                        <i class="fas fa-user fa-4x text-white"></i>
+                    </div>
+                    {{/if}}
+                    <h5 class="card-title">{{user.name}}</h5>
+                    <p class="text-muted">{{user.email}}</p>
+                    <div class="mb-3">
+                        <span class="badge {{#if user.isAdmin}}bg-danger{{else}}bg-info{{/if}} me-2">
+                            {{#if user.isAdmin}}Admin{{else}}User{{/if}}
+                        </span>
+                        <span class="badge {{#if user.isActive}}bg-success{{else}}bg-danger{{/if}}">
+                            {{#if user.isActive}}Active{{else}}Inactive{{/if}}
+                        </span>
+                    </div>
+                    <p class="small text-muted">
+                        Member since {{formatDate user.createdAt}}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            {{#unless user.isAdmin}}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Actions</h5>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="toggleAdminRole('{{user._id}}')">
+                            <i class="fas fa-user-shield"></i> Make Admin
+                        </button>
+                        <button class="btn btn-outline-{{#if user.isActive}}danger{{else}}success{{/if}}" 
+                                onclick="toggleUserStatus('{{user._id}}')">
+                            <i class="fas fa-power-off"></i> 
+                            {{#if user.isActive}}Deactivate{{else}}Activate{{/if}} Account
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteUser('{{user._id}}')">
+                            <i class="fas fa-trash-alt"></i> Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {{/unless}}
+        </div>
+
+        <div class="col-md-8">
+            <!-- User Statistics -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Statistics</h5>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <h3 class="mb-1">{{user.hotelCount}}</h3>
+                                <p class="text-muted mb-0">Hotels Listed</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <h3 class="mb-1">{{user.bookingCount}}</h3>
+                                <p class="text-muted mb-0">Total Bookings</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <h3 class="mb-1">{{user.reviewCount}}</h3>
+                                <p class="text-muted mb-0">Reviews Given</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User's Hotels -->
+            {{#if user.hotels.length}}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Hotels</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Hotel Name</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each user.hotels}}
+                                <tr>
+                                    <td>{{name}}</td>
+                                    <td>{{location}}</td>
+                                    <td>
+                                        <span class="badge {{#if isActive}}bg-success{{else}}bg-danger{{/if}}">
+                                            {{#if isActive}}Active{{else}}Inactive{{/if}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="/admin/hotels/{{_id}}" class="btn btn-sm btn-outline-primary">
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {{/if}}
+
+            <!-- Recent Bookings -->
+            {{#if user.recentBookings.length}}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Bookings</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Hotel</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each user.recentBookings}}
+                                <tr>
+                                    <td>{{hotel.name}}</td>
+                                    <td>{{formatDate checkIn}}</td>
+                                    <td>{{formatDate checkOut}}</td>
+                                    <td>
+                                        <span class="badge bg-{{getStatusColor status}}">
+                                            {{status}}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+</div>
+
+<script>
+async function toggleUserStatus(userId) {
+    if (!confirm('Are you sure you want to change this user\'s status?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/admin/users/${userId}/toggle-status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to toggle user status');
+        }
+
+        location.reload();
+    } catch (error) {
+        alert('Error toggling user status: ' + error.message);
+    }
+}
+
+async function toggleAdminRole(userId) {
+    if (!confirm('Are you sure you want to change this user\'s admin status?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/admin/users/${userId}/toggle-admin`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to toggle admin role');
+        }
+
+        location.reload();
+    } catch (error) {
+        alert('Error toggling admin role: ' + error.message);
+    }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete user');
+        }
+
+        window.location.href = '/admin/users';
+    } catch (error) {
+        alert('Error deleting user: ' + error.message);
+    }
+}
+</script>

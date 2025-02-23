@@ -1,0 +1,212 @@
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Edit Hotel: {{hotel.name}}</h2>
+        <div>
+            <a href="/admin/hotels" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            <a href="/admin/hotels/{{hotel._id}}" class="btn btn-outline-primary">
+                <i class="fas fa-eye"></i> View Details
+            </a>
+        </div>
+    </div>
+
+    <form id="editHotelForm" class="needs-validation" novalidate>
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Basic Information -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Basic Information</h5>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Hotel Name</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{hotel.name}}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required>{{hotel.description}}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="location" value="{{hotel.location}}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="pricePerNight" class="form-label">Price per Night</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="pricePerNight" name="pricePerNight" value="{{hotel.pricePerNight}}" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Address</h5>
+                        
+                        <div class="mb-3">
+                            <label for="street" class="form-label">Street</label>
+                            <input type="text" class="form-control" id="street" name="address[street]" value="{{hotel.address.street}}">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="city" class="form-label">City</label>
+                                <input type="text" class="form-control" id="city" name="address[city]" value="{{hotel.address.city}}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="state" class="form-label">State</label>
+                                <input type="text" class="form-control" id="state" name="address[state]" value="{{hotel.address.state}}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="country" class="form-label">Country</label>
+                                <input type="text" class="form-control" id="country" name="address[country]" value="{{hotel.address.country}}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="zipCode" class="form-label">ZIP Code</label>
+                                <input type="text" class="form-control" id="zipCode" name="address[zipCode]" value="{{hotel.address.zipCode}}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Images -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Images</h5>
+                        <div class="mb-3">
+                            <label for="images" class="form-label">Add Images</label>
+                            <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+                        </div>
+                        {{#if hotel.images.length}}
+                        <div class="row g-3">
+                            {{#each hotel.images}}
+                            <div class="col-md-4">
+                                <div class="position-relative">
+                                    <img src="{{this}}" class="img-thumbnail" alt="Hotel Image">
+                                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2" 
+                                            onclick="removeImage('{{@index}}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {{/each}}
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Status -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Status</h5>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="isActive" name="isActive" {{#if hotel.isActive}}checked{{/if}}>
+                            <label class="form-check-label" for="isActive">Active</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Amenities -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Amenities</h5>
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="amenity" placeholder="Add amenity">
+                            <div class="d-grid mt-2">
+                                <button type="button" class="btn btn-outline-primary" onclick="addAmenity()">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                        <div id="amenitiesList">
+                            {{#each hotel.amenities}}
+                            <div class="badge bg-info mb-1 me-1">
+                                {{this}}
+                                <button type="button" class="btn-close btn-close-white" onclick="removeAmenity(this)"></button>
+                                <input type="hidden" name="amenities[]" value="{{this}}">
+                            </div>
+                            {{/each}}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('editHotelForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    try {
+        const formData = new FormData(e.target);
+        
+        const response = await fetch(`/api/admin/hotels/${hotelId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(Object.fromEntries(formData))
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update hotel');
+        }
+
+        window.location.href = `/admin/hotels/${hotelId}`;
+    } catch (error) {
+        alert('Error updating hotel: ' + error.message);
+    }
+});
+
+function addAmenity() {
+    const amenityInput = document.getElementById('amenity');
+    const amenity = amenityInput.value.trim();
+    
+    if (!amenity) return;
+    
+    const amenitiesList = document.getElementById('amenitiesList');
+    const badge = document.createElement('div');
+    badge.className = 'badge bg-info mb-1 me-1';
+    badge.innerHTML = `
+        ${amenity}
+        <button type="button" class="btn-close btn-close-white" onclick="removeAmenity(this)"></button>
+        <input type="hidden" name="amenities[]" value="${amenity}">
+    `;
+    
+    amenitiesList.appendChild(badge);
+    amenityInput.value = '';
+}
+
+function removeAmenity(button) {
+    button.closest('.badge').remove();
+}
+
+function removeImage(index) {
+    if (!confirm('Are you sure you want to remove this image?')) return;
+    
+    // Here you would typically make an API call to remove the image
+    // For now, just hide the image container
+    const imageContainer = event.target.closest('.col-md-4');
+    imageContainer.remove();
+}
+</script>

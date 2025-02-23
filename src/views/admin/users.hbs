@@ -1,0 +1,220 @@
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manage Users</h2>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="userFilterForm" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="searchQuery" placeholder="Search by name or email">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="roleFilter">
+                        <option value="">All Roles</option>
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each users}}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {{#if profileImage}}
+                                    <img src="{{profileImage}}" class="rounded-circle me-2" width="40" height="40" alt="Profile">
+                                    {{else}}
+                                    <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    {{/if}}
+                                    <div>
+                                        <div class="fw-bold">{{name}}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{email}}</td>
+                            <td>
+                                <span class="badge {{#if isAdmin}}bg-danger{{else}}bg-info{{/if}}">
+                                    {{#if isAdmin}}Admin{{else}}User{{/if}}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           {{#if isActive}}checked{{/if}}
+                                           onchange="toggleUserStatus('{{_id}}')"
+                                           {{#if isAdmin}}disabled{{/if}}>
+                                </div>
+                            </td>
+                            <td>{{formatDate createdAt}}</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" href="/admin/users/{{_id}}">
+                                                <i class="fas fa-eye me-2"></i>View Details
+                                            </a>
+                                        </li>
+                                        {{#unless isAdmin}}
+                                        <li>
+                                            <button class="dropdown-item" onclick="toggleAdminRole('{{_id}}')">
+                                                <i class="fas fa-user-shield me-2"></i>Make Admin
+                                            </button>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <button class="dropdown-item text-danger" onclick="deleteUser('{{_id}}')">
+                                                <i class="fas fa-trash-alt me-2"></i>Delete User
+                                            </button>
+                                        </li>
+                                        {{/unless}}
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {{#if pagination}}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {{#unless pagination.hasPrevPage}}disabled{{/unless}}">
+                        <a class="page-link" href="?page={{pagination.prevPage}}&limit={{pagination.limit}}">Previous</a>
+                    </li>
+                    {{#each pagination.pages}}
+                    <li class="page-item {{#if isCurrent}}active{{/if}}">
+                        <a class="page-link" href="?page={{page}}&limit={{../pagination.limit}}">{{page}}</a>
+                    </li>
+                    {{/each}}
+                    <li class="page-item {{#unless pagination.hasNextPage}}disabled{{/unless}}">
+                        <a class="page-link" href="?page={{pagination.nextPage}}&limit={{pagination.limit}}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {{/if}}
+        </div>
+    </div>
+</div>
+
+<script>
+async function toggleUserStatus(userId) {
+    try {
+        const response = await fetch(`/api/admin/users/${userId}/toggle-status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to toggle user status');
+        }
+
+        // Optionally refresh the page or update the UI
+        location.reload();
+    } catch (error) {
+        alert('Error toggling user status: ' + error.message);
+    }
+}
+
+async function toggleAdminRole(userId) {
+    if (!confirm('Are you sure you want to change this user\'s admin status?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/admin/users/${userId}/toggle-admin`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to toggle admin role');
+        }
+
+        location.reload();
+    } catch (error) {
+        alert('Error toggling admin role: ' + error.message);
+    }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete user');
+        }
+
+        location.reload();
+    } catch (error) {
+        alert('Error deleting user: ' + error.message);
+    }
+}
+
+// Filter form handling
+document.getElementById('userFilterForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const searchQuery = document.getElementById('searchQuery').value;
+    const roleFilter = document.getElementById('roleFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    const params = new URLSearchParams(window.location.search);
+    if (searchQuery) params.set('search', searchQuery);
+    if (roleFilter) params.set('role', roleFilter);
+    if (statusFilter) params.set('status', statusFilter);
+    
+    window.location.href = `${window.location.pathname}?${params.toString()}`;
+});
+</script>

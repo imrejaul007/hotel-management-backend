@@ -1,0 +1,171 @@
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h3>Add New Hotel</h3>
+            </div>
+            <div class="card-body">
+                <form id="addHotelForm" action="/api/admin/hotels" method="POST">
+                    <!-- Basic Information -->
+                    <div class="mb-4">
+                        <h4>Basic Information</h4>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Hotel Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Rating</label>
+                            <input type="number" class="form-control" id="rating" name="rating" min="1" max="5" step="0.1">
+                        </div>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="mb-4">
+                        <h4>Address</h4>
+                        <div class="mb-3">
+                            <label for="street" class="form-label">Street *</label>
+                            <input type="text" class="form-control" id="street" name="address.street" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="city" class="form-label">City *</label>
+                            <input type="text" class="form-control" id="city" name="address.city" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="state" class="form-label">State *</label>
+                            <input type="text" class="form-control" id="state" name="address.state" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Country *</label>
+                            <input type="text" class="form-control" id="country" name="address.country" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="zipCode" class="form-label">ZIP Code *</label>
+                            <input type="text" class="form-control" id="zipCode" name="address.zipCode" required>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="mb-4">
+                        <h4>Contact Information</h4>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone *</label>
+                            <input type="tel" class="form-control" id="phone" name="contactInfo.phone" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="contactInfo.email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="website" class="form-label">Website</label>
+                            <input type="url" class="form-control" id="website" name="contactInfo.website">
+                        </div>
+                    </div>
+
+                    <!-- Policies -->
+                    <div class="mb-4">
+                        <h4>Policies</h4>
+                        <div class="mb-3">
+                            <label for="checkInTime" class="form-label">Check-in Time *</label>
+                            <input type="time" class="form-control" id="checkInTime" name="policies.checkInTime" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="checkOutTime" class="form-label">Check-out Time *</label>
+                            <input type="time" class="form-control" id="checkOutTime" name="policies.checkOutTime" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cancellationPolicy" class="form-label">Cancellation Policy</label>
+                            <textarea class="form-control" id="cancellationPolicy" name="policies.cancellationPolicy" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Amenities -->
+                    <div class="mb-4">
+                        <h4>Amenities</h4>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="amenities[]" value="wifi" id="wifi">
+                                <label class="form-check-label" for="wifi">WiFi</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="amenities[]" value="parking" id="parking">
+                                <label class="form-check-label" for="parking">Parking</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="amenities[]" value="pool" id="pool">
+                                <label class="form-check-label" for="pool">Swimming Pool</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="amenities[]" value="gym" id="gym">
+                                <label class="form-check-label" for="gym">Gym</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="amenities[]" value="restaurant" id="restaurant">
+                                <label class="form-check-label" for="restaurant">Restaurant</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">Add Hotel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('addHotelForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = {
+        name: formData.get('name'),
+        description: formData.get('description'),
+        rating: parseFloat(formData.get('rating')),
+        address: {
+            street: formData.get('address.street'),
+            city: formData.get('address.city'),
+            state: formData.get('address.state'),
+            country: formData.get('address.country'),
+            zipCode: formData.get('address.zipCode')
+        },
+        contactInfo: {
+            phone: formData.get('contactInfo.phone'),
+            email: formData.get('contactInfo.email'),
+            website: formData.get('contactInfo.website')
+        },
+        policies: {
+            checkInTime: formData.get('policies.checkInTime'),
+            checkOutTime: formData.get('policies.checkOutTime'),
+            cancellationPolicy: formData.get('policies.cancellationPolicy')
+        },
+        amenities: Array.from(formData.getAll('amenities[]'))
+    };
+
+    try {
+        const response = await fetch('/api/admin/hotels', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to add hotel');
+        }
+
+        const result = await response.json();
+        alert('Hotel added successfully!');
+        window.location.href = '/admin/hotels';
+    } catch (error) {
+        alert('Error adding hotel: ' + error.message);
+    }
+});
+</script>

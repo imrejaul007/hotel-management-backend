@@ -1,0 +1,95 @@
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>Admin Dashboard</h2>
+            <p class="text-muted">Welcome back, {{user.name}}!</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Hotels</h5>
+                    <p class="card-text">Manage your hotel listings</p>
+                    <a href="/admin/hotels/add" class="btn btn-primary">Add New Hotel</a>
+                    <a href="/admin/hotels" class="btn btn-outline-primary">View All Hotels</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Users</h5>
+                    <p class="card-text">Manage user accounts</p>
+                    <a href="/admin/users" class="btn btn-primary">Manage Users</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Bookings</h5>
+                    <p class="card-text">View and manage bookings</p>
+                    <a href="/admin/bookings" class="btn btn-primary">View Bookings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Activities</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            New hotel added
+                            <span class="badge bg-primary rounded-pill">Just now</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            New booking received
+                            <span class="badge bg-primary rounded-pill">2h ago</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            User feedback received
+                            <span class="badge bg-primary rounded-pill">5h ago</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <h6 class="text-muted">Total Hotels</h6>
+                            <h3>12</h3>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h6 class="text-muted">Active Bookings</h6>
+                            <h3>25</h3>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="text-muted">Total Users</h6>
+                            <h3>150</h3>
+                        </div>
+                        <div class="col-6">
+                            <h6 class="text-muted">Revenue</h6>
+                            <h3>$12,450</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
