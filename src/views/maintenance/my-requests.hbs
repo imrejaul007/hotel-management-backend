@@ -1,0 +1,231 @@
+{{#if activeBooking}}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>My Maintenance Requests</h4>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newRequestModal">
+            <i class="fas fa-plus me-2"></i>New Request
+        </button>
+    </div>
+
+    {{#if requests.length}}
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each requests}}
+                    <tr>
+                        <td>#{{this._id}}</td>
+                        <td>
+                            <span class="badge bg-{{serviceTypeColor this.serviceType}}">
+                                {{formatServiceType this.serviceType}}
+                            </span>
+                        </td>
+                        <td>{{this.description}}</td>
+                        <td>
+                            <span class="badge bg-{{statusColor this.status}}">
+                                {{this.status}}
+                            </span>
+                        </td>
+                        <td>{{formatDate this.createdAt}}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info me-2" onclick="viewRequest('{{this._id}}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            {{#if (eq this.status "pending")}}
+                            <button class="btn btn-sm btn-danger" onclick="cancelRequest('{{this._id}}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            {{/if}}
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{#if pagination.totalPages}}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {{#if pagination.hasPrev}}
+            <li class="page-item">
+                <a class="page-link" href="?page={{subtract pagination.page 1}}">Previous</a>
+            </li>
+            {{/if}}
+            {{#if pagination.hasNext}}
+            <li class="page-item">
+                <a class="page-link" href="?page={{add pagination.page 1}}">Next</a>
+            </li>
+            {{/if}}
+        </ul>
+    </nav>
+    {{/if}}
+
+    {{else}}
+    <div class="alert alert-info">
+        No maintenance requests found. Create a new request using the button above.
+    </div>
+    {{/if}}
+</div>
+
+<!-- New Request Modal -->
+<div class="modal fade" id="newRequestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Maintenance Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newRequestForm">
+                    <div class="mb-3">
+                        <label class="form-label">Service Type</label>
+                        <select name="serviceType" class="form-select" required>
+                            <option value="guest-request">Guest Request</option>
+                            <option value="housekeeping">Housekeeping</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="emergency">Emergency</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Priority</label>
+                        <select name="priority" class="form-select" required>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createRequest()">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Request Modal -->
+<div class="modal fade" id="viewRequestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Request Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="requestDetails"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{else}}
+<div class="container py-4">
+    <div class="alert alert-warning">
+        You must be checked in to create or view maintenance requests.
+    </div>
+</div>
+{{/if}}
+
+<script>
+let currentRequestId = null;
+
+async function createRequest() {
+    const form = document.getElementById('newRequestForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+
+    try {
+        const response = await fetch('/maintenance/request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.message || 'Error creating request');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error creating request');
+    }
+}
+
+async function viewRequest(id) {
+    try {
+        const response = await fetch(`/maintenance/request/${id}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const request = result.data;
+            const details = `
+                <dl class="row">
+                    <dt class="col-sm-4">Service Type</dt>
+                    <dd class="col-sm-8">${request.serviceType}</dd>
+                    
+                    <dt class="col-sm-4">Priority</dt>
+                    <dd class="col-sm-8">${request.priority}</dd>
+                    
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">${request.status}</dd>
+                    
+                    <dt class="col-sm-4">Description</dt>
+                    <dd class="col-sm-8">${request.description}</dd>
+                    
+                    <dt class="col-sm-4">Created</dt>
+                    <dd class="col-sm-8">${new Date(request.createdAt).toLocaleString()}</dd>
+                </dl>
+            `;
+            
+            document.getElementById('requestDetails').innerHTML = details;
+            new bootstrap.Modal(document.getElementById('viewRequestModal')).show();
+        } else {
+            alert(result.message || 'Error fetching request details');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error fetching request details');
+    }
+}
+
+async function cancelRequest(id) {
+    if (!confirm('Are you sure you want to cancel this request?')) return;
+
+    try {
+        const response = await fetch(`/maintenance/request/${id}/cancel`, {
+            method: 'PATCH'
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.message || 'Error cancelling request');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error cancelling request');
+    }
+}
+</script>

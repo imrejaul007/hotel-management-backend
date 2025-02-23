@@ -1,0 +1,61 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="fas fa-hotel me-2"></i>Hotel Booking
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {{#if (eq active 'home')}}active{{/if}}" href="/">
+                        <i class="fas fa-home me-1"></i>Home
+                    </a>
+                </li>
+                {{#if user}}
+                <li class="nav-item">
+                    <a class="nav-link {{#if (eq active 'bookings')}}active{{/if}}" href="/bookings">
+                        <i class="fas fa-calendar-check me-1"></i>My Bookings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{#if (eq active 'maintenance')}}active{{/if}}" href="/maintenance">
+                        <i class="fas fa-tools me-1"></i>Maintenance
+                    </a>
+                </li>
+                {{/if}}
+            </ul>
+            <ul class="navbar-nav">
+                {{#if user}}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>{{user.name}}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user-circle me-2"></i>Profile
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/auth/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                {{else}}
+                <li class="nav-item">
+                    <a class="nav-link" href="/auth/login">
+                        <i class="fas fa-sign-in-alt me-1"></i>Login
+                    </a>
+                </li>
+                {{/if}}
+            </ul>
+        </div>
+    </div>
+</nav>

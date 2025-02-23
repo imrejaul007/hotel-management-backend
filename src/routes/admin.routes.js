@@ -3,7 +3,12 @@ const router = express.Router();
 const User = require('../models/user.model');
 const Booking = require('../models/booking.model');
 const Hotel = require('../models/hotel.model');
+const Guest = require('../models/guest.model');
+const Maintenance = require('../models/maintenance.model');
 const { protect, authorize } = require('../middlewares/auth.middleware');
+
+// Import route modules
+const guestRoutes = require('./guest.routes');
 
 // Admin dashboard
 router.get('/dashboard', protect, authorize('admin'), async (req, res) => {
@@ -21,7 +26,9 @@ router.get('/dashboard', protect, authorize('admin'), async (req, res) => {
             users,
             newUsersThisMonth,
             recentBookings,
-            recentGuests
+            recentGuests,
+            maintenanceStats,
+            recentMaintenance
         ] = await Promise.all([
             Booking.countDocuments(),
             Booking.countDocuments({ createdAt: { $gte: firstDayOfMonth } }),
@@ -54,7 +61,21 @@ router.get('/dashboard', protect, authorize('admin'), async (req, res) => {
                             totalSpent
                         };
                     }));
-                })
+                }),
+            Maintenance.aggregate([
+                {
+                    $group: {
+                        _id: '$status',
+                        count: { $sum: 1 }
+                    }
+                }
+            ]),
+            Maintenance.find()
+                .populate('hotel', 'name')
+                .populate('location.room', 'number')
+                .populate('guest', 'name')
+                .sort({ createdAt: -1 })
+                .limit(5)
         ]);
 
         // Calculate hotel status
@@ -94,6 +115,17 @@ router.get('/dashboard', protect, authorize('admin'), async (req, res) => {
         const occupiedRoomsPercentage = Math.round((occupiedRooms / totalRooms) * 100);
         const maintenanceRoomsPercentage = Math.round((maintenanceRooms / totalRooms) * 100);
 
+        // Process maintenance stats
+        const maintenanceCount = {
+            pending: 0,
+            'in-progress': 0,
+            completed: 0,
+            cancelled: 0
+        };
+        maintenanceStats.forEach(stat => {
+            maintenanceCount[stat._id] = stat.count;
+        });
+
         // Get notifications (example data - you can modify based on your needs)
         const notifications = [
             {
@@ -132,12 +164,14 @@ router.get('/dashboard', protect, authorize('admin'), async (req, res) => {
                 maintenanceRooms,
                 availableRoomsPercentage,
                 occupiedRoomsPercentage,
-                maintenanceRoomsPercentage
+                maintenanceRoomsPercentage,
+                maintenance: maintenanceCount
             },
             recentBookings,
             hotelStatus,
             notifications,
-            recentGuests
+            recentGuests,
+            recentMaintenance
         });
     } catch (error) {
         console.error('Error loading admin dashboard:', error);
@@ -706,6 +740,24 @@ router.get('/hotels/:hotelId/rooms', protect, authorize('admin'), async (req, re
     }
 });
 
+// API endpoint to get rooms for a hotel
+router.get('/api/hotels/:hotelId/rooms', protect, authorize('admin'), async (req, res) => {
+    try {
+        const rooms = await Hotel.findById(req.params.hotelId).select('rooms');
+        if (!rooms) {
+            return res.status(404).json({
+                success: false,
+                message: 'Hotel not found'
+            });
+        }
+
+        res.json({ success: true, data: rooms.rooms });
+    } catch (error) {
+        console.error('Error fetching hotel rooms:', error);
+        res.status(500).json({ success: false, message: 'Error fetching hotel rooms' });
+    }
+});
+
 // Room Management Routes
 router.get('/rooms', protect, authorize('admin'), async (req, res) => {
     try {
@@ -1040,6 +1092,193 @@ router.delete('/guests/:id', protect, authorize('admin'), async (req, res) => {
         console.error('Error deleting guest:', error);
         res.status(500).json({
             error: 'Error deleting guest'
+        });
+    }
+});
+
+// Guest routes
+router.use('/guests', guestRoutes);
+
+// Maintenance routes
+router.get('/maintenance', protect, authorize('admin'), async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        // Build query
+        const query = {};
+        if (req.query.type) query.requestType = req.query.type;
+        if (req.query.status) query.status = req.query.status;
+        if (req.query.priority) query.priority = req.query.priority;
+        if (req.query.hotel) query.hotel = req.query.hotel;
+        if (req.query.serviceType) query.serviceType = req.query.serviceType;
+
+        // Get maintenance requests with pagination
+        const [requests, total, hotels, staff, stats] = await Promise.all([
+            Maintenance.find(query)
+                .populate('hotel', 'name')
+                .populate('location.room', 'number')
+                .populate('guest', 'name')
+                .populate('requestedBy', 'name')
+                .populate('assignedTo', 'name')
+                .sort('-createdAt')
+                .skip(skip)
+                .limit(limit),
+            Maintenance.countDocuments(query),
+            Hotel.find().select('name'),
+            User.find({ role: 'staff' }).select('name'),
+            Promise.all([
+                Maintenance.countDocuments({ status: 'in-progress' }),
+                Maintenance.countDocuments({ status: 'pending' }),
+                Maintenance.countDocuments({ status: 'completed' }),
+                Maintenance.countDocuments()
+            ]).then(([current, pending, completed, total]) => ({
+                current,
+                pending,
+                completed,
+                total
+            }))
+        ]);
+
+        // Calculate pagination
+        const totalPages = Math.ceil(total / limit);
+        const pagination = {
+            page,
+            totalPages,
+            hasPrev: page > 1,
+            hasNext: page < totalPages
+        };
+
+        res.render('admin/maintenance/list', {
+            title: 'Maintenance Requests',
+            active: 'maintenance',
+            requests,
+            hotels,
+            staff,
+            stats,
+            query: req.query,
+            pagination
+        });
+    } catch (error) {
+        console.error('Error loading maintenance requests:', error);
+        res.status(500).send('Error loading maintenance requests');
+    }
+});
+
+// Get single maintenance request
+router.get('/maintenance/:id', protect, authorize('admin'), async (req, res) => {
+    try {
+        const request = await Maintenance.findById(req.params.id)
+            .populate('hotel', 'name')
+            .populate('location.room', 'number')
+            .populate('guest', 'name');
+            
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Maintenance request not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: request
+        });
+    } catch (error) {
+        console.error('Error fetching maintenance request:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching maintenance request'
+        });
+    }
+});
+
+// Create maintenance request
+router.post('/maintenance', protect, authorize('admin'), async (req, res) => {
+    try {
+        const request = await Maintenance.create({
+            ...req.body,
+            requestedBy: req.user._id,
+            location: {
+                room: req.body.room,
+                description: `Room ${req.body.room}`
+            }
+        });
+
+        res.json({
+            success: true,
+            data: request
+        });
+    } catch (error) {
+        console.error('Error creating maintenance request:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error creating maintenance request'
+        });
+    }
+});
+
+// Assign staff to request
+router.patch('/maintenance/:id/assign', protect, authorize('admin'), async (req, res) => {
+    try {
+        const request = await Maintenance.findById(req.params.id);
+        
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Maintenance request not found'
+            });
+        }
+
+        request.assignedTo = req.body.assignedTo;
+        if (request.status === 'pending') {
+            request.status = 'in-progress';
+        }
+        
+        await request.save();
+
+        res.json({
+            success: true,
+            data: request
+        });
+    } catch (error) {
+        console.error('Error assigning staff:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error assigning staff'
+        });
+    }
+});
+
+// Update request status
+router.patch('/maintenance/:id/status', protect, authorize('admin'), async (req, res) => {
+    try {
+        const request = await Maintenance.findById(req.params.id);
+        
+        if (!request) {
+            return res.status(404).json({
+                success: false,
+                message: 'Maintenance request not found'
+            });
+        }
+
+        request.status = req.body.status;
+        if (req.body.notes) {
+            request.notes = req.body.notes;
+        }
+        
+        await request.save();
+
+        res.json({
+            success: true,
+            data: request
+        });
+    } catch (error) {
+        console.error('Error updating status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating status'
         });
     }
 });

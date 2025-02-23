@@ -1,0 +1,271 @@
+{{> guest/header}}
+
+<div class="container py-4">
+    <div class="row">
+        <!-- Current Booking -->
+        <div class="col-lg-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Current Stay</h5>
+                </div>
+                <div class="card-body">
+                    {{#if currentBooking}}
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{#if currentBooking.hotel.images.[0]}}
+                            <img src="{{currentBooking.hotel.images.[0]}}" class="img-fluid rounded" alt="{{currentBooking.hotel.name}}">
+                            {{/if}}
+                        </div>
+                        <div class="col-md-8">
+                            <h5>{{currentBooking.hotel.name}}</h5>
+                            <p class="text-muted mb-2">Room {{currentBooking.room.number}} - {{currentBooking.room.type}}</p>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                <span>{{formatDate currentBooking.checkIn}} - {{formatDate currentBooking.checkOut}}</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-user-friends text-primary me-2"></i>
+                                <span>{{currentBooking.guests}} Guests</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm" onclick="requestService()">
+                                    <i class="fas fa-concierge-bell me-2"></i>Request Service
+                                </button>
+                                <button class="btn btn-info btn-sm" onclick="viewRoomDetails()">
+                                    <i class="fas fa-info-circle me-2"></i>Room Info
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {{else}}
+                    <p class="text-muted mb-0">No active stay at the moment.</p>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/guest/bookings" class="btn btn-outline-primary">
+                            <i class="fas fa-calendar-check me-2"></i>My Bookings
+                        </a>
+                        <a href="/guest/profile" class="btn btn-outline-primary">
+                            <i class="fas fa-user me-2"></i>My Profile
+                        </a>
+                        <a href="/maintenance" class="btn btn-outline-primary">
+                            <i class="fas fa-tools me-2"></i>Maintenance Requests
+                        </a>
+                        <a href="/search" class="btn btn-outline-primary">
+                            <i class="fas fa-search me-2"></i>Book New Stay
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Bookings -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Upcoming Stays</h5>
+                </div>
+                <div class="card-body">
+                    {{#if upcomingBookings.length}}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Hotel</th>
+                                    <th>Room</th>
+                                    <th>Check-in</th>
+                                    <th>Check-out</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each upcomingBookings}}
+                                <tr>
+                                    <td>{{this.hotel.name}}</td>
+                                    <td>{{this.room.number}} - {{this.room.type}}</td>
+                                    <td>{{formatDate this.checkIn}}</td>
+                                    <td>{{formatDate this.checkOut}}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{this.status}}</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger" onclick="cancelBooking('{{this._id}}')">
+                                            Cancel
+                                        </button>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{else}}
+                    <p class="text-muted mb-0">No upcoming stays.</p>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Requests -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Active Requests</h5>
+                </div>
+                <div class="card-body">
+                    {{#if activeRequests.length}}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each activeRequests}}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-{{serviceTypeColor this.serviceType}}">
+                                            {{formatServiceType this.serviceType}}
+                                        </span>
+                                    </td>
+                                    <td>{{this.description}}</td>
+                                    <td>
+                                        <span class="badge bg-{{statusColor this.status}}">
+                                            {{this.status}}
+                                        </span>
+                                    </td>
+                                    <td>{{formatDate this.createdAt}}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" onclick="viewRequest('{{this._id}}')">
+                                            View
+                                        </button>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{else}}
+                    <p class="text-muted mb-0">No active requests.</p>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Service Request Modal -->
+<div class="modal fade" id="serviceRequestModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Request Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="serviceRequestForm">
+                    <div class="mb-3">
+                        <label class="form-label">Service Type</label>
+                        <select name="type" class="form-select" required>
+                            <option value="housekeeping">Housekeeping</option>
+                            <option value="room-service">Room Service</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="amenity">Additional Amenities</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Preferred Time</label>
+                        <input type="time" name="preferredTime" class="form-control">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitServiceRequest()">Submit Request</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{#section 'scripts'}}
+<script>
+function requestService() {
+    const modal = new bootstrap.Modal(document.getElementById('serviceRequestModal'));
+    modal.show();
+}
+
+async function submitServiceRequest() {
+    const form = document.getElementById('serviceRequestForm');
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch('/guest/services/request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(Object.fromEntries(formData))
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.message || 'Error submitting request');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error submitting request');
+    }
+}
+
+async function cancelBooking(id) {
+    if (!confirm('Are you sure you want to cancel this booking?')) return;
+    
+    try {
+        const response = await fetch(`/guest/bookings/${id}/cancel`, {
+            method: 'PUT'
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.message || 'Error cancelling booking');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error cancelling booking');
+    }
+}
+
+function viewRequest(id) {
+    location.href = `/maintenance/request/${id}`;
+}
+
+function viewRoomDetails() {
+    // Implement room details view
+}
+</script>
+{{/section}}

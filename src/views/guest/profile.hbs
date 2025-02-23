@@ -1,0 +1,214 @@
+{{> guest/header}}
+
+<div class="container py-4">
+    <div class="row">
+        <!-- Profile Information -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <form id="profileForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" name="name" value="{{user.name}}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" name="email" value="{{user.email}}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" name="phone" value="{{user.phone}}">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="updateProfile()">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form id="passwordForm">
+                        <div class="mb-3">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-control" name="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" name="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" name="confirmPassword" required>
+                        </div>
+                        <button type="button" class="btn btn-primary w-100" onclick="changePassword()">
+                            <i class="fas fa-key me-2"></i>Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preferences -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Stay Preferences</h5>
+                </div>
+                <div class="card-body">
+                    <form id="preferencesForm">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Room Type Preference</label>
+                                <select class="form-select" name="roomPreference">
+                                    <option value="">No Preference</option>
+                                    <option value="standard" {{#if (eq user.preferences.roomType "standard")}}selected{{/if}}>Standard</option>
+                                    <option value="deluxe" {{#if (eq user.preferences.roomType "deluxe")}}selected{{/if}}>Deluxe</option>
+                                    <option value="suite" {{#if (eq user.preferences.roomType "suite")}}selected{{/if}}>Suite</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Bed Type Preference</label>
+                                <select class="form-select" name="bedPreference">
+                                    <option value="">No Preference</option>
+                                    <option value="single" {{#if (eq user.preferences.bedType "single")}}selected{{/if}}>Single</option>
+                                    <option value="double" {{#if (eq user.preferences.bedType "double")}}selected{{/if}}>Double</option>
+                                    <option value="king" {{#if (eq user.preferences.bedType "king")}}selected{{/if}}>King</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Floor Preference</label>
+                                <select class="form-select" name="floorPreference">
+                                    <option value="">No Preference</option>
+                                    <option value="low" {{#if (eq user.preferences.floor "low")}}selected{{/if}}>Lower Floor</option>
+                                    <option value="middle" {{#if (eq user.preferences.floor "middle")}}selected{{/if}}>Middle Floor</option>
+                                    <option value="high" {{#if (eq user.preferences.floor "high")}}selected{{/if}}>Higher Floor</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Special Requests</label>
+                                <textarea class="form-control" name="specialRequests" rows="3">{{user.preferences.specialRequests}}</textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Dietary Requirements</label>
+                                <textarea class="form-control" name="dietaryRequirements" rows="3">{{user.preferences.dietaryRequirements}}</textarea>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="updatePreferences()">
+                            <i class="fas fa-save me-2"></i>Save Preferences
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{#section 'scripts'}}
+<script>
+async function updateProfile() {
+    const form = document.getElementById('profileForm');
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch('/guest/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(Object.fromEntries(formData))
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Profile updated successfully');
+            location.reload();
+        } else {
+            alert(result.message || 'Error updating profile');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating profile');
+    }
+}
+
+async function changePassword() {
+    const form = document.getElementById('passwordForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    
+    if (data.newPassword !== data.confirmPassword) {
+        alert('New passwords do not match');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/guest/change-password', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                currentPassword: data.currentPassword,
+                newPassword: data.newPassword
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Password changed successfully');
+            form.reset();
+        } else {
+            alert(result.message || 'Error changing password');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error changing password');
+    }
+}
+
+async function updatePreferences() {
+    const form = document.getElementById('preferencesForm');
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch('/guest/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                preferences: Object.fromEntries(formData)
+            })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Preferences updated successfully');
+            location.reload();
+        } else {
+            alert(result.message || 'Error updating preferences');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating preferences');
+    }
+}
+</script>
+{{/section}}
