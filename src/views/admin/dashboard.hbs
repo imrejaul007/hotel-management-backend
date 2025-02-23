@@ -1,95 +1,352 @@
-<div class="container py-4">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h2>Admin Dashboard</h2>
-            <p class="text-muted">Welcome back, {{user.name}}!</p>
+{{> admin/header}}
+
+<div class="container-fluid py-4">
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Total Bookings</h6>
+                            <h3 class="mb-0">{{stats.totalBookings}}</h3>
+                        </div>
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
+                            <i class="fas fa-calendar-check fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-white-50">
+                            <i class="fas fa-arrow-up me-1"></i>{{stats.bookingsThisMonth}} this month
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Total Revenue</h6>
+                            <h3 class="mb-0">${{stats.totalRevenue}}</h3>
+                        </div>
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
+                            <i class="fas fa-dollar-sign fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-white-50">
+                            <i class="fas fa-arrow-up me-1"></i>${{stats.revenueThisMonth}} this month
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Total Hotels</h6>
+                            <h3 class="mb-0">{{stats.totalHotels}}</h3>
+                        </div>
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
+                            <i class="fas fa-hotel fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-white-50">
+                            <i class="fas fa-bed me-1"></i>{{stats.totalRooms}} rooms available
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1">Total Users</h6>
+                            <h3 class="mb-0">{{stats.totalUsers}}</h3>
+                        </div>
+                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
+                            <i class="fas fa-users fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-white-50">
+                            <i class="fas fa-user-plus me-1"></i>{{stats.newUsersThisMonth}} new this month
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card">
+    <!-- Quick Actions and Recent Activity -->
+    <div class="row g-4">
+        <!-- Quick Actions -->
+        <div class="col-xl-4">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Hotels</h5>
-                    <p class="card-text">Manage your hotel listings</p>
-                    <a href="/admin/hotels/add" class="btn btn-primary">Add New Hotel</a>
-                    <a href="/admin/hotels" class="btn btn-outline-primary">View All Hotels</a>
+                    <div class="d-grid gap-2">
+                        <a href="/admin/bookings/create" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>Create New Booking
+                        </a>
+                        <a href="/admin/hotels/add" class="btn btn-success">
+                            <i class="fas fa-hotel me-2"></i>Add New Hotel
+                        </a>
+                        <a href="/admin/rooms" class="btn btn-info">
+                            <i class="fas fa-bed me-2"></i>Manage Rooms
+                        </a>
+                        <a href="/admin/guests" class="btn btn-warning text-white">
+                            <i class="fas fa-users me-2"></i>Guest Management
+                        </a>
+                        <a href="/admin/users" class="btn btn-info text-white">
+                            <i class="fas fa-user-plus me-2"></i>Manage Users
+                        </a>
+                        <a href="/admin/reports" class="btn btn-secondary">
+                            <i class="fas fa-chart-bar me-2"></i>View Reports
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Users</h5>
-                    <p class="card-text">Manage user accounts</p>
-                    <a href="/admin/users" class="btn btn-primary">Manage Users</a>
+        <!-- Recent Bookings -->
+        <div class="col-xl-8">
+            <div class="card h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Recent Bookings</h5>
+                    <a href="/admin/bookings" class="btn btn-sm btn-primary">View All</a>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Bookings</h5>
-                    <p class="card-text">View and manage bookings</p>
-                    <a href="/admin/bookings" class="btn btn-primary">View Bookings</a>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Booking ID</th>
+                                    <th>Guest</th>
+                                    <th>Hotel</th>
+                                    <th>Check-in</th>
+                                    <th>Status</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each recentBookings}}
+                                <tr>
+                                    <td><a href="/admin/bookings/{{_id}}" class="text-primary">#{{_id}}</a></td>
+                                    <td>{{user.name}}</td>
+                                    <td>{{hotel.name}}</td>
+                                    <td>{{formatDate checkIn}}</td>
+                                    <td>
+                                        <span class="badge {{getStatusBadgeClass status}}">
+                                            {{status}}
+                                        </span>
+                                    </td>
+                                    <td>${{totalPrice}}</td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Recent Activities</h5>
+    <!-- Hotel Status and Notifications -->
+    <div class="row g-4 mt-4">
+        <!-- Hotel Status -->
+        <div class="col-xl-6">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Hotel Status</h5>
                 </div>
                 <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            New hotel added
-                            <span class="badge bg-primary rounded-pill">Just now</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            New booking received
-                            <span class="badge bg-primary rounded-pill">2h ago</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            User feedback received
-                            <span class="badge bg-primary rounded-pill">5h ago</span>
-                        </li>
-                    </ul>
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">Room Availability Overview</h6>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{stats.availableRoomsPercentage}}%">
+                                Available ({{stats.availableRooms}})
+                            </div>
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{stats.occupiedRoomsPercentage}}%">
+                                Occupied ({{stats.occupiedRooms}})
+                            </div>
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: {{stats.maintenanceRoomsPercentage}}%">
+                                Maintenance ({{stats.maintenanceRooms}})
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Hotel</th>
+                                    <th>Rooms Available</th>
+                                    <th>Occupancy Rate</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each hotelStatus}}
+                                <tr>
+                                    <td>{{name}}</td>
+                                    <td>{{availableRooms}}/{{totalRooms}}</td>
+                                    <td>
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{occupancyRate}}%;" 
+                                                 aria-valuenow="{{occupancyRate}}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">{{occupancyRate}}%</small>
+                                    </td>
+                                    <td>
+                                        {{#if isOperational}}
+                                        <span class="badge bg-success">Operational</span>
+                                        {{else}}
+                                        <span class="badge bg-danger">Maintenance</span>
+                                        {{/if}}
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Quick Stats</h5>
+        <!-- Recent Guests -->
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">Recent Guests</h5>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <h6 class="text-muted">Total Hotels</h6>
-                            <h3>12</h3>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {{#each recentGuests}}
+                        <div class="list-group-item border-0 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle me-3">
+                                    <span class="text-primary">{{firstChar this.name}}</span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{this.name}}</h6>
+                                    <div class="d-flex align-items-center text-muted small">
+                                        <i class="fas fa-calendar-check me-1"></i>
+                                        <span>{{this.totalStays}} stays</span>
+                                        <i class="fas fa-dollar-sign ms-3 me-1"></i>
+                                        <span>${{this.totalSpent}} spent</span>
+                                    </div>
+                                </div>
+                                <a href="/admin/guests/{{this._id}}" class="btn btn-sm btn-light">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
                         </div>
-                        <div class="col-6 mb-3">
-                            <h6 class="text-muted">Active Bookings</h6>
-                            <h3>25</h3>
+                        {{/each}}
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0 text-center py-3">
+                    <a href="/admin/guests" class="text-decoration-none">View All Guests</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Notifications -->
+        <div class="col-xl-6">
+            <div class="card h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Recent Notifications</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {{#each notifications}}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{title}}</h6>
+                                <small class="text-muted">{{timeAgo}}</small>
+                            </div>
+                            <p class="mb-1">{{message}}</p>
+                            {{#if actionUrl}}
+                            <a href="{{actionUrl}}" class="btn btn-sm btn-light">View Details</a>
+                            {{/if}}
                         </div>
-                        <div class="col-6">
-                            <h6 class="text-muted">Total Users</h6>
-                            <h3>150</h3>
-                        </div>
-                        <div class="col-6">
-                            <h6 class="text-muted">Revenue</h6>
-                            <h3>$12,450</h3>
-                        </div>
+                        {{/each}}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: none;
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    background-color: #f8f9fa;
+}
+
+.progress {
+    background-color: #e9ecef;
+}
+
+.badge {
+    padding: 0.5em 0.75em;
+}
+
+.list-group-item {
+    border-left: none;
+    border-right: none;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.bg-opacity-25 {
+    opacity: 0.25;
+}
+
+.table > :not(caption) > * > * {
+    padding: 1rem;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+</style>
+
+<script>
+function getStatusBadgeClass(status) {
+    switch(status.toLowerCase()) {
+        case 'confirmed':
+            return 'bg-success';
+        case 'pending':
+            return 'bg-warning text-dark';
+        case 'cancelled':
+            return 'bg-danger';
+        default:
+            return 'bg-secondary';
+    }
+}
+</script>

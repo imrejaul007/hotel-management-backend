@@ -1,0 +1,80 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/admin/dashboard">
+            <i class="fas fa-hotel me-2"></i>Hotel Admin
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {{#if (eq active 'dashboard')}}active{{/if}}" href="/admin/dashboard">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{#if (eq active 'bookings')}}active{{/if}}" href="/admin/bookings">
+                        <i class="fas fa-calendar-check me-1"></i>Bookings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{#if (eq active 'hotels')}}active{{/if}}" href="/admin/hotels">
+                        <i class="fas fa-building me-1"></i>Hotels
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{#if (eq active 'users')}}active{{/if}}" href="/admin/users">
+                        <i class="fas fa-users me-1"></i>Users
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{#if (eq active 'guests')}}active{{/if}}" href="/admin/guests">
+                        <i class="fas fa-users me-1"></i>Guests
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{#if (eq active 'reports')}}active{{/if}}" href="/admin/reports">
+                        <i class="fas fa-chart-bar me-1"></i>Reports
+                    </a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>{{user.name}}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="/admin/profile">
+                                <i class="fas fa-user-cog me-2"></i>Profile
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="/auth/logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">{{title}}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                {{#if breadcrumb}}
+                    <li class="breadcrumb-item active">{{breadcrumb}}</li>
+                {{/if}}
+            </ol>
+        </nav>
+    </div>
+</div>

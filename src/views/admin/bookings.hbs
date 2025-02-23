@@ -1,0 +1,231 @@
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Booking Stats -->
+        <div class="col-12 mb-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Current Bookings</h5>
+                            <h2 class="mb-0">{{stats.current}}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Upcoming Bookings</h5>
+                            <h2 class="mb-0">{{stats.upcoming}}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Past Bookings</h5>
+                            <h2 class="mb-0">{{stats.past}}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Revenue</h5>
+                            <h2 class="mb-0">${{stats.revenue}}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Tabs -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="bookingTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'current')}}active{{/if}}" 
+                               href="?tab=current">Current Bookings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'upcoming')}}active{{/if}}" 
+                               href="?tab=upcoming">Upcoming Bookings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{#if (eq activeTab 'past')}}active{{/if}}" 
+                               href="?tab=past">Past Bookings</a>
+                        </li>
+                    </ul>
+
+                    <!-- Filters -->
+                    <div class="row mt-4 mb-3">
+                        <div class="col-md-3">
+                            <select class="form-select" id="hotelFilter">
+                                <option value="">All Hotels</option>
+                                {{#each hotels}}
+                                <option value="{{_id}}" {{#if (eq ../selectedHotel _id)}}selected{{/if}}>
+                                    {{name}}
+                                </option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="pending" {{#if (eq selectedStatus 'pending')}}selected{{/if}}>Pending</option>
+                                <option value="confirmed" {{#if (eq selectedStatus 'confirmed')}}selected{{/if}}>Confirmed</option>
+                                <option value="cancelled" {{#if (eq selectedStatus 'cancelled')}}selected{{/if}}>Cancelled</option>
+                                <option value="completed" {{#if (eq selectedStatus 'completed')}}selected{{/if}}>Completed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchInput" 
+                                       placeholder="Search by guest name or booking ID"
+                                       value="{{searchQuery}}">
+                                <button class="btn btn-primary" type="button" onclick="applyFilters()">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bookings Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Booking ID</th>
+                                    <th>Guest</th>
+                                    <th>Hotel</th>
+                                    <th>Room</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Status</th>
+                                    <th>Total</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each bookings}}
+                                <tr>
+                                    <td>{{_id}}</td>
+                                    <td>
+                                        {{user.name}}<br>
+                                        <small class="text-muted">{{user.email}}</small>
+                                    </td>
+                                    <td>{{hotel.name}}</td>
+                                    <td>{{room.type}} - {{room.number}}</td>
+                                    <td>{{formatDate checkIn}}</td>
+                                    <td>{{formatDate checkOut}}</td>
+                                    <td>
+                                        <span class="badge bg-{{getStatusColor status}}">
+                                            {{status}}
+                                        </span>
+                                    </td>
+                                    <td>${{totalPrice}}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-primary" 
+                                                    onclick="viewBooking('{{_id}}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            {{#if (eq status 'pending')}}
+                                            <button type="button" class="btn btn-sm btn-success" 
+                                                    onclick="updateStatus('{{_id}}', 'confirmed')">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger" 
+                                                    onclick="updateStatus('{{_id}}', 'cancelled')">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            {{/if}}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {{#if pagination}}
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item {{#unless pagination.hasPrevPage}}disabled{{/unless}}">
+                                <a class="page-link" href="{{getPaginationUrl pagination.prevPage}}">Previous</a>
+                            </li>
+                            {{#each pagination.pages}}
+                            <li class="page-item {{#if isCurrent}}active{{/if}}">
+                                <a class="page-link" href="{{getPaginationUrl page}}">{{page}}</a>
+                            </li>
+                            {{/each}}
+                            <li class="page-item {{#unless pagination.hasNextPage}}disabled{{/unless}}">
+                                <a class="page-link" href="{{getPaginationUrl pagination.nextPage}}">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function applyFilters() {
+    const hotel = document.getElementById('hotelFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const search = document.getElementById('searchInput').value;
+    const tab = new URLSearchParams(window.location.search).get('tab') || 'current';
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    if (hotel) url.searchParams.set('hotel', hotel);
+    else url.searchParams.delete('hotel');
+    if (status) url.searchParams.set('status', status);
+    else url.searchParams.delete('status');
+    if (search) url.searchParams.set('search', search);
+    else url.searchParams.delete('search');
+    url.searchParams.delete('page');
+
+    window.location.href = url.toString();
+}
+
+function viewBooking(id) {
+    window.location.href = `/bookings/${id}`;
+}
+
+async function updateStatus(id, status) {
+    if (!confirm(`Are you sure you want to mark this booking as ${status}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/bookings/${id}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update booking status');
+        }
+
+        location.reload();
+    } catch (error) {
+        alert('Error updating booking status: ' + error.message);
+    }
+}
+
+// Add event listeners for filter changes
+document.getElementById('hotelFilter').addEventListener('change', applyFilters);
+document.getElementById('statusFilter').addEventListener('change', applyFilters);
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        applyFilters();
+    }
+});
+</script>

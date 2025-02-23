@@ -1,0 +1,304 @@
+{{> admin/header}}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Room Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="editRoomForm" onsubmit="updateRoom(event)">
+                        <div class="row g-3">
+                            <!-- Basic Information -->
+                            <div class="col-md-6">
+                                <label class="form-label">Room Number</label>
+                                <input type="text" class="form-control" name="roomNumber" value="{{room.roomNumber}}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Room Type</label>
+                                <select class="form-select" name="roomType" required>
+                                    <option value="standard" {{#if (eq room.roomType 'standard')}}selected{{/if}}>Standard</option>
+                                    <option value="deluxe" {{#if (eq room.roomType 'deluxe')}}selected{{/if}}>Deluxe</option>
+                                    <option value="suite" {{#if (eq room.roomType 'suite')}}selected{{/if}}>Suite</option>
+                                </select>
+                            </div>
+
+                            <!-- Pricing and Capacity -->
+                            <div class="col-md-6">
+                                <label class="form-label">Price per Night ($)</label>
+                                <input type="number" class="form-control" name="price" value="{{room.price}}" required min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Capacity (Guests)</label>
+                                <input type="number" class="form-control" name="capacity" value="{{room.capacity}}" required min="1">
+                            </div>
+
+                            <!-- Status -->
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" name="status" required>
+                                    <option value="available" {{#if (eq room.status 'available')}}selected{{/if}}>Available</option>
+                                    <option value="maintenance" {{#if (eq room.status 'maintenance')}}selected{{/if}}>Under Maintenance</option>
+                                    <option value="inactive" {{#if (eq room.status 'inactive')}}selected{{/if}}>Inactive</option>
+                                </select>
+                            </div>
+
+                            <!-- Amenities -->
+                            <div class="col-12">
+                                <label class="form-label">Amenities</label>
+                                <div class="row g-3" id="amenitiesContainer">
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="amenities" value="wifi" 
+                                                {{#if (includes room.amenities 'wifi')}}checked{{/if}}>
+                                            <label class="form-check-label">WiFi</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="amenities" value="tv" 
+                                                {{#if (includes room.amenities 'tv')}}checked{{/if}}>
+                                            <label class="form-check-label">TV</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="amenities" value="ac" 
+                                                {{#if (includes room.amenities 'ac')}}checked{{/if}}>
+                                            <label class="form-check-label">Air Conditioning</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="amenities" value="minibar" 
+                                                {{#if (includes room.amenities 'minibar')}}checked{{/if}}>
+                                            <label class="form-check-label">Minibar</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="amenities" value="safe" 
+                                                {{#if (includes room.amenities 'safe')}}checked{{/if}}>
+                                            <label class="form-check-label">Safe</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="amenities" value="balcony" 
+                                                {{#if (includes room.amenities 'balcony')}}checked{{/if}}>
+                                            <label class="form-check-label">Balcony</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <a href="/admin/rooms" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Back to Rooms
+                                    </a>
+                                    <div>
+                                        <button type="button" class="btn btn-danger me-2" onclick="confirmDelete()">
+                                            <i class="fas fa-trash me-2"></i>Delete Room
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Preview Card -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>Room Preview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="display-4 mb-2">Room {{room.roomNumber}}</div>
+                        <span class="badge bg-primary">{{room.roomType}}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>Price per Night</h5>
+                        <h4 class="text-primary">${{room.price}}</h4>
+                    </div>
+                    <div class="mb-3">
+                        <h5>Capacity</h5>
+                        <p><i class="fas fa-users me-2"></i>{{room.capacity}} guests</p>
+                    </div>
+                    <div class="mb-3">
+                        <h5>Status</h5>
+                        <span class="badge {{#if (eq room.status 'available')}}bg-success{{else}}bg-warning{{/if}}">
+                            {{room.status}}
+                        </span>
+                    </div>
+                    <div>
+                        <h5>Amenities</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            {{#each room.amenities}}
+                            <span class="badge bg-light text-dark">{{this}}</span>
+                            {{/each}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Booking Info (if any) -->
+            <div class="card mt-4">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-check me-2"></i>Current Booking
+                    </h5>
+                </div>
+                <div class="card-body" id="currentBookingInfo">
+                    Loading...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete Room {{room.roomNumber}}? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="deleteRoom()">Delete Room</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update room details
+async function updateRoom(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    // Get selected amenities
+    const amenities = Array.from(form.querySelectorAll('input[name="amenities"]:checked')).map(cb => cb.value);
+
+    const roomData = {
+        roomNumber: formData.get('roomNumber'),
+        roomType: formData.get('roomType'),
+        price: parseFloat(formData.get('price')),
+        capacity: parseInt(formData.get('capacity')),
+        status: formData.get('status'),
+        amenities
+    };
+
+    try {
+        const response = await fetch('/admin/rooms/{{hotel._id}}/{{room._id}}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(roomData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Room updated successfully');
+            window.location.href = '/admin/rooms';
+        } else {
+            alert(data.message || 'Error updating room');
+        }
+    } catch (error) {
+        console.error('Error updating room:', error);
+        alert('Error updating room');
+    }
+}
+
+// Load current booking info
+async function loadCurrentBooking() {
+    try {
+        const response = await fetch('/admin/rooms/{{hotel._id}}/{{room._id}}/availability');
+        const data = await response.json();
+
+        const bookingInfo = document.getElementById('currentBookingInfo');
+        
+        if (data.success && data.data.length > 0) {
+            const booking = data.data[0];
+            const checkIn = new Date(booking.checkIn).toLocaleDateString();
+            const checkOut = new Date(booking.checkOut).toLocaleDateString();
+            
+            bookingInfo.innerHTML = `
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-user-circle fa-2x me-2"></i>
+                    <div>
+                        <h6 class="mb-0">${booking.user.name}</h6>
+                        <small class="text-muted">${booking.user.email}</small>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    ${checkIn} - ${checkOut}
+                </div>
+                <div>
+                    <span class="badge bg-${booking.status === 'confirmed' ? 'success' : 'warning'}">
+                        ${booking.status}
+                    </span>
+                </div>
+            `;
+        } else {
+            bookingInfo.innerHTML = '<div class="alert alert-info mb-0">No current bookings</div>';
+        }
+    } catch (error) {
+        console.error('Error loading current booking:', error);
+        document.getElementById('currentBookingInfo').innerHTML = 
+            '<div class="alert alert-danger mb-0">Error loading booking information</div>';
+    }
+}
+
+// Delete room confirmation
+function confirmDelete() {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+// Delete room
+async function deleteRoom() {
+    try {
+        const response = await fetch('/admin/rooms/{{hotel._id}}/{{room._id}}', {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            alert('Room deleted successfully');
+            window.location.href = '/admin/rooms';
+        } else {
+            alert(data.message || 'Error deleting room');
+        }
+    } catch (error) {
+        console.error('Error deleting room:', error);
+        alert('Error deleting room');
+    }
+}
+
+// Load current booking on page load
+loadCurrentBooking();
+</script>

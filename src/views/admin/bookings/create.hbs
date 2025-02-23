@@ -1,0 +1,347 @@
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>Create New Booking
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form id="createBookingForm" onsubmit="createBooking(event)">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Guest Information</h5>
+                                <div class="mb-3">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="guestType" 
+                                               id="existingGuest" value="existing" checked>
+                                        <label class="form-check-label" for="existingGuest">
+                                            Select Existing Guest
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="guestType" 
+                                               id="newGuest" value="new">
+                                        <label class="form-check-label" for="newGuest">
+                                            Add New Guest
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Existing Guest Selection -->
+                                <div id="existingGuestForm">
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Guest</label>
+                                        <select class="form-select" name="userId">
+                                            <option value="">Choose a guest...</option>
+                                            {{#each users}}
+                                            <option value="{{_id}}">{{name}} ({{email}})</option>
+                                            {{/each}}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- New Guest Form -->
+                                <div id="newGuestForm" style="display: none;">
+                                    <div class="mb-3">
+                                        <label class="form-label">Guest Name</label>
+                                        <input type="text" class="form-control" name="guestDetails[name]" 
+                                               placeholder="Enter guest name">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="guestDetails[email]" 
+                                               placeholder="Enter guest email">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Phone</label>
+                                        <input type="tel" class="form-control" name="guestDetails[phone]" 
+                                               placeholder="Enter guest phone">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Booking Status</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Initial Status</label>
+                                    <select class="form-select" name="status">
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Hotel & Room Selection</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Hotel</label>
+                                    <select class="form-select" name="hotelId" id="hotelSelect" required>
+                                        <option value="">Choose a hotel...</option>
+                                        {{#each hotels}}
+                                        <option value="{{_id}}">{{name}}</option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Room</label>
+                                    <select class="form-select" name="roomId" id="roomSelect" required disabled>
+                                        <option value="">Choose a room...</option>
+                                    </select>
+                                    <div id="roomDetails" class="mt-2" style="display: none;">
+                                        <small class="text-muted">
+                                            Room Type: <span id="roomType"></span><br>
+                                            Capacity: <span id="roomCapacity"></span> guests<br>
+                                            Price per night: $<span id="roomPrice"></span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Dates</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Check-in Date</label>
+                                    <input type="date" class="form-control" name="checkIn" required
+                                           min="{{formatDateISO now}}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Check-out Date</label>
+                                    <input type="date" class="form-control" name="checkOut" required
+                                           min="{{formatDateISO now}}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Number of Guests</h5>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Adults</label>
+                                            <input type="number" class="form-control" name="guests[adults]" 
+                                                   value="1" min="1" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Children</label>
+                                            <input type="number" class="form-control" name="guests[children]" 
+                                                   value="0" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Special Requests</h5>
+                                <div class="mb-3">
+                                    <textarea class="form-control" name="specialRequests" rows="3" 
+                                              placeholder="Enter any special requests..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <a href="/admin/bookings" class="btn btn-secondary me-2">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create Booking
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadRooms(hotelId) {
+    if (!hotelId) {
+        const roomSelect = document.querySelector('select[name="roomId"]');
+        roomSelect.innerHTML = '<option value="">Select hotel first...</option>';
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/hotels/${hotelId}/rooms`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const roomSelect = document.querySelector('select[name="roomId"]');
+            roomSelect.innerHTML = '<option value="">Select a room...</option>' + 
+                data.data.map(room => `
+                    <option value="${room._id}">
+                        ${room.type} - Room ${room.number} (Capacity: ${room.capacity}, Price: $${room.price}/night)
+                    </option>
+                `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading rooms:', error);
+        alert('Error loading rooms. Please try again.');
+    }
+}
+
+document.querySelectorAll('input[name="guestType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const existingForm = document.getElementById('existingGuestForm');
+        const newForm = document.getElementById('newGuestForm');
+        const userIdSelect = document.querySelector('select[name="userId"]');
+        const guestDetailsInputs = document.querySelectorAll('#newGuestForm input');
+        
+        if (this.value === 'existing') {
+            existingForm.style.display = 'block';
+            newForm.style.display = 'none';
+            userIdSelect.required = true;
+            guestDetailsInputs.forEach(input => input.required = false);
+        } else {
+            existingForm.style.display = 'none';
+            newForm.style.display = 'block';
+            userIdSelect.required = false;
+            guestDetailsInputs.forEach(input => input.required = true);
+        }
+    });
+});
+
+async function createBooking(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const guestType = formData.get('guestType');
+    
+    const bookingData = {
+        hotelId: formData.get('hotelId'),
+        roomId: formData.get('roomId'),
+        checkIn: formData.get('checkIn'),
+        checkOut: formData.get('checkOut'),
+        guests: {
+            adults: parseInt(formData.get('guests[adults]')),
+            children: parseInt(formData.get('guests[children]'))
+        },
+        specialRequests: formData.get('specialRequests'),
+        status: formData.get('status')
+    };
+
+    // Add either userId or guestDetails based on selection
+    if (guestType === 'existing') {
+        bookingData.userId = formData.get('userId');
+    } else {
+        bookingData.guestDetails = {
+            name: formData.get('guestDetails[name]'),
+            email: formData.get('guestDetails[email]'),
+            phone: formData.get('guestDetails[phone]')
+        };
+    }
+    
+    try {
+        const response = await fetch('/admin/bookings/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bookingData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Booking created successfully');
+            window.location.href = '/admin/bookings';
+        } else {
+            alert(data.message || 'Error creating booking');
+        }
+    } catch (error) {
+        console.error('Error creating booking:', error);
+        alert('Error creating booking. Please try again.');
+    }
+}
+
+// Set minimum dates for check-in and check-out
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelector('input[name="checkIn"]').min = today;
+    document.querySelector('input[name="checkOut"]').min = today;
+});
+
+// Update check-out min date when check-in changes
+document.querySelector('input[name="checkIn"]').addEventListener('change', function() {
+    document.querySelector('input[name="checkOut"]').min = this.value;
+});
+
+document.getElementById('hotelSelect').addEventListener('change', async function() {
+    const hotelId = this.value;
+    const roomSelect = document.getElementById('roomSelect');
+    const roomDetails = document.getElementById('roomDetails');
+    
+    // Reset room selection
+    roomSelect.innerHTML = '<option value="">Choose a room...</option>';
+    roomSelect.disabled = true;
+    roomDetails.style.display = 'none';
+    
+    if (!hotelId) return;
+    
+    try {
+        const response = await fetch(`/admin/hotels/${hotelId}/rooms`);
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+            data.data.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room._id;
+                option.textContent = `${room.roomType} - ${room.roomNumber}`;
+                option.dataset.type = room.roomType;
+                option.dataset.capacity = room.capacity;
+                option.dataset.price = room.price;
+                roomSelect.appendChild(option);
+            });
+            roomSelect.disabled = false;
+        } else {
+            roomSelect.innerHTML = '<option value="">No rooms available</option>';
+        }
+    } catch (error) {
+        console.error('Error fetching rooms:', error);
+        alert('Error fetching rooms. Please try again.');
+    }
+});
+
+document.getElementById('roomSelect').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const roomDetails = document.getElementById('roomDetails');
+    
+    if (this.value) {
+        document.getElementById('roomType').textContent = selectedOption.dataset.type;
+        document.getElementById('roomCapacity').textContent = selectedOption.dataset.capacity;
+        document.getElementById('roomPrice').textContent = selectedOption.dataset.price;
+        roomDetails.style.display = 'block';
+        
+        // Update max guests based on room capacity
+        const adultsInput = document.querySelector('input[name="guests[adults]"]');
+        const childrenInput = document.querySelector('input[name="guests[children]"]');
+        const totalCapacity = parseInt(selectedOption.dataset.capacity);
+        
+        adultsInput.max = totalCapacity;
+        childrenInput.max = totalCapacity - parseInt(adultsInput.value);
+    } else {
+        roomDetails.style.display = 'none';
+    }
+});
+
+// Add event listener for adults input to update children max
+document.querySelector('input[name="guests[adults]"]').addEventListener('change', function() {
+    const selectedOption = document.getElementById('roomSelect').options[document.getElementById('roomSelect').selectedIndex];
+    if (selectedOption.value) {
+        const totalCapacity = parseInt(selectedOption.dataset.capacity);
+        const childrenInput = document.querySelector('input[name="guests[children]"]');
+        childrenInput.max = totalCapacity - parseInt(this.value);
+        
+        // Adjust children value if it exceeds new max
+        if (parseInt(childrenInput.value) > childrenInput.max) {
+            childrenInput.value = childrenInput.max;
+        }
+    }
+});
+</script>

@@ -1,0 +1,211 @@
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Booking
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form id="editBookingForm" onsubmit="updateBooking(event)">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Guest Information</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Guest Name</label>
+                                    <input type="text" class="form-control" value="{{booking.user.name}}" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" value="{{booking.user.email}}" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Booking Details</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" name="status" required>
+                                        <option value="pending" {{#if (eq booking.status 'pending')}}selected{{/if}}>Pending</option>
+                                        <option value="confirmed" {{#if (eq booking.status 'confirmed')}}selected{{/if}}>Confirmed</option>
+                                        <option value="cancelled" {{#if (eq booking.status 'cancelled')}}selected{{/if}}>Cancelled</option>
+                                        <option value="completed" {{#if (eq booking.status 'completed')}}selected{{/if}}>Completed</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Hotel & Room</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Hotel</label>
+                                    <select class="form-select" name="hotelId" onchange="loadRooms(this.value)" required>
+                                        {{#each hotels}}
+                                        <option value="{{_id}}" {{#if (eq ../booking.hotel._id _id)}}selected{{/if}}>
+                                            {{name}} - {{location}}
+                                        </option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Room</label>
+                                    <select class="form-select" name="roomId" required>
+                                        {{#each booking.hotel.rooms}}
+                                        <option value="{{_id}}" {{#if (eq ../booking.room._id _id)}}selected{{/if}}>
+                                            {{type}} - Room {{number}} (Capacity: {{capacity}})
+                                        </option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Dates</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Check-in Date</label>
+                                    <input type="date" class="form-control" name="checkIn" 
+                                           value="{{formatDateISO booking.checkIn}}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Check-out Date</label>
+                                    <input type="date" class="form-control" name="checkOut" 
+                                           value="{{formatDateISO booking.checkOut}}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Guests</h5>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Adults</label>
+                                            <input type="number" class="form-control" name="guests[adults]" 
+                                                   value="{{booking.guests.adults}}" min="1" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Children</label>
+                                            <input type="number" class="form-control" name="guests[children]" 
+                                                   value="{{booking.guests.children}}" min="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Special Requests</h5>
+                                <div class="mb-3">
+                                    <textarea class="form-control" name="specialRequests" rows="3">{{booking.specialRequests}}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-danger" onclick="cancelBooking()">
+                                <i class="fas fa-times me-2"></i>Cancel Booking
+                            </button>
+                            <div>
+                                <a href="/admin/bookings" class="btn btn-secondary me-2">
+                                    <i class="fas fa-arrow-left me-2"></i>Back
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadRooms(hotelId) {
+    try {
+        const response = await fetch(`/api/hotels/${hotelId}/rooms`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const roomSelect = document.querySelector('select[name="roomId"]');
+            roomSelect.innerHTML = data.data.map(room => `
+                <option value="${room._id}">
+                    ${room.type} - Room ${room.number} (Capacity: ${room.capacity})
+                </option>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading rooms:', error);
+        alert('Error loading rooms. Please try again.');
+    }
+}
+
+async function updateBooking(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const bookingId = '{{booking._id}}';
+    
+    try {
+        const response = await fetch(`/admin/bookings/${bookingId}/update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                hotelId: formData.get('hotelId'),
+                roomId: formData.get('roomId'),
+                checkIn: formData.get('checkIn'),
+                checkOut: formData.get('checkOut'),
+                guests: {
+                    adults: parseInt(formData.get('guests[adults]')),
+                    children: parseInt(formData.get('guests[children]'))
+                },
+                specialRequests: formData.get('specialRequests'),
+                status: formData.get('status')
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Booking updated successfully');
+            window.location.href = '/admin/bookings';
+        } else {
+            alert(data.message || 'Error updating booking');
+        }
+    } catch (error) {
+        console.error('Error updating booking:', error);
+        alert('Error updating booking. Please try again.');
+    }
+}
+
+async function cancelBooking() {
+    if (!confirm('Are you sure you want to cancel this booking?')) {
+        return;
+    }
+    
+    const bookingId = '{{booking._id}}';
+    
+    try {
+        const response = await fetch(`/admin/bookings/${bookingId}/cancel`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Booking cancelled successfully');
+            window.location.href = '/admin/bookings';
+        } else {
+            alert(data.message || 'Error cancelling booking');
+        }
+    } catch (error) {
+        console.error('Error cancelling booking:', error);
+        alert('Error cancelling booking. Please try again.');
+    }
+}
+</script>

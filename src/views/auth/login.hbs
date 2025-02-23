@@ -5,9 +5,13 @@
                 <h3 class="mb-0">Admin Login</h3>
             </div>
             <div class="card-body p-4">
-                <div id="errorAlert" class="alert alert-danger d-none" role="alert"></div>
+                {{#if error}}
+                <div class="alert alert-danger" role="alert">
+                    {{error}}
+                </div>
+                {{/if}}
                 
-                <form id="loginForm" class="needs-validation" novalidate>
+                <form action="/auth/login" method="POST" class="needs-validation" novalidate>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email address</label>
                         <input type="email" class="form-control" id="email" name="email" required>

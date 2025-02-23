@@ -3,6 +3,50 @@ const router = express.Router();
 const passport = require('passport');
 const authController = require('../controllers/auth.controller');
 
+// Web routes
+router.get('/login', (req, res) => {
+    res.render('auth/login', {
+        title: 'Login',
+        layout: false
+    });
+});
+
+router.post('/login', async (req, res) => {
+    try {
+        const { token, user } = await authController.login(req.body);
+        
+        // Set JWT as HTTP-only cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+        
+        // Redirect based on role
+        if (user.role === 'admin') {
+            res.redirect('/admin/dashboard');
+        } else {
+            res.redirect('/');
+        }
+    } catch (error) {
+        res.render('auth/login', {
+            title: 'Login',
+            layout: false,
+            error: error.message
+        });
+    }
+});
+
+router.get('/logout', (req, res) => {
+    res.cookie('token', 'none', {
+        expires: new Date(Date.now() + 10 * 1000), // Expire in 10 seconds
+        httpOnly: true
+    });
+    res.redirect('/auth/login');
+});
+
+// API routes
 /**
  * @swagger
  * /api/auth/register:
@@ -37,7 +81,7 @@ const authController = require('../controllers/auth.controller');
  *       400:
  *         description: Invalid input data
  */
-router.post('/register', authController.register);
+router.post('/api/register', authController.register);
 
 /**
  * @swagger
@@ -88,8 +132,21 @@ router.post('/register', authController.register);
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', authController.login);
+router.post('/api/login', authController.login);
 
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Authentication]
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ */
+router.post('/api/logout', authController.logout);
+
+// Google OAuth routes
 /**
  * @swagger
  * /api/auth/google:
@@ -145,20 +202,8 @@ router.get('/google',
  *               $ref: '#/components/schemas/Error'
  */
 router.get('/google/callback',
-    passport.authenticate('google', { session: false }),
+    passport.authenticate('google', { failureRedirect: '/login' }),
     authController.googleCallback
 );
-
-/**
- * @swagger
- * /api/auth/logout:
- *   post:
- *     summary: Logout user
- *     tags: [Authentication]
- *     responses:
- *       200:
- *         description: Logged out successfully
- */
-router.post('/logout', authController.logout);
 
 module.exports = router;

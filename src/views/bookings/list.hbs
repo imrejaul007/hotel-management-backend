@@ -1,0 +1,139 @@
+<div class="container mt-4">
+    <h2>My Bookings</h2>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="filterForm" class="row g-3">
+                <div class="col-md-4">
+                    <select class="form-select" id="statusFilter" onchange="this.form.submit()">
+                        <option value="">All Bookings</option>
+                        <option value="pending" {{#if (eq status 'pending')}}selected{{/if}}>Pending</option>
+                        <option value="confirmed" {{#if (eq status 'confirmed')}}selected{{/if}}>Confirmed</option>
+                        <option value="completed" {{#if (eq status 'completed')}}selected{{/if}}>Completed</option>
+                        <option value="cancelled" {{#if (eq status 'cancelled')}}selected{{/if}}>Cancelled</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{#if bookings.length}}
+    <div class="row">
+        {{#each bookings}}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                {{#if hotel.images.[0]}}
+                <img src="{{hotel.images.[0]}}" class="card-img-top" alt="Hotel Image" style="height: 200px; object-fit: cover;">
+                {{else}}
+                <div class="bg-secondary" style="height: 200px;"></div>
+                {{/if}}
+                
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{hotel.name}}</h5>
+                        <span class="badge bg-{{getStatusColor status}}">{{status}}</span>
+                    </div>
+                    
+                    <p class="text-muted">{{hotel.location}}</p>
+                    
+                    <div class="mb-3">
+                        <div><strong>Check In:</strong> {{formatDate checkIn}}</div>
+                        <div><strong>Check Out:</strong> {{formatDate checkOut}}</div>
+                        <div><strong>Guests:</strong> {{guests.adults}} adults{{#if guests.children}}, {{guests.children}} children{{/if}}</div>
+                        <div><strong>Total Price:</strong> ${{totalPrice}}</div>
+                    </div>
+
+                    {{#if specialRequests}}
+                    <div class="mb-3">
+                        <strong>Special Requests:</strong>
+                        <p class="mb-0">{{specialRequests}}</p>
+                    </div>
+                    {{/if}}
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="/bookings/{{_id}}" class="btn btn-outline-primary">
+                            View Details
+                        </a>
+                        
+                        {{#if (eq status 'pending')}}
+                        <button class="btn btn-danger" onclick="cancelBooking('{{_id}}')">
+                            Cancel Booking
+                        </button>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+
+    <!-- Pagination -->
+    {{#if pagination}}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {{#unless pagination.hasPrevPage}}disabled{{/unless}}">
+                <a class="page-link" href="?page={{pagination.prevPage}}&status={{status}}">Previous</a>
+            </li>
+            {{#each pagination.pages}}
+            <li class="page-item {{#if isCurrent}}active{{/if}}">
+                <a class="page-link" href="?page={{page}}&status={{../status}}">{{page}}</a>
+            </li>
+            {{/each}}
+            <li class="page-item {{#unless pagination.hasNextPage}}disabled{{/unless}}">
+                <a class="page-link" href="?page={{pagination.nextPage}}&status={{status}}">Next</a>
+            </li>
+        </ul>
+    </nav>
+    {{/if}}
+
+    {{else}}
+    <div class="text-center py-5">
+        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+        <h4>No bookings found</h4>
+        <p class="text-muted">You haven't made any bookings yet.</p>
+        <a href="/hotels" class="btn btn-primary">Browse Hotels</a>
+    </div>
+    {{/if}}
+</div>
+
+<script>
+document.getElementById('statusFilter').addEventListener('change', function() {
+    const status = this.value;
+    const url = new URL(window.location.href);
+    if (status) {
+        url.searchParams.set('status', status);
+    } else {
+        url.searchParams.delete('status');
+    }
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+});
+
+async function cancelBooking(bookingId) {
+    if (!confirm('Are you sure you want to cancel this booking?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/bookings/${bookingId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                status: 'cancelled',
+                cancellationReason: 'Cancelled by user'
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to cancel booking');
+        }
+
+        location.reload();
+    } catch (error) {
+        alert('Error cancelling booking: ' + error.message);
+    }
+}
+</script>

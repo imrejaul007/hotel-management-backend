@@ -1,0 +1,236 @@
+{{> admin/header}}
+
+<div class="container-fluid">
+    <!-- Filters and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Filter by Hotel</label>
+                    <select class="form-select" id="hotelFilter">
+                        <option value="">All Hotels</option>
+                        {{#each hotels}}
+                        <option value="{{_id}}">{{name}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Room Type</label>
+                    <select class="form-select" id="roomTypeFilter">
+                        <option value="">All Types</option>
+                        <option value="standard">Standard</option>
+                        <option value="deluxe">Deluxe</option>
+                        <option value="suite">Suite</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Availability</label>
+                    <select class="form-select" id="availabilityFilter">
+                        <option value="">All Status</option>
+                        <option value="available">Available</option>
+                        <option value="occupied">Occupied</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search rooms...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rooms Grid -->
+    <div class="row g-4" id="roomsGrid">
+        {{#each rooms}}
+        <div class="col-xl-3 col-lg-4 col-md-6 room-card" 
+             data-hotel="{{hotelId}}" 
+             data-type="{{roomType}}" 
+             data-available="{{isAvailable}}">
+            <div class="card h-100">
+                <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Room {{roomNumber}}</h6>
+                    <span class="badge {{#if isAvailable}}bg-success{{else}}bg-danger{{/if}}">
+                        {{#if isAvailable}}Available{{else}}Occupied{{/if}}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <div>
+                            <h5 class="card-title">{{roomType}}</h5>
+                            <p class="card-text text-muted">{{hotelName}}</p>
+                        </div>
+                        <div class="text-end">
+                            <h5 class="text-primary">${{price}}</h5>
+                            <small class="text-muted">per night</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-users me-2"></i>
+                            <span>Capacity: {{capacity}} guests</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-bed me-2"></i>
+                            <span>{{roomType}} Room</span>
+                        </div>
+                    </div>
+
+                    {{#if amenities}}
+                    <div class="mb-3">
+                        <h6 class="mb-2">Amenities:</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {{#each amenities}}
+                            <span class="badge bg-light text-dark">{{this}}</span>
+                            {{/each}}
+                        </div>
+                    </div>
+                    {{/if}}
+
+                    {{#unless isAvailable}}
+                    <div class="alert alert-warning mb-3">
+                        <small>
+                            <i class="fas fa-clock me-1"></i>
+                            Booked until: {{formatDate currentBooking.checkOut}}
+                        </small>
+                    </div>
+                    {{/unless}}
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-outline-primary" onclick="viewAvailability('{{hotelId}}', '{{_id}}')">
+                            <i class="fas fa-calendar me-1"></i>Availability
+                        </button>
+                        <a href="/admin/rooms/{{hotelId}}/{{_id}}/edit" class="btn btn-primary">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</div>
+
+<!-- Availability Modal -->
+<div class="modal fade" id="availabilityModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Room Availability</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="availabilityCalendar"></div>
+                <div id="bookingsList" class="mt-3">
+                    <h6>Upcoming Bookings</h6>
+                    <div class="list-group" id="bookingsListContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.room-card .card {
+    transition: transform 0.2s;
+}
+
+.room-card .card:hover {
+    transform: translateY(-5px);
+}
+
+.badge {
+    padding: 0.5em 0.75em;
+}
+
+.amenities-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.amenity-badge {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 20px;
+}
+</style>
+
+<script>
+// Filter functionality
+function filterRooms() {
+    const hotelFilter = document.getElementById('hotelFilter').value;
+    const typeFilter = document.getElementById('roomTypeFilter').value;
+    const availabilityFilter = document.getElementById('availabilityFilter').value;
+    const searchText = document.getElementById('searchInput').value.toLowerCase();
+
+    document.querySelectorAll('.room-card').forEach(card => {
+        const hotel = card.dataset.hotel;
+        const type = card.dataset.type.toLowerCase();
+        const available = card.dataset.available === 'true';
+        const text = card.textContent.toLowerCase();
+
+        let show = true;
+
+        if (hotelFilter && hotel !== hotelFilter) show = false;
+        if (typeFilter && type !== typeFilter) show = false;
+        if (availabilityFilter === 'available' && !available) show = false;
+        if (availabilityFilter === 'occupied' && available) show = false;
+        if (searchText && !text.includes(searchText)) show = false;
+
+        card.style.display = show ? '' : 'none';
+    });
+}
+
+// Add event listeners to filters
+document.getElementById('hotelFilter').addEventListener('change', filterRooms);
+document.getElementById('roomTypeFilter').addEventListener('change', filterRooms);
+document.getElementById('availabilityFilter').addEventListener('change', filterRooms);
+document.getElementById('searchInput').addEventListener('input', filterRooms);
+
+// View availability function
+async function viewAvailability(hotelId, roomId) {
+    try {
+        const response = await fetch(`/admin/rooms/${hotelId}/${roomId}/availability`);
+        const data = await response.json();
+
+        if (data.success) {
+            const bookingsListContent = document.getElementById('bookingsListContent');
+            bookingsListContent.innerHTML = '';
+
+            if (data.data.length === 0) {
+                bookingsListContent.innerHTML = '<div class="alert alert-info">No upcoming bookings for this room.</div>';
+            } else {
+                data.data.forEach(booking => {
+                    const checkIn = new Date(booking.checkIn).toLocaleDateString();
+                    const checkOut = new Date(booking.checkOut).toLocaleDateString();
+                    
+                    bookingsListContent.innerHTML += `
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">${booking.user.name}</h6>
+                                <small class="text-muted">${booking.status}</small>
+                            </div>
+                            <p class="mb-1">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                ${checkIn} - ${checkOut}
+                            </p>
+                            <small>
+                                <i class="fas fa-envelope me-1"></i>
+                                ${booking.user.email}
+                            </small>
+                        </div>
+                    `;
+                });
+            }
+
+            const modal = new bootstrap.Modal(document.getElementById('availabilityModal'));
+            modal.show();
+        }
+    } catch (error) {
+        console.error('Error fetching availability:', error);
+        alert('Error fetching room availability');
+    }
+}
+</script>

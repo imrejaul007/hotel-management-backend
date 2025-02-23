@@ -1,0 +1,196 @@
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Booking Status Banner -->
+            <div class="alert alert-{{getStatusColor booking.status}} d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="alert-heading mb-1">Booking Status: {{booking.status}}</h5>
+                    {{#if (eq booking.status 'confirmed')}}
+                    <p class="mb-0">Your booking is confirmed. We look forward to hosting you!</p>
+                    {{else if (eq booking.status 'pending')}}
+                    <p class="mb-0">Your booking is being processed. We'll confirm it shortly.</p>
+                    {{else if (eq booking.status 'cancelled')}}
+                    <p class="mb-0">This booking has been cancelled.</p>
+                    {{else if (eq booking.status 'completed')}}
+                    <p class="mb-0">Thank you for staying with us!</p>
+                    {{/if}}
+                </div>
+                {{#if (eq booking.status 'pending')}}
+                <button class="btn btn-danger" onclick="cancelBooking('{{booking._id}}')">
+                    Cancel Booking
+                </button>
+                {{/if}}
+            </div>
+
+            <!-- Booking Details -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Booking Details</h4>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Check In</label>
+                            <div class="form-control bg-light">{{formatDate booking.checkIn}}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Check Out</label>
+                            <div class="form-control bg-light">{{formatDate booking.checkOut}}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Adults</label>
+                            <div class="form-control bg-light">{{booking.guests.adults}}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Children</label>
+                            <div class="form-control bg-light">{{booking.guests.children}}</div>
+                        </div>
+                        {{#if booking.specialRequests}}
+                        <div class="col-12">
+                            <label class="form-label">Special Requests</label>
+                            <div class="form-control bg-light" style="min-height: 60px;">
+                                {{booking.specialRequests}}
+                            </div>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hotel Details -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Hotel Information</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{#if booking.hotel.images.[0]}}
+                            <img src="{{booking.hotel.images.[0]}}" class="img-fluid rounded" alt="Hotel Image">
+                            {{else}}
+                            <div class="bg-secondary rounded" style="height: 150px;"></div>
+                            {{/if}}
+                        </div>
+                        <div class="col-md-8">
+                            <h5>{{booking.hotel.name}}</h5>
+                            <p class="text-muted">{{booking.hotel.location}}</p>
+                            <p>{{booking.hotel.description}}</p>
+                            
+                            <h6>Contact Information</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-phone me-2"></i>{{booking.hotel.phone}}</li>
+                                <li><i class="fas fa-envelope me-2"></i>{{booking.hotel.email}}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Details -->
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Room Information</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{#if booking.room.images.[0]}}
+                            <img src="{{booking.room.images.[0]}}" class="img-fluid rounded" alt="Room Image">
+                            {{else}}
+                            <div class="bg-secondary rounded" style="height: 150px;"></div>
+                            {{/if}}
+                        </div>
+                        <div class="col-md-8">
+                            <h5>{{booking.room.type}}</h5>
+                            <p>{{booking.room.description}}</p>
+                            
+                            <h6>Room Features</h6>
+                            <ul class="list-unstyled row">
+                                <li class="col-md-6"><i class="fas fa-user me-2"></i>Max Capacity: {{booking.room.capacity}} persons</li>
+                                <li class="col-md-6"><i class="fas fa-bed me-2"></i>{{booking.room.beds}} bed(s)</li>
+                                {{#each booking.room.amenities}}
+                                <li class="col-md-6"><i class="fas fa-check me-2"></i>{{this}}</li>
+                                {{/each}}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Summary -->
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    <h4 class="card-title">Price Summary</h4>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Room Rate</span>
+                        <span>${{booking.room.price}}/night</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Number of Nights</span>
+                        <span>{{booking.numberOfNights}}</span>
+                    </div>
+                    {{#if booking.taxes}}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Taxes & Fees</span>
+                        <span>${{booking.taxes}}</span>
+                    </div>
+                    {{/if}}
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total Price</span>
+                        <span>${{booking.totalPrice}}</span>
+                    </div>
+
+                    {{#if (eq booking.status 'confirmed')}}
+                    <div class="mt-4">
+                        <h6>Check-in Instructions</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-clock me-2"></i>Check-in time: 2:00 PM</li>
+                            <li><i class="fas fa-id-card me-2"></i>Please bring a valid ID</li>
+                            <li><i class="fas fa-credit-card me-2"></i>Credit card required for incidentals</li>
+                        </ul>
+                    </div>
+                    {{/if}}
+
+                    {{#if (eq booking.status 'pending')}}
+                    <div class="mt-4">
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Your booking will be confirmed within 24 hours.
+                        </div>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function cancelBooking(bookingId) {
+    if (!confirm('Are you sure you want to cancel this booking?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/bookings/${bookingId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                status: 'cancelled',
+                cancellationReason: 'Cancelled by user'
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to cancel booking');
+        }
+
+        location.reload();
+    } catch (error) {
+        alert('Error cancelling booking: ' + error.message);
+    }
+}
+</script>

@@ -11,12 +11,20 @@ const generateToken = (userId) => {
 };
 
 exports.register = async (userData) => {
+    // Validate email
+    const existingUser = await User.findOne({ email: userData.email });
+    if (existingUser) {
+        throw new Error('Email already registered');
+    }
+
     // Hash password
     const salt = await bcrypt.genSalt(10);
     userData.password = await bcrypt.hash(userData.password, salt);
     
     const user = await User.create(userData);
-    return { ...user.toJSON(), password: undefined };
+    
+    const token = generateToken(user._id);
+    return { token, user: { ...user.toObject(), password: undefined } };
 };
 
 exports.login = async ({ email, password }) => {
@@ -52,8 +60,25 @@ exports.login = async ({ email, password }) => {
 
 exports.handleGoogleAuthCallback = async (user) => {
     const token = generateToken(user._id);
-    return {
-        token,
-        user: { ...user.toJSON(), password: undefined }
+    return { token, user };
+};
+
+exports.createAdmin = async () => {
+    const admin = await User.findOne({ role: 'admin' });
+    if (admin) {
+        throw new Error('Admin user already exists');
+    }
+
+    const adminData = {
+        name: 'Admin',
+        email: 'admin@example.com',
+        password: 'password',
+        role: 'admin'
     };
+
+    const salt = await bcrypt.genSalt(10);
+    adminData.password = await bcrypt.hash(adminData.password, salt);
+
+    const newAdmin = await User.create(adminData);
+    return { ...newAdmin.toObject(), password: undefined };
 };

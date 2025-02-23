@@ -16,24 +16,54 @@ const userRoutes = require('./routes/user.routes');
 const hotelRoutes = require('./routes/hotel.routes');
 const viewRoutes = require('./routes/view.routes');
 const adminRoutes = require('./routes/admin.routes');
+const bookingRoutes = require('./routes/booking.routes');
 
 // Initialize passport config
 require('./config/passport');
 
 const app = express();
 
-// Handlebars setup
-app.engine('hbs', exphbs.engine({
+// Configure handlebars
+const hbs = exphbs.create({
     extname: '.hbs',
     defaultLayout: 'main',
     layoutsDir: path.join(__dirname, 'views/layouts'),
     partialsDir: path.join(__dirname, 'views/partials'),
-    helpers: hbsHelpers,
-    runtimeOptions: {
-        allowProtoPropertiesByDefault: true,
-        allowProtoMethodsByDefault: true
+    helpers: {
+        ...hbsHelpers,
+        eq: function(v1, v2) {
+            return v1 === v2;
+        },
+        eq: function (v1, v2) {
+            return v1 === v2;
+        },
+        formatDate: function(date) {
+            return new Date(date).toLocaleDateString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        },
+        getStatusColor: function(status) {
+            switch (status) {
+                case 'pending':
+                    return 'warning';
+                case 'confirmed':
+                    return 'success';
+                case 'cancelled':
+                    return 'danger';
+                case 'completed':
+                    return 'info';
+                default:
+                    return 'secondary';
+            }
+        }
     }
-}));
+});
+
+// View engine setup
+app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -58,7 +88,8 @@ app.use('/', viewRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin/hotels', hotelRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/admin', adminRoutes);
+app.use('/api/bookings', bookingRoutes);
 
 // Error handling
 app.use(errorHandler);

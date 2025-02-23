@@ -36,6 +36,21 @@ const userSchema = new mongoose.Schema({
     isEmailVerified: {
         type: Boolean,
         default: false
+    },
+    phone: {
+        type: String,
+        match: [/^[0-9]{10}$/, 'Please add a valid phone number']
+    },
+    city: {
+        type: String
+    },
+    preferences: [{
+        type: String,
+        enum: ['Non-smoking', 'High floor', 'Quiet room', 'Early check-in', 'Late check-out', 'Extra pillows', 'Room service']
+    }],
+    isActive: {
+        type: Boolean,
+        default: true
     }
 }, {
     timestamps: true

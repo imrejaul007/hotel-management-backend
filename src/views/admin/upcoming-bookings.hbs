@@ -1,0 +1,161 @@
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Upcoming Bookings
+                        <span class="badge bg-light text-success ms-2">{{bookings.length}}</span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchInput" 
+                                       placeholder="Search by guest name..."
+                                       value="{{searchQuery}}">
+                                <button class="btn btn-outline-success" type="button" onclick="applyFilters()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="sortBy">
+                                <option value="checkIn" {{#if (eq sortBy 'checkIn')}}selected{{/if}}>Sort by Check-in</option>
+                                <option value="checkOut" {{#if (eq sortBy 'checkOut')}}selected{{/if}}>Sort by Check-out</option>
+                                <option value="guestName" {{#if (eq sortBy 'guestName')}}selected{{/if}}>Sort by Guest Name</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-success w-100" onclick="refreshBookings()">
+                                <i class="fas fa-sync-alt me-1"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bookings Grid -->
+                    <div class="row">
+                        {{#each bookings}}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100 border-success">
+                                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Room {{room.number}}</h5>
+                                    <span class="badge bg-light text-success">
+                                        {{nights}} nights
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h5 class="mb-1">{{user.name}}</h5>
+                                                <small class="text-muted">{{user.email}}</small>
+                                            </div>
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-users me-1"></i>
+                                                {{guests.adults}} adults{{#if guests.children}}, {{guests.children}} children{{/if}}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6 class="mb-2">Hotel</h6>
+                                        <p class="mb-1">{{hotel.name}}</p>
+                                        <small class="text-muted">{{hotel.location}}</small>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6 class="mb-2">Room Details</h6>
+                                        <p class="mb-1">{{room.type}}</p>
+                                        <small class="text-muted">Max Capacity: {{room.capacity}} persons</small>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <h6 class="mb-2">Dates</h6>
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <small class="text-muted d-block">Check-in</small>
+                                                <strong>{{formatDate checkIn}}</strong>
+                                            </div>
+                                            <div class="text-end">
+                                                <small class="text-muted d-block">Check-out</small>
+                                                <strong>{{formatDate checkOut}}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h6 class="mb-2">Price</h6>
+                                        <h4 class="text-success mb-0">${{totalPrice}}</h4>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <div class="d-grid gap-2">
+                                        <a href="/admin/bookings/{{_id}}" class="btn btn-outline-success">
+                                            <i class="fas fa-eye me-1"></i> View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{else}}
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>No upcoming bookings found.
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {{#if pagination.hasPrev}}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{pagination.prevPage}}">Previous</a>
+                            </li>
+                            {{else}}
+                            <li class="page-item disabled">
+                                <span class="page-link">Previous</span>
+                            </li>
+                            {{/if}}
+
+                            <li class="page-item active">
+                                <span class="page-link">{{pagination.page}} of {{pagination.totalPages}}</span>
+                            </li>
+
+                            {{#if pagination.hasNext}}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{pagination.nextPage}}">Next</a>
+                            </li>
+                            {{else}}
+                            <li class="page-item disabled">
+                                <span class="page-link">Next</span>
+                            </li>
+                            {{/if}}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function applyFilters() {
+    const search = document.getElementById('searchInput').value;
+    const sortBy = document.getElementById('sortBy').value;
+    
+    let url = window.location.pathname + '?';
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (sortBy) url += `&sortBy=${encodeURIComponent(sortBy)}`;
+    
+    window.location.href = url;
+}
+
+function refreshBookings() {
+    window.location.reload();
+}
+</script>

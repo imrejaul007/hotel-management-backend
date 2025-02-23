@@ -3,6 +3,8 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 const Hotel = require('../models/hotel.model');
+const Room = require('../models/room.model');
+const Booking = require('../models/booking.model');
 const { protect, authorize } = require('../middlewares/auth.middleware');
 
 // Middleware to check if user is logged in for templates
@@ -246,6 +248,106 @@ router.get('/admin/users/:id', protect, authorize('admin'), async (req, res) => 
     } catch (error) {
         console.error('Error fetching user details:', error);
         res.render('error', { message: 'Error fetching user details' });
+    }
+});
+
+// Booking routes
+router.get('/bookings/create/:hotelId/:roomId', protect, async (req, res) => {
+    try {
+        const hotel = await Hotel.findById(req.params.hotelId);
+        const room = await Room.findById(req.params.roomId);
+        
+        if (!hotel || !room) {
+            return res.status(404).render('error', {
+                message: 'Hotel or room not found'
+            });
+        }
+
+        res.render('bookings/create', {
+            hotel,
+            room,
+            today: new Date().toISOString().split('T')[0]
+        });
+    } catch (error) {
+        res.status(500).render('error', {
+            message: 'Error loading booking page'
+        });
+    }
+});
+
+router.get('/bookings', protect, async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const status = req.query.status;
+
+        const query = { user: req.user._id };
+        if (status) {
+            query.status = status;
+        }
+
+        const bookings = await Booking.find(query)
+            .populate('hotel')
+            .populate('room')
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        const total = await Booking.countDocuments(query);
+        const pages = Math.ceil(total / limit);
+
+        const pagination = {
+            pages: Array.from({ length: pages }, (_, i) => ({
+                page: i + 1,
+                isCurrent: i + 1 === page
+            })),
+            prevPage: page > 1 ? page - 1 : null,
+            nextPage: page < pages ? page + 1 : null,
+            hasPrevPage: page > 1,
+            hasNextPage: page < pages
+        };
+
+        res.render('bookings/list', {
+            bookings,
+            pagination,
+            status
+        });
+    } catch (error) {
+        res.status(500).render('error', {
+            message: 'Error loading bookings'
+        });
+    }
+});
+
+router.get('/bookings/:id', protect, async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id)
+            .populate('hotel')
+            .populate('room');
+
+        if (!booking) {
+            return res.status(404).render('error', {
+                message: 'Booking not found'
+            });
+        }
+
+        // Check if user owns the booking or is admin
+        if (!booking.user.equals(req.user._id) && !req.user.isAdmin) {
+            return res.status(403).render('error', {
+                message: 'Not authorized to view this booking'
+            });
+        }
+
+        // Calculate number of nights
+        const checkIn = new Date(booking.checkIn);
+        const checkOut = new Date(booking.checkOut);
+        booking.numberOfNights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+
+        res.render('bookings/details', { booking });
+    } catch (error) {
+        res.status(500).render('error', {
+            message: 'Error loading booking details'
+        });
     }
 });
 
