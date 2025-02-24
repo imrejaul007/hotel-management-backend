@@ -2,12 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middlewares/auth.middleware');
 const adminController = require('../controllers/admin.controller');
+const emailService = require('../services/email.service');
 const User = require('../models/user.model');
 const Booking = require('../models/booking.model');
 const Hotel = require('../models/hotel.model');
 const Guest = require('../models/guest.model');
 const Maintenance = require('../models/maintenance.model');
 const Inventory = require('../models/inventory.model');
+const Invoice = require('../models/invoice.model');
+const Transaction = require('../models/transaction.model');
 
 // Admin Dashboard
 router.get('/dashboard', protect, authorize('admin', 'manager'), adminController.getDashboard);
@@ -820,60 +823,96 @@ router.get('/guests', protect, authorize('admin'), async (req, res) => {
             };
         }));
 
+        // Calculate pagination
         const totalPages = Math.ceil(total / limit);
-        
-        res.render('admin/guests/list', {
+        const pages = Array.from({ length: totalPages }, (_, i) => ({
+            number: i + 1,
+            active: i + 1 === page,
+            url: `/admin/guests?page=${i + 1}${searchQuery ? `&search=${searchQuery}` : ''}`
+        }));
+
+        res.render('admin/guests', {
             title: 'Guest Management',
-            active: 'guests',
             guests: enhancedGuests,
-            pagination: {
-                page,
-                totalPages,
-                hasNext: page < totalPages,
-                hasPrev: page > 1,
-                nextPage: page + 1,
-                prevPage: page - 1
-            },
-            searchQuery
+            search: searchQuery,
+            total,
+            skip: skip + 1,
+            limit,
+            pages,
+            hasPrevPage: page > 1,
+            hasNextPage: page < totalPages,
+            prevPageUrl: `/admin/guests?page=${page - 1}${searchQuery ? `&search=${searchQuery}` : ''}`,
+            nextPageUrl: `/admin/guests?page=${page + 1}${searchQuery ? `&search=${searchQuery}` : ''}`
         });
     } catch (error) {
-        console.error('Error loading guests:', error);
+        console.error('Error fetching guests:', error);
         res.status(500).render('error', {
-            message: 'Error loading guests',
-            error
+            message: 'Error fetching guests'
         });
     }
 });
 
+// Get single guest
 router.get('/guests/:id', protect, authorize('admin'), async (req, res) => {
     try {
         const guest = await User.findById(req.params.id).select('-password');
         if (!guest) {
-            return res.status(404).render('error', {
-                message: 'Guest not found'
-            });
+            return res.status(404).json({ message: 'Guest not found' });
         }
-
-        const bookings = await Booking.find({ user: guest._id })
-            .populate('hotel', 'name')
-            .sort({ checkIn: -1 });
-
-        res.json({
-            guest: {
-                ...guest.toObject(),
-                bookings,
-                totalBookings: bookings.length,
-                totalSpent: bookings.reduce((acc, booking) => acc + booking.totalPrice, 0)
-            }
-        });
+        res.json(guest);
     } catch (error) {
-        console.error('Error fetching guest details:', error);
-        res.status(500).json({
-            error: 'Error fetching guest details'
-        });
+        res.status(500).json({ message: 'Error fetching guest details' });
     }
 });
 
+// Update guest
+router.put('/guests/:id', protect, authorize('admin'), async (req, res) => {
+    try {
+        const { name, email, phone, city, preferences, active } = req.body;
+        
+        // Check if email already exists for different user
+        if (email) {
+            const existingUser = await User.findOne({ 
+                email, 
+                _id: { $ne: req.params.id } 
+            });
+            if (existingUser) {
+                return res.status(400).json({ 
+                    message: 'Email already registered to another user' 
+                });
+            }
+        }
+
+        const guest = await User.findByIdAndUpdate(
+            req.params.id,
+            { name, email, phone, city, preferences, active },
+            { new: true, runValidators: true }
+        );
+
+        if (!guest) {
+            return res.status(404).json({ message: 'Guest not found' });
+        }
+
+        res.json(guest);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating guest' });
+    }
+});
+
+// Delete guest
+router.delete('/guests/:id', protect, authorize('admin'), async (req, res) => {
+    try {
+        const guest = await User.findByIdAndDelete(req.params.id);
+        if (!guest) {
+            return res.status(404).json({ message: 'Guest not found' });
+        }
+        res.json({ message: 'Guest deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting guest' });
+    }
+});
+
+// Create new guest
 router.post('/guests', protect, authorize('admin'), async (req, res) => {
     try {
         const { name, email, phone, city, preferences } = req.body;
@@ -882,9 +921,12 @@ router.post('/guests', protect, authorize('admin'), async (req, res) => {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({
-                error: 'Email already registered'
+                message: 'Email already registered'
             });
         }
+
+        // Generate a random password
+        const password = Math.random().toString(36).slice(-8);
 
         // Create new guest
         const guest = await User.create({
@@ -893,90 +935,34 @@ router.post('/guests', protect, authorize('admin'), async (req, res) => {
             phone,
             city,
             preferences,
-            role: 'user',
-            password: Math.random().toString(36).slice(-8) // Generate random password
+            password,
+            role: 'user'
         });
 
+        // Send welcome email with password
+        try {
+            const template = emailService.templates.welcomeGuest(name, email, password);
+            await emailService.sendEmail({
+                to: email,
+                subject: template.subject,
+                html: template.html
+            });
+        } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+        }
+
+        // Return guest data without password
+        const guestData = guest.toObject();
+        delete guestData.password;
+
         res.status(201).json({
-            guest: {
-                ...guest.toObject(),
-                password: undefined
-            }
+            message: 'Guest created successfully',
+            guest: guestData
         });
     } catch (error) {
         console.error('Error creating guest:', error);
         res.status(500).json({
-            error: 'Error creating guest'
-        });
-    }
-});
-
-router.put('/guests/:id', protect, authorize('admin'), async (req, res) => {
-    try {
-        const { name, email, phone, city, preferences, active } = req.body;
-        
-        // Check if email already exists for different user
-        if (email) {
-            const existingUser = await User.findOne({ email, _id: { $ne: req.params.id } });
-            if (existingUser) {
-                return res.status(400).json({
-                    error: 'Email already registered to another user'
-                });
-            }
-        }
-
-        const guest = await User.findByIdAndUpdate(
-            req.params.id,
-            {
-                name,
-                email,
-                phone,
-                city,
-                preferences,
-                active
-            },
-            { new: true }
-        ).select('-password');
-
-        if (!guest) {
-            return res.status(404).json({
-                error: 'Guest not found'
-            });
-        }
-
-        res.json({ guest });
-    } catch (error) {
-        console.error('Error updating guest:', error);
-        res.status(500).json({
-            error: 'Error updating guest'
-        });
-    }
-});
-
-router.delete('/guests/:id', protect, authorize('admin'), async (req, res) => {
-    try {
-        const guest = await User.findById(req.params.id);
-        
-        if (!guest) {
-            return res.status(404).json({
-                error: 'Guest not found'
-            });
-        }
-
-        // Check if guest has any bookings
-        const bookings = await Booking.find({ user: guest._id });
-        if (bookings.length > 0) {
-            return res.status(400).json({
-                error: 'Cannot delete guest with existing bookings'
-            });
-        }
-
-        await guest.remove();
-        res.json({ message: 'Guest deleted successfully' });
-    } catch (error) {
-        console.error('Error deleting guest:', error);
-        res.status(500).json({
-            error: 'Error deleting guest'
+            message: 'Error creating guest'
         });
     }
 });
@@ -988,184 +974,214 @@ router.use('/guests', guestRoutes);
 router.get('/maintenance', protect, authorize('admin'), async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = 10;
+        const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Build query
         const query = {};
-        if (req.query.type) query.requestType = req.query.type;
         if (req.query.status) query.status = req.query.status;
         if (req.query.priority) query.priority = req.query.priority;
-        if (req.query.hotel) query.hotel = req.query.hotel;
-        if (req.query.serviceType) query.serviceType = req.query.serviceType;
+        if (req.query.location) query['location.areaName'] = req.query.location;
 
-        // Get maintenance requests with pagination
-        const [requests, total, hotels, staff, stats] = await Promise.all([
-            Maintenance.find(query)
-                .populate('hotel', 'name')
-                .populate('location.room', 'number')
-                .populate('guest', 'name')
-                .populate('requestedBy', 'name')
-                .populate('assignedTo', 'name')
-                .sort('-createdAt')
-                .skip(skip)
-                .limit(limit),
-            Maintenance.countDocuments(query),
-            Hotel.find().select('name'),
-            User.find({ role: 'staff' }).select('name'),
-            Promise.all([
-                Maintenance.countDocuments({ status: 'in-progress' }),
-                Maintenance.countDocuments({ status: 'pending' }),
-                Maintenance.countDocuments({ status: 'completed' }),
-                Maintenance.countDocuments()
-            ]).then(([current, pending, completed, total]) => ({
-                current,
-                pending,
-                completed,
-                total
-            }))
-        ]);
+        // Get tasks with pagination
+        const tasks = await Maintenance.find(query)
+            .populate('assignedTo', 'name')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
 
-        // Calculate pagination
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            page,
-            totalPages,
-            hasPrev: page > 1,
-            hasNext: page < totalPages
-        };
+        // Get total count
+        const totalCount = await Maintenance.countDocuments(query);
+        const totalPages = Math.ceil(totalCount / limit);
 
-        res.render('admin/maintenance/list', {
-            title: 'Maintenance Requests',
-            active: 'maintenance',
-            requests,
-            hotels,
-            staff,
-            stats,
-            query: req.query,
-            pagination
-        });
-    } catch (error) {
-        console.error('Error loading maintenance requests:', error);
-        res.status(500).send('Error loading maintenance requests');
-    }
-});
+        // Get all staff members for assignment
+        const staff = await User.find({ role: { $in: ['admin', 'staff'] } })
+            .select('name')
+            .lean();
 
-// Get single maintenance request
-router.get('/maintenance/:id', protect, authorize('admin'), async (req, res) => {
-    try {
-        const request = await Maintenance.findById(req.params.id)
-            .populate('hotel', 'name')
-            .populate('location.room', 'number')
-            .populate('guest', 'name');
-            
-        if (!request) {
-            return res.status(404).json({
-                success: false,
-                message: 'Maintenance request not found'
+        // Get all locations
+        const locations = await Hotel.distinct('facilities.name');
+        locations.push('Lobby', 'Restaurant', 'Pool', 'Gym');
+
+        // Generate pagination data
+        const pages = [];
+        for (let i = 1; i <= totalPages; i++) {
+            pages.push({
+                number: i,
+                active: i === page
             });
         }
 
-        res.json({
-            success: true,
-            data: request
+        res.render('admin/maintenance', {
+            tasks: tasks.map(task => ({
+                ...task,
+                priorityColor: getPriorityColor(task.priority),
+                statusColor: getStatusColor(task.status),
+                dueDate: task.scheduledFor
+            })),
+            staff,
+            locations,
+            pages,
+            hasPrevPage: page > 1,
+            hasNextPage: page < totalPages,
+            prevPage: page - 1,
+            nextPage: page + 1,
+            startCount: skip + 1,
+            endCount: Math.min(skip + limit, totalCount),
+            totalCount
         });
     } catch (error) {
-        console.error('Error fetching maintenance request:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching maintenance request'
-        });
+        console.error('Error fetching maintenance tasks:', error);
+        res.status(500).json({ message: 'Error fetching maintenance tasks' });
     }
 });
 
-// Create maintenance request
+// Create maintenance task
 router.post('/maintenance', protect, authorize('admin'), async (req, res) => {
     try {
-        const request = await Maintenance.create({
-            ...req.body,
-            requestedBy: req.user._id,
+        const {
+            title,
+            location,
+            priority,
+            status,
+            dueDate,
+            assignedTo,
+            description,
+            notes
+        } = req.body;
+
+        const task = await Maintenance.create({
+            requestType: 'maintenance',
+            serviceType: 'regular-service',
             location: {
-                room: req.body.room,
-                description: `Room ${req.body.room}`
-            }
+                type: 'public-area',
+                areaName: location
+            },
+            description,
+            priority,
+            status,
+            scheduledFor: dueDate,
+            assignedTo,
+            requestedBy: req.user._id,
+            notes: notes ? [{ text: notes, addedBy: req.user._id }] : []
         });
 
-        res.json({
+        res.status(201).json({
             success: true,
-            data: request
+            task
         });
     } catch (error) {
-        console.error('Error creating maintenance request:', error);
+        console.error('Error creating maintenance task:', error);
         res.status(500).json({
             success: false,
-            message: error.message || 'Error creating maintenance request'
+            message: 'Error creating maintenance task'
         });
     }
 });
 
-// Assign staff to request
-router.patch('/maintenance/:id/assign', protect, authorize('admin'), async (req, res) => {
+// Update maintenance task
+router.put('/maintenance/:id', protect, authorize('admin'), async (req, res) => {
     try {
-        const request = await Maintenance.findById(req.params.id);
-        
-        if (!request) {
+        const {
+            title,
+            location,
+            priority,
+            status,
+            dueDate,
+            assignedTo,
+            description,
+            notes
+        } = req.body;
+
+        const task = await Maintenance.findById(req.params.id);
+        if (!task) {
             return res.status(404).json({
                 success: false,
-                message: 'Maintenance request not found'
+                message: 'Maintenance task not found'
             });
         }
 
-        request.assignedTo = req.body.assignedTo;
-        if (request.status === 'pending') {
-            request.status = 'in-progress';
-        }
-        
-        await request.save();
+        // Update task
+        task.location.areaName = location;
+        task.description = description;
+        task.priority = priority;
+        task.status = status;
+        task.scheduledFor = dueDate;
+        task.assignedTo = assignedTo;
 
-        res.json({
-            success: true,
-            data: request
-        });
-    } catch (error) {
-        console.error('Error assigning staff:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error assigning staff'
-        });
-    }
-});
-
-// Update request status
-router.patch('/maintenance/:id/status', protect, authorize('admin'), async (req, res) => {
-    try {
-        const request = await Maintenance.findById(req.params.id);
-        
-        if (!request) {
-            return res.status(404).json({
-                success: false,
-                message: 'Maintenance request not found'
+        // Add new note if provided
+        if (notes) {
+            task.notes.push({
+                text: notes,
+                addedBy: req.user._id
             });
         }
 
-        request.status = req.body.status;
-        if (req.body.notes) {
-            request.notes = req.body.notes;
+        // Update completedAt if status is completed
+        if (status === 'completed' && task.status !== 'completed') {
+            task.completedAt = new Date();
+        } else if (status !== 'completed') {
+            task.completedAt = undefined;
         }
-        
-        await request.save();
+
+        await task.save();
 
         res.json({
             success: true,
-            data: request
+            task
         });
     } catch (error) {
-        console.error('Error updating status:', error);
+        console.error('Error updating maintenance task:', error);
         res.status(500).json({
             success: false,
-            message: 'Error updating status'
+            message: 'Error updating maintenance task'
         });
     }
 });
+
+// Delete maintenance task
+router.delete('/maintenance/:id', protect, authorize('admin'), async (req, res) => {
+    try {
+        const task = await Maintenance.findByIdAndDelete(req.params.id);
+        if (!task) {
+            return res.status(404).json({
+                success: false,
+                message: 'Maintenance task not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Maintenance task deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting maintenance task:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting maintenance task'
+        });
+    }
+});
+
+// Helper functions for UI
+function getPriorityColor(priority) {
+    switch (priority) {
+        case 'low': return 'success';
+        case 'medium': return 'warning';
+        case 'high': return 'danger';
+        case 'urgent': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function getStatusColor(status) {
+    switch (status) {
+        case 'pending': return 'warning';
+        case 'in-progress': return 'info';
+        case 'completed': return 'success';
+        case 'cancelled': return 'secondary';
+        default: return 'secondary';
+    }
+}
 
 module.exports = router;

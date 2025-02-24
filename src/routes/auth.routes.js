@@ -46,6 +46,29 @@ router.get('/logout', (req, res) => {
     res.redirect('/auth/login');
 });
 
+router.get('/register', (req, res) => {
+    res.render('auth/register', {
+        title: 'Create Admin Account',
+        layout: false
+    });
+});
+
+router.post('/register', authController.register);
+
+// Forgot password routes
+router.get('/forgot-password', (req, res) => {
+    res.render('auth/forgot-password', {
+        title: 'Forgot Password',
+        layout: false
+    });
+});
+
+router.post('/forgot-password', authController.forgotPassword);
+
+// Reset password routes
+router.get('/reset-password/:token', authController.getResetPassword);
+router.post('/reset-password/:token', authController.resetPassword);
+
 // API routes
 /**
  * @swagger

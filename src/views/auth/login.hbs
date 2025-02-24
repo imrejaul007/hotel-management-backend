@@ -11,6 +11,12 @@
                 </div>
                 {{/if}}
                 
+                {{#if success}}
+                <div class="alert alert-success" role="alert">
+                    {{success}}
+                </div>
+                {{/if}}
+                
                 <form action="/auth/login" method="POST" class="needs-validation" novalidate>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email address</label>
@@ -39,7 +45,12 @@
                 </form>
 
                 <div class="text-center mt-3">
-                    <a href="/forgot-password" class="text-decoration-none">Forgot Password?</a>
+                    <div class="mb-2">
+                        <a href="/forgot-password" class="text-decoration-none">Forgot Password?</a>
+                    </div>
+                    <div>
+                        <a href="/auth/register" class="btn btn-outline-primary btn-sm">Create Admin Account</a>
+                    </div>
                 </div>
             </div>
         </div>

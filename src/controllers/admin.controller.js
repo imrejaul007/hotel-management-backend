@@ -3,11 +3,26 @@ const OTABooking = require('../models/ota-booking.model');
 
 exports.getDashboard = async (req, res) => {
     try {
+        // For new admin without hotel
+        if (!req.user || !req.user.hotel) {
+            return res.render('admin/dashboard', {
+                title: 'Admin Dashboard',
+                otaStats: {
+                    totalChannels: 0,
+                    activeChannels: 0,
+                    totalBookings: 0,
+                    totalRevenue: 0
+                },
+                channelPerformance: [],
+                recentBookings: []
+            });
+        }
+
         // Get OTA statistics
         const [channels, bookings] = await Promise.all([
-            OTAChannel.find({ hotel: req.hotel._id }),
+            OTAChannel.find({ hotel: req.user.hotel }),
             OTABooking.find({
-                hotel: req.hotel._id,
+                hotel: req.user.hotel,
                 createdAt: {
                     $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
                 }
@@ -25,7 +40,7 @@ exports.getDashboard = async (req, res) => {
         const channelPerformance = await OTABooking.aggregate([
             {
                 $match: {
-                    hotel: req.hotel._id,
+                    hotel: req.user.hotel,
                     createdAt: {
                         $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
                     }
@@ -87,9 +102,18 @@ exports.getDashboard = async (req, res) => {
             }
         };
 
+        // Get recent bookings
+        const recentBookings = await OTABooking.find({ hotel: req.user.hotel })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .populate('channel');
+
         res.render('admin/dashboard', {
+            title: 'Admin Dashboard',
             otaStats,
-            chartData: JSON.stringify(chartData)
+            chartData: JSON.stringify(chartData),
+            channelPerformance,
+            recentBookings
         });
     } catch (error) {
         console.error('Admin Dashboard Error:', error);

@@ -86,6 +86,7 @@ const otaRoutes = require('./src/routes/ota.routes');
 const indexRoutes = require('./src/routes/index.routes');
 
 // Mount routes
+app.get('/login', (req, res) => res.redirect('/auth/login'));
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/maintenance', maintenanceRoutes);
