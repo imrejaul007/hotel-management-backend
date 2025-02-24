@@ -74,6 +74,71 @@ const hbs = exphbs.create({
     partialsDir: path.join(__dirname, 'src/views/partials')
 });
 
+hbs.handlebars.registerHelper('json', function(context) {
+    return JSON.stringify(context);
+});
+
+hbs.handlebars.registerHelper('formatDate', function(date) {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+});
+
+hbs.handlebars.registerHelper('formatDateInput', function(date) {
+    if (!date) return '';
+    return new Date(date).toISOString().split('T')[0];
+});
+
+// Handlebars helper functions for maintenance views
+hbs.handlebars.registerHelper('formatDate', function(date) {
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+});
+
+hbs.handlebars.registerHelper('json', function(context) {
+    return JSON.stringify(context);
+});
+
+hbs.handlebars.registerHelper('eq', function(a, b) {
+    return a === b;
+});
+
+hbs.handlebars.registerHelper('statusColor', function(status) {
+    switch (status) {
+        case 'pending':
+            return 'warning';
+        case 'in-progress':
+            return 'info';
+        case 'completed':
+            return 'success';
+        case 'cancelled':
+            return 'danger';
+        default:
+            return 'secondary';
+    }
+});
+
+hbs.handlebars.registerHelper('priorityColor', function(priority) {
+    switch (priority) {
+        case 'low':
+            return 'success';
+        case 'medium':
+            return 'warning';
+        case 'high':
+            return 'danger';
+        case 'urgent':
+            return 'dark';
+        default:
+            return 'secondary';
+    }
+});
+
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', './src/views');

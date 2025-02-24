@@ -1,0 +1,221 @@
+{{> admin/header}}
+{{> admin/sidebar}}
+
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/admin/maintenance">Maintenance</a></li>
+                <li class="breadcrumb-item active">Reports</li>
+            </ol>
+        </nav>
+
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-primary text-white mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-2">{{stats.total}}</h4>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Total Tasks</div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-tasks fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-warning text-white mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-2">{{stats.pending}}</h4>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Pending Tasks</div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-info text-white mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-2">{{stats.inProgress}}</h4>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>In Progress</div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-spinner fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-success text-white mb-4">
+                    <div class="card-body">
+                        <h4 class="mb-2">{{stats.completed}}</h4>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Completed Tasks</div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Tasks by Priority</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Tasks by Location</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="locationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Staff Performance -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Staff Performance</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Staff Member</th>
+                                <th>Assigned Tasks</th>
+                                <th>Completed</th>
+                                <th>In Progress</th>
+                                <th>Pending</th>
+                                <th>Average Completion Time</th>
+                                <th>Performance Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each staffPerformance}}
+                            <tr>
+                                <td>{{name}}</td>
+                                <td>{{totalTasks}}</td>
+                                <td>{{completed}}</td>
+                                <td>{{inProgress}}</td>
+                                <td>{{pending}}</td>
+                                <td>{{avgCompletionTime}} days</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{performanceScore}}%">
+                                            {{performanceScore}}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Trends -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Monthly Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="trendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    // Priority Chart
+    new Chart(document.getElementById('priorityChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Low', 'Medium', 'High', 'Urgent'],
+            datasets: [{
+                data: [
+                    {{stats.priorityLow}},
+                    {{stats.priorityMedium}},
+                    {{stats.priorityHigh}},
+                    {{stats.priorityUrgent}}
+                ],
+                backgroundColor: [
+                    '#28a745',
+                    '#ffc107',
+                    '#fd7e14',
+                    '#dc3545'
+                ]
+            }]
+        }
+    });
+
+    // Location Chart
+    new Chart(document.getElementById('locationChart'), {
+        type: 'bar',
+        data: {
+            labels: {{{json locationStats.labels}}},
+            datasets: [{
+                label: 'Tasks by Location',
+                data: {{{json locationStats.data}}},
+                backgroundColor: '#007bff'
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Trends Chart
+    new Chart(document.getElementById('trendsChart'), {
+        type: 'line',
+        data: {
+            labels: {{{json monthlyTrends.labels}}},
+            datasets: [{
+                label: 'New Tasks',
+                data: {{{json monthlyTrends.newTasks}}},
+                borderColor: '#007bff',
+                fill: false
+            }, {
+                label: 'Completed Tasks',
+                data: {{{json monthlyTrends.completedTasks}}},
+                borderColor: '#28a745',
+                fill: false
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>

@@ -971,6 +971,244 @@ router.post('/guests', protect, authorize('admin'), async (req, res) => {
 router.use('/guests', guestRoutes);
 
 // Maintenance routes
+router.get('/maintenance/reports', protect, authorize('admin'), async (req, res) => {
+    try {
+        // Get basic statistics
+        const [
+            total,
+            pending,
+            inProgress,
+            completed,
+            priorityStats,
+            locationStats
+        ] = await Promise.all([
+            Maintenance.countDocuments(),
+            Maintenance.countDocuments({ status: 'pending' }),
+            Maintenance.countDocuments({ status: 'in-progress' }),
+            Maintenance.countDocuments({ status: 'completed' }),
+            Maintenance.aggregate([
+                {
+                    $group: {
+                        _id: '$priority',
+                        count: { $sum: 1 }
+                    }
+                }
+            ]),
+            Maintenance.aggregate([
+                {
+                    $group: {
+                        _id: '$location.areaName',
+                        count: { $sum: 1 }
+                    }
+                }
+            ])
+        ]);
+
+        // Get staff performance statistics
+        const staffPerformance = await User.aggregate([
+            {
+                $match: { role: { $in: ['admin', 'staff'] } }
+            },
+            {
+                $lookup: {
+                    from: 'maintenances',
+                    localField: '_id',
+                    foreignField: 'assignedTo',
+                    as: 'tasks'
+                }
+            },
+            {
+                $project: {
+                    name: 1,
+                    totalTasks: { $size: '$tasks' },
+                    completed: {
+                        $size: {
+                            $filter: {
+                                input: '$tasks',
+                                as: 'task',
+                                cond: { $eq: ['$$task.status', 'completed'] }
+                            }
+                        }
+                    },
+                    inProgress: {
+                        $size: {
+                            $filter: {
+                                input: '$tasks',
+                                as: 'task',
+                                cond: { $eq: ['$$task.status', 'in-progress'] }
+                            }
+                        }
+                    },
+                    pending: {
+                        $size: {
+                            $filter: {
+                                input: '$tasks',
+                                as: 'task',
+                                cond: { $eq: ['$$task.status', 'pending'] }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $addFields: {
+                    performanceScore: {
+                        $multiply: [
+                            { $divide: ['$completed', { $max: ['$totalTasks', 1] }] },
+                            100
+                        ]
+                    }
+                }
+            }
+        ]);
+
+        // Get monthly trends
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+        const monthlyTrends = await Maintenance.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: sixMonthsAgo }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: '$createdAt' },
+                        month: { $month: '$createdAt' }
+                    },
+                    newTasks: { $sum: 1 },
+                    completedTasks: {
+                        $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] }
+                    }
+                }
+            },
+            {
+                $sort: { '_id.year': 1, '_id.month': 1 }
+            }
+        ]);
+
+        // Format monthly trends data
+        const months = monthlyTrends.map(m => {
+            const date = new Date(m._id.year, m._id.month - 1);
+            return date.toLocaleString('default', { month: 'short' });
+        });
+
+        res.render('admin/maintenance-report', {
+            title: 'Maintenance Reports',
+            active: 'maintenance',
+            stats: {
+                total,
+                pending,
+                inProgress,
+                completed,
+                priorityLow: priorityStats.find(p => p._id === 'low')?.count || 0,
+                priorityMedium: priorityStats.find(p => p._id === 'medium')?.count || 0,
+                priorityHigh: priorityStats.find(p => p._id === 'high')?.count || 0,
+                priorityUrgent: priorityStats.find(p => p._id === 'urgent')?.count || 0
+            },
+            locationStats: {
+                labels: locationStats.map(l => l._id),
+                data: locationStats.map(l => l.count)
+            },
+            monthlyTrends: {
+                labels: months,
+                newTasks: monthlyTrends.map(m => m.newTasks),
+                completedTasks: monthlyTrends.map(m => m.completedTasks)
+            },
+            staffPerformance
+        });
+    } catch (error) {
+        console.error('Error generating maintenance report:', error);
+        res.status(500).redirect('/admin/maintenance');
+    }
+});
+
+// Show edit maintenance task page
+router.get('/maintenance/edit/:id', protect, authorize('admin'), async (req, res) => {
+    try {
+        const task = await Maintenance.findById(req.params.id)
+            .populate('assignedTo', 'name')
+            .populate('requestedBy', 'name')
+            .populate('notes.addedBy', 'name')
+            .lean();
+
+        if (!task) {
+            return res.status(404).redirect('/admin/maintenance');
+        }
+
+        // Get all staff members for assignment
+        const staff = await User.find({ role: { $in: ['admin', 'staff'] } })
+            .select('name')
+            .lean();
+
+        // Get all locations
+        const locations = await Hotel.distinct('facilities.name');
+        locations.push('Lobby', 'Restaurant', 'Pool', 'Gym');
+
+        res.render('admin/maintenance-edit', {
+            title: 'Edit Maintenance Task',
+            active: 'maintenance',
+            task,
+            staff,
+            locations
+        });
+    } catch (error) {
+        console.error('Error fetching task for edit:', error);
+        res.status(500).redirect('/admin/maintenance');
+    }
+});
+
+// Get maintenance task details
+router.get('/maintenance/:id', protect, authorize('admin'), async (req, res) => {
+    try {
+        const task = await Maintenance.findById(req.params.id)
+            .populate('assignedTo', 'name')
+            .populate('requestedBy', 'name')
+            .populate('notes.addedBy', 'name')
+            .lean();
+
+        if (!task) {
+            return res.status(404).redirect('/admin/maintenance');
+        }
+
+        // Get related tasks (same location or priority)
+        const relatedTasks = await Maintenance.find({
+            _id: { $ne: task._id },
+            $or: [
+                { 'location.areaName': task.location.areaName },
+                { priority: task.priority }
+            ]
+        })
+        .limit(5)
+        .populate('assignedTo', 'name')
+        .lean();
+
+        // Get all staff members for assignment
+        const staff = await User.find({ role: { $in: ['admin', 'staff'] } })
+            .select('name')
+            .lean();
+
+        // Get all locations
+        const locations = await Hotel.distinct('facilities.name');
+        locations.push('Lobby', 'Restaurant', 'Pool', 'Gym');
+
+        res.render('admin/maintenance-details', {
+            title: 'Maintenance Task Details',
+            active: 'maintenance',
+            task,
+            relatedTasks,
+            staff,
+            locations
+        });
+    } catch (error) {
+        console.error('Error fetching task details:', error);
+        res.status(500).redirect('/admin/maintenance');
+    }
+});
+
+// Main maintenance page
 router.get('/maintenance', protect, authorize('admin'), async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -1013,6 +1251,8 @@ router.get('/maintenance', protect, authorize('admin'), async (req, res) => {
         }
 
         res.render('admin/maintenance', {
+            title: 'Maintenance Management',
+            active: 'maintenance',
             tasks: tasks.map(task => ({
                 ...task,
                 priorityColor: getPriorityColor(task.priority),
@@ -1039,6 +1279,10 @@ router.get('/maintenance', protect, authorize('admin'), async (req, res) => {
 // Create maintenance task
 router.post('/maintenance', protect, authorize('admin'), async (req, res) => {
     try {
+        console.log('=== Starting maintenance task creation ===');
+        console.log('Request body:', req.body);
+        console.log('User:', req.user);
+        
         const {
             title,
             location,
@@ -1046,13 +1290,42 @@ router.post('/maintenance', protect, authorize('admin'), async (req, res) => {
             status,
             dueDate,
             assignedTo,
-            description,
-            notes
+            description
         } = req.body;
 
-        const task = await Maintenance.create({
+        // Validate required fields
+        if (!title || !location || !priority || !status || !dueDate || !assignedTo || !description) {
+            console.log('Missing required fields:', {
+                title: !title,
+                location: !location,
+                priority: !priority,
+                status: !status,
+                dueDate: !dueDate,
+                assignedTo: !assignedTo,
+                description: !description
+            });
+            return res.status(400).json({
+                success: false,
+                message: 'Please fill in all required fields'
+            });
+        }
+
+        // Get the first hotel (assuming single hotel system for now)
+        const hotel = await Hotel.findOne();
+        console.log('Found hotel:', hotel ? hotel._id : 'No hotel found');
+        
+        if (!hotel) {
+            return res.status(400).json({
+                success: false,
+                message: 'No hotel found in the system'
+            });
+        }
+
+        const taskData = {
+            title,
             requestType: 'maintenance',
             serviceType: 'regular-service',
+            hotel: hotel._id,
             location: {
                 type: 'public-area',
                 areaName: location
@@ -1062,19 +1335,37 @@ router.post('/maintenance', protect, authorize('admin'), async (req, res) => {
             status,
             scheduledFor: dueDate,
             assignedTo,
-            requestedBy: req.user._id,
-            notes: notes ? [{ text: notes, addedBy: req.user._id }] : []
-        });
+            requestedBy: req.user._id
+        };
+        
+        console.log('Attempting to create task with data:', taskData);
+
+        // Create the maintenance task
+        const task = await Maintenance.create(taskData);
+        console.log('Task created successfully:', task);
 
         res.status(201).json({
             success: true,
             task
         });
     } catch (error) {
-        console.error('Error creating maintenance task:', error);
+        console.error('Detailed error creating maintenance task:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+            body: req.body,
+            validationErrors: error.errors
+        });
+        
+        // Send a more detailed error message to the client
+        let errorMessage = 'Error creating maintenance task';
+        if (error.name === 'ValidationError') {
+            errorMessage = Object.values(error.errors).map(err => err.message).join(', ');
+        }
+        
         res.status(500).json({
             success: false,
-            message: 'Error creating maintenance task'
+            message: errorMessage
         });
     }
 });
@@ -1102,6 +1393,7 @@ router.put('/maintenance/:id', protect, authorize('admin'), async (req, res) => 
         }
 
         // Update task
+        task.title = title;
         task.location.areaName = location;
         task.description = description;
         task.priority = priority;
@@ -1134,7 +1426,7 @@ router.put('/maintenance/:id', protect, authorize('admin'), async (req, res) => 
         console.error('Error updating maintenance task:', error);
         res.status(500).json({
             success: false,
-            message: 'Error updating maintenance task'
+            message: error.message || 'Error updating maintenance task'
         });
     }
 });

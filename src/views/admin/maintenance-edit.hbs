@@ -1,0 +1,199 @@
+{{> admin/header}}
+{{> admin/sidebar}}
+
+<div class="main-content">
+    <div class="container-fluid">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/admin/maintenance">Maintenance</a></li>
+                <li class="breadcrumb-item"><a href="/admin/maintenance/{{task._id}}">Task Details</a></li>
+                <li class="breadcrumb-item active">Edit Task</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Edit Maintenance Task</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="editTaskForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Location</label>
+                                    <select class="form-select" id="location" required>
+                                        <option value="">Select Location</option>
+                                        {{#each locations}}
+                                        <option value="{{this}}" {{#if (eq ../task.location.areaName this)}}selected{{/if}}>{{this}}</option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Priority</label>
+                                    <select class="form-select" id="priority" required>
+                                        <option value="low" {{#if (eq task.priority 'low')}}selected{{/if}}>Low</option>
+                                        <option value="medium" {{#if (eq task.priority 'medium')}}selected{{/if}}>Medium</option>
+                                        <option value="high" {{#if (eq task.priority 'high')}}selected{{/if}}>High</option>
+                                        <option value="urgent" {{#if (eq task.priority 'urgent')}}selected{{/if}}>Urgent</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" id="status" required>
+                                        <option value="pending" {{#if (eq task.status 'pending')}}selected{{/if}}>Pending</option>
+                                        <option value="in-progress" {{#if (eq task.status 'in-progress')}}selected{{/if}}>In Progress</option>
+                                        <option value="completed" {{#if (eq task.status 'completed')}}selected{{/if}}>Completed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Due Date</label>
+                                    <input type="date" class="form-control" id="dueDate" value="{{formatDateInput task.scheduledFor}}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Assigned To</label>
+                                    <select class="form-select" id="assignedTo" required>
+                                        <option value="">Select Staff</option>
+                                        {{#each staff}}
+                                        <option value="{{_id}}" {{#if (eq ../task.assignedTo._id _id)}}selected{{/if}}>{{name}}</option>
+                                        {{/each}}
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" rows="3" required>{{task.description}}</textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Add Note</label>
+                                    <textarea class="form-control" id="notes" rows="2" placeholder="Add a note about your changes"></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    <a href="/admin/maintenance/{{task._id}}" class="btn btn-secondary">Cancel</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task History Sidebar -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Task History</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            {{#each task.notes}}
+                            <div class="timeline-item">
+                                <div class="timeline-date">{{formatDate addedAt}}</div>
+                                <div class="timeline-content">
+                                    <p>{{text}}</p>
+                                    <small class="text-muted">Added by {{addedBy.name}}</small>
+                                </div>
+                            </div>
+                            {{/each}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 20px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: -20px;
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.timeline-item::after {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #007bff;
+}
+
+.timeline-date {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.timeline-content {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+}
+</style>
+
+<script>
+$(document).ready(function() {
+    // Initialize date picker
+    flatpickr("#dueDate", {
+        dateFormat: "Y-m-d",
+        minDate: "today"
+    });
+
+    // Handle form submission
+    $('#editTaskForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const taskData = {
+            location: $('#location').val(),
+            priority: $('#priority').val(),
+            status: $('#status').val(),
+            dueDate: $('#dueDate').val(),
+            assignedTo: $('#assignedTo').val(),
+            description: $('#description').val(),
+            notes: $('#notes').val()
+        };
+
+        updateTask(taskData);
+    });
+});
+
+function updateTask(taskData) {
+    fetch(`/api/admin/maintenance/{{task._id}}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(taskData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = `/admin/maintenance/{{task._id}}`;
+        } else {
+            alert(data.message || 'Error updating task');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating task');
+    });
+}
+</script>

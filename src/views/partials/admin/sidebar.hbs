@@ -1,0 +1,179 @@
+<!-- Sidebar -->
+<nav id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <h3 class="mb-0">Hotel Admin</h3>
+    </div>
+
+    <ul class="list-unstyled components">
+        <li class="{{#if (eq active 'dashboard')}}active{{/if}}">
+            <a href="/admin/dashboard" class="d-flex align-items-center">
+                <i class="fas fa-tachometer-alt me-3"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li class="{{#if (eq active 'hotels')}}active{{/if}}">
+            <a href="/admin/hotels" class="d-flex align-items-center">
+                <i class="fas fa-hotel me-3"></i>
+                <span>Hotels</span>
+            </a>
+        </li>
+        <li class="{{#if (eq active 'bookings')}}active{{/if}}">
+            <a href="/admin/bookings" class="d-flex align-items-center">
+                <i class="fas fa-calendar-check me-3"></i>
+                <span>Bookings</span>
+            </a>
+        </li>
+        <li class="{{#if (eq active 'rooms')}}active{{/if}}">
+            <a href="/admin/rooms" class="d-flex align-items-center">
+                <i class="fas fa-bed me-3"></i>
+                <span>Rooms</span>
+            </a>
+        </li>
+        <li class="{{#if (eq active 'users')}}active{{/if}}">
+            <a href="/admin/users" class="d-flex align-items-center">
+                <i class="fas fa-users me-3"></i>
+                <span>Users</span>
+            </a>
+        </li>
+        <li class="{{#if (eq active 'reviews')}}active{{/if}}">
+            <a href="/admin/reviews" class="d-flex align-items-center">
+                <i class="fas fa-star me-3"></i>
+                <span>Reviews</span>
+            </a>
+        </li>
+        <li class="{{#if (eq active 'maintenance')}}active{{/if}}">
+            <a href="/admin/maintenance" class="d-flex align-items-center">
+                <i class="fas fa-tools me-3"></i>
+                <span>Maintenance</span>
+            </a>
+        </li>
+        <li class="{{#if (eq active 'settings')}}active{{/if}}">
+            <a href="/admin/settings" class="d-flex align-items-center">
+                <i class="fas fa-cog me-3"></i>
+                <span>Settings</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-footer">
+        <a href="/admin/profile" class="d-flex align-items-center mb-3 {{#if (eq active 'profile')}}active{{/if}}">
+            <i class="fas fa-user-circle me-3"></i>
+            <span>Profile</span>
+        </a>
+        <a href="/auth/logout" class="d-flex align-items-center text-danger">
+            <i class="fas fa-sign-out-alt me-3"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+</nav>
+
+<style>
+/* Sidebar Styles */
+.sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    min-height: 100vh;
+    background: #2c3e50;
+    color: #fff;
+    transition: all 0.3s;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 20px;
+    background: #1a2634;
+}
+
+.sidebar-header h3 {
+    color: #fff;
+    font-size: 1.4rem;
+}
+
+.sidebar .components {
+    padding: 20px 0;
+    flex-grow: 1;
+}
+
+.sidebar ul li a {
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all 0.3s;
+    font-size: 1rem;
+}
+
+.sidebar ul li a:hover,
+.sidebar ul li.active > a {
+    color: #fff;
+    background: #3498db;
+    text-decoration: none;
+}
+
+.sidebar ul li a i {
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-footer a {
+    padding: 10px;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all 0.3s;
+    border-radius: 5px;
+}
+
+.sidebar-footer a:hover,
+.sidebar-footer a.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive Sidebar */
+@media (max-width: 768px) {
+    .sidebar {
+        margin-left: -250px;
+    }
+    .sidebar.active {
+        margin-left: 0;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Make entire li elements clickable
+    document.querySelectorAll('#sidebar .components li').forEach(li => {
+        li.style.cursor = 'pointer';
+        li.addEventListener('click', function(e) {
+            const link = this.querySelector('a');
+            if (link) {
+                window.location = link.href;
+            }
+        });
+    });
+
+    // Add hover effect to entire li
+    document.querySelectorAll('#sidebar .components li').forEach(li => {
+        li.addEventListener('mouseenter', function() {
+            this.querySelector('a').style.backgroundColor = '#3498db';
+        });
+        li.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('active')) {
+                this.querySelector('a').style.backgroundColor = '';
+            }
+        });
+    });
+});
+</script>
