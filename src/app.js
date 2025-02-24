@@ -3,12 +3,12 @@ const cors = require('cors');
 const passport = require('passport');
 const { PORT } = require('./config/env');
 const path = require('path');
-const exphbs = require('express-handlebars');
+const { engine } = require('express-handlebars');
 const cookieParser = require('cookie-parser');
 const errorHandler = require('./middlewares/error.middleware');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
-const hbsHelpers = require('./utils/handlebars-helpers');
+const handlebarsHelpers = require('./helpers/handlebars-helpers');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -17,6 +17,7 @@ const hotelRoutes = require('./routes/hotel.routes');
 const viewRoutes = require('./routes/view.routes');
 const adminRoutes = require('./routes/admin.routes');
 const bookingRoutes = require('./routes/booking.routes');
+const billingRoutes = require('./routes/billing.routes');
 
 // Initialize passport config
 require('./config/passport');
@@ -24,46 +25,13 @@ require('./config/passport');
 const app = express();
 
 // Configure handlebars
-const hbs = exphbs.create({
+app.engine('hbs', engine({
     extname: '.hbs',
     defaultLayout: 'main',
+    helpers: handlebarsHelpers,
     layoutsDir: path.join(__dirname, 'views/layouts'),
-    partialsDir: path.join(__dirname, 'views/partials'),
-    helpers: {
-        ...hbsHelpers,
-        eq: function(v1, v2) {
-            return v1 === v2;
-        },
-        eq: function (v1, v2) {
-            return v1 === v2;
-        },
-        formatDate: function(date) {
-            return new Date(date).toLocaleDateString('en-US', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-        },
-        getStatusColor: function(status) {
-            switch (status) {
-                case 'pending':
-                    return 'warning';
-                case 'confirmed':
-                    return 'success';
-                case 'cancelled':
-                    return 'danger';
-                case 'completed':
-                    return 'info';
-                default:
-                    return 'secondary';
-            }
-        }
-    }
-});
-
-// View engine setup
-app.engine('hbs', hbs.engine);
+    partialsDir: path.join(__dirname, 'views/partials')
+}));
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -90,6 +58,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/admin/hotels', hotelRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/billing', billingRoutes);
 
 // Error handling
 app.use(errorHandler);

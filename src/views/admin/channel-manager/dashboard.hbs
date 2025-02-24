@@ -1,0 +1,300 @@
+{{#extend "admin-layout"}}
+{{#content "content"}}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Channel Manager Dashboard</h1>
+    
+    <!-- Channel Overview Cards -->
+    <div class="row mt-4">
+        {{#each channels}}
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-light mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="small text-muted">{{name}}</div>
+                            <div class="text-lg fw-bold">
+                                {{stats.totalBookings}} Bookings
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">Revenue</div>
+                            <div class="text-lg fw-bold">${{stats.totalRevenue}}</div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="badge bg-{{statusColor status}}">{{status}}</div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="/admin/channel-manager/channels/{{_id}}" class="small text-dark stretched-link">View Details</a>
+                    <div class="small text-dark"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+
+    <!-- Sync Status and Recent Activities -->
+    <div class="row">
+        <!-- Sync Status -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    Sync Status
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Channel</th>
+                                    <th>Last Inventory Sync</th>
+                                    <th>Last Rate Sync</th>
+                                    <th>Last Booking Sync</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each channels}}
+                                <tr>
+                                    <td>{{name}}</td>
+                                    <td>{{formatTimeAgo lastSync.inventory}}</td>
+                                    <td>{{formatTimeAgo lastSync.prices}}</td>
+                                    <td>{{formatTimeAgo lastSync.bookings}}</td>
+                                    <td>
+                                        <span class="badge bg-{{syncStatusColor syncStatus}}">
+                                            {{syncStatus}}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-list me-1"></i>
+                    Recent Activities
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {{#each recentActivities}}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-{{typeColor type}}"></div>
+                            <div class="timeline-content">
+                                <h3 class="timeline-title">{{title}}</h3>
+                                <p class="timeline-text">{{message}}</p>
+                                <p class="timeline-time">{{formatTimeAgo timestamp}}</p>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Statistics -->
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Booking Statistics
+                    <div class="float-end">
+                        <select class="form-select form-select-sm d-inline-block w-auto" id="statsTimeRange">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="90">Last 90 Days</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="bookingStats" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Channel Performance Comparison -->
+    <div class="row">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-pie me-1"></i>
+                    Revenue Distribution
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueDistribution" width="100%" height="50"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-line me-1"></i>
+                    Conversion Rates
+                </div>
+                <div class="card-body">
+                    <canvas id="conversionRates" width="100%" height="50"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Modal -->
+<div class="modal fade" id="quickActionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <button class="list-group-item list-group-item-action" onclick="syncAllChannels()">
+                        <i class="fas fa-sync-alt me-2"></i> Sync All Channels
+                    </button>
+                    <button class="list-group-item list-group-item-action" onclick="updateAllRates()">
+                        <i class="fas fa-tags me-2"></i> Update All Rates
+                    </button>
+                    <button class="list-group-item list-group-item-action" onclick="checkAllBookings()">
+                        <i class="fas fa-book me-2"></i> Check New Bookings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{/content}}
+
+{{#content "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Initialize charts
+    document.addEventListener('DOMContentLoaded', function() {
+        // Booking Statistics Chart
+        const bookingStatsCtx = document.getElementById('bookingStats').getContext('2d');
+        new Chart(bookingStatsCtx, {
+            type: 'bar',
+            data: {
+                labels: {{{json bookingStats.labels}}},
+                datasets: {{{json bookingStats.datasets}}}
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Revenue Distribution Chart
+        const revenueCtx = document.getElementById('revenueDistribution').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'pie',
+            data: {
+                labels: {{{json revenueDistribution.labels}}},
+                datasets: [{
+                    data: {{{json revenueDistribution.data}}},
+                    backgroundColor: {{{json revenueDistribution.colors}}}
+                }]
+            }
+        });
+
+        // Conversion Rates Chart
+        const conversionCtx = document.getElementById('conversionRates').getContext('2d');
+        new Chart(conversionCtx, {
+            type: 'line',
+            data: {
+                labels: {{{json conversionRates.labels}}},
+                datasets: {{{json conversionRates.datasets}}}
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    });
+
+    // Quick Actions
+    async function syncAllChannels() {
+        try {
+            const response = await fetch('/api/channel-manager/sync-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('success', 'Sync initiated for all channels');
+            } else {
+                showToast('error', data.error);
+            }
+        } catch (error) {
+            showToast('error', 'Failed to sync channels');
+        }
+    }
+
+    async function updateAllRates() {
+        try {
+            const response = await fetch('/api/channel-manager/update-rates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('success', 'Rate update initiated for all channels');
+            } else {
+                showToast('error', data.error);
+            }
+        } catch (error) {
+            showToast('error', 'Failed to update rates');
+        }
+    }
+
+    async function checkAllBookings() {
+        try {
+            const response = await fetch('/api/channel-manager/check-bookings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                showToast('success', 'Checking for new bookings');
+            } else {
+                showToast('error', data.error);
+            }
+        } catch (error) {
+            showToast('error', 'Failed to check bookings');
+        }
+    }
+
+    // Helper function to show toast notifications
+    function showToast(type, message) {
+        // Implementation depends on your toast notification library
+    }
+</script>
+{{/content}}
+{{/extend}}

@@ -1,0 +1,173 @@
+{{> admin/header}}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h1 class="h3 mb-2">Invoice #{{invoice.invoiceNumber}}</h1>
+                            <span class="badge bg-{{invoiceStatusColor invoice.status}}-soft text-{{invoiceStatusColor invoice.status}}">
+                                {{formatInvoiceStatus invoice.status}}
+                            </span>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="printInvoice()">
+                                <i class="fas fa-print me-2"></i>Print
+                            </button>
+                            <button class="btn btn-success" onclick="emailInvoice()">
+                                <i class="fas fa-envelope me-2"></i>Email
+                            </button>
+                            {{#if (canEditInvoice invoice.status)}}
+                            <button class="btn btn-secondary" onclick="editInvoice()">
+                                <i class="fas fa-edit me-2"></i>Edit
+                            </button>
+                            {{/if}}
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Guest Information</h5>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle bg-primary bg-opacity-10 text-primary">
+                                    {{firstLetter invoice.guest.name}}
+                                </div>
+                                <div class="ms-3">
+                                    <h6 class="mb-1">{{invoice.guest.name}}</h6>
+                                    <p class="mb-0 text-muted">{{invoice.guest.email}}</p>
+                                    <p class="mb-0 text-muted">{{invoice.guest.phone}}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <h5 class="mb-3">Invoice Details</h5>
+                            <p class="mb-1">
+                                <strong>Invoice Date:</strong> {{formatDate invoice.createdAt}}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Due Date:</strong> {{formatDate invoice.dueDate}}
+                            </p>
+                            <p class="mb-0">
+                                <strong>Payment Terms:</strong> {{invoice.paymentTerms}}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each invoice.items}}
+                                <tr>
+                                    <td>{{this.description}}</td>
+                                    <td class="text-center">{{this.quantity}}</td>
+                                    <td class="text-end">${{this.unitPrice}}</td>
+                                    <td class="text-end">${{this.amount}}</td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Subtotal</strong></td>
+                                    <td class="text-end">${{invoice.subtotal}}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Tax</strong></td>
+                                    <td class="text-end">${{invoice.tax}}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Total</strong></td>
+                                    <td class="text-end"><strong>${{invoice.total}}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    {{#if invoice.notes}}
+                    <div class="mb-4">
+                        <h5>Notes</h5>
+                        <p class="mb-0">{{invoice.notes}}</p>
+                    </div>
+                    {{/if}}
+
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="mb-3">Payment History</h5>
+                            <div class="table-responsive">
+                                <table class="table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Transaction ID</th>
+                                            <th>Method</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{#each transactions}}
+                                        <tr>
+                                            <td>{{formatDate this.createdAt}}</td>
+                                            <td>{{this.transactionId}}</td>
+                                            <td>{{formatPaymentMethod this.method}}</td>
+                                            <td>${{this.amount}}</td>
+                                            <td>
+                                                <span class="badge bg-{{transactionStatusColor this.status}}-soft text-{{transactionStatusColor this.status}}">
+                                                    {{formatTransactionStatus this.status}}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {{/each}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function printInvoice() {
+    window.print();
+}
+
+function emailInvoice() {
+    $.post('/api/billing/invoices/{{invoice._id}}/email', function(response) {
+        showToast('Success', 'Invoice sent successfully');
+    }).fail(function(xhr) {
+        showToast('Error', xhr.responseJSON.message || 'Failed to send invoice');
+    });
+}
+
+function editInvoice() {
+    window.location.href = '/admin/billing/invoices/{{invoice._id}}/edit';
+}
+
+function showToast(title, message) {
+    // Implement toast notification
+}
+</script>
+
+<style>
+@media print {
+    .btn-group, .header, footer {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+</style>

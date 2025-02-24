@@ -60,7 +60,42 @@ const bookingSchema = new mongoose.Schema({
     },
     cancellationDate: {
         type: Date
-    }
+    },
+    bookingType: {
+        type: String,
+        enum: ['personal', 'corporate', 'mixed'],
+        required: true,
+        default: 'personal'
+    },
+    company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Company',
+        required: function() {
+            return ['corporate', 'mixed'].includes(this.bookingType);
+        }
+    },
+    billingSplits: [{
+        payer: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true
+        },
+        payerType: {
+            type: String,
+            enum: ['personal', 'corporate'],
+            required: true
+        },
+        company: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Company'
+        },
+        percentage: {
+            type: Number,
+            required: true,
+            min: 0,
+            max: 100
+        }
+    }]
 }, {
     timestamps: true
 });

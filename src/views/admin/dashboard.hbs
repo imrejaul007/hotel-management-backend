@@ -1,84 +1,141 @@
 {{> admin/header}}
 
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.action-card {
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.bg-primary-soft { background-color: rgba(13, 110, 253, 0.1); }
+.bg-success-soft { background-color: rgba(25, 135, 84, 0.1); }
+.bg-warning-soft { background-color: rgba(255, 193, 7, 0.1); }
+.bg-danger-soft { background-color: rgba(220, 53, 69, 0.1); }
+.bg-info-soft { background-color: rgba(13, 202, 240, 0.1); }
+
+.progress {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.list-group-item {
+    padding: 1rem 1.5rem;
+    border-left: 0;
+    border-right: 0;
+}
+
+.card {
+    border-radius: 10px;
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+.table > :not(:first-child) {
+    border-top: 0;
+}
+</style>
+
 <div class="container-fluid py-4">
     <!-- Statistics Cards -->
     <div class="row g-4 mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-primary text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-uppercase mb-1">Total Bookings</h6>
-                            <h3 class="mb-0">{{stats.totalBookings}}</h3>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 rounded-circle p-3 bg-primary bg-opacity-10">
+                            <i class="fas fa-calendar-check fa-2x text-primary"></i>
                         </div>
-                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
-                            <i class="fas fa-calendar-check fa-2x text-white"></i>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <span class="text-white-50">
-                            <i class="fas fa-arrow-up me-1"></i>{{stats.bookingsThisMonth}} this month
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-success text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-uppercase mb-1">Total Revenue</h6>
-                            <h3 class="mb-0">${{stats.totalRevenue}}</h3>
-                        </div>
-                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
-                            <i class="fas fa-dollar-sign fa-2x text-white"></i>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-sm text-muted text-uppercase mb-1">Total Bookings</p>
+                            <h3 class="fw-bold mb-0">{{stats.totalBookings}}</h3>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <span class="text-white-50">
-                            <i class="fas fa-arrow-up me-1"></i>${{stats.revenueThisMonth}} this month
-                        </span>
+                    <div class="mt-3 pt-2 border-top">
+                        <p class="text-sm text-muted mb-0">
+                            <i class="fas fa-arrow-up me-1 text-success"></i>
+                            {{stats.bookingsThisMonth}} new this month
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-warning text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-uppercase mb-1">Active Tasks</h6>
-                            <h3 class="mb-0">{{maintenanceStats.current}}</h3>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 rounded-circle p-3 bg-success bg-opacity-10">
+                            <i class="fas fa-users fa-2x text-success"></i>
                         </div>
-                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
-                            <i class="fas fa-tools fa-2x text-white"></i>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-sm text-muted text-uppercase mb-1">Active Guests</p>
+                            <h3 class="fw-bold mb-0">{{stats.activeGuests}}</h3>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <span class="text-white-50">
-                            <i class="fas fa-clock me-1"></i>{{maintenanceStats.pending}} pending
-                        </span>
+                    <div class="mt-3 pt-2 border-top">
+                        <p class="text-sm text-muted mb-0">
+                            <i class="fas fa-clock me-1"></i>
+                            Currently checked in
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-info text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="text-uppercase mb-1">Total Hotels</h6>
-                            <h3 class="mb-0">{{stats.totalHotels}}</h3>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 rounded-circle p-3 bg-warning bg-opacity-10">
+                            <i class="fas fa-tools fa-2x text-warning"></i>
                         </div>
-                        <div class="rounded-circle bg-white bg-opacity-25 p-3">
-                            <i class="fas fa-hotel fa-2x text-white"></i>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-sm text-muted text-uppercase mb-1">Maintenance</p>
+                            <h3 class="fw-bold mb-0">{{stats.pendingMaintenance}}</h3>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <span class="text-white-50">
-                            <i class="fas fa-building me-1"></i>{{stats.activeHotels}} active
-                        </span>
+                    <div class="mt-3 pt-2 border-top">
+                        <p class="text-sm text-muted mb-0">
+                            <i class="fas fa-exclamation-circle me-1 text-warning"></i>
+                            Pending requests
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 rounded-circle p-3 bg-danger bg-opacity-10">
+                            <i class="fas fa-box fa-2x text-danger"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p class="text-sm text-muted text-uppercase mb-1">Low Stock</p>
+                            <h3 class="fw-bold mb-0">{{stats.lowStockItems}}</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2 border-top">
+                        <p class="text-sm text-muted mb-0">
+                            <i class="fas fa-exclamation-triangle me-1 text-danger"></i>
+                            Items need attention
+                        </p>
                     </div>
                 </div>
             </div>
@@ -86,76 +143,188 @@
     </div>
 
     <div class="row g-4">
-        <!-- Quick Actions -->
-        <div class="col-xl-4">
-            <div class="card h-100">
-                <div class="card-header bg-light">
-                    <h5 class="card-title mb-0">Quick Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="/admin/bookings/create" class="list-group-item list-group-item-action">
-                            <i class="fas fa-plus me-2"></i>New Booking
-                        </a>
-                        <a href="/admin/maintenance" class="list-group-item list-group-item-action">
-                            <i class="fas fa-tools me-2"></i>Manage Maintenance
-                        </a>
-                        <a href="/admin/guests/create" class="list-group-item list-group-item-action">
-                            <i class="fas fa-user-plus me-2"></i>Add Guest
-                        </a>
-                        <a href="/admin/hotels/create" class="list-group-item list-group-item-action">
-                            <i class="fas fa-hotel me-2"></i>Add Hotel
+        <!-- Recent Bookings -->
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recent Bookings</h5>
+                        <a href="/admin/bookings" class="btn btn-sm btn-primary">
+                            View All <i class="fas fa-arrow-right ms-1"></i>
                         </a>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Maintenance -->
-        <div class="col-xl-8">
-            <div class="card h-100">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Recent Maintenance Requests</h5>
-                    <a href="/admin/maintenance" class="btn btn-primary btn-sm">
-                        <i class="fas fa-external-link-alt me-1"></i>View All
-                    </a>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="bg-light">
                                 <tr>
-                                    <th>Hotel</th>
-                                    <th>Type</th>
-                                    <th>Priority</th>
-                                    <th>Status</th>
-                                    <th>Created</th>
+                                    <th class="ps-4">Guest</th>
+                                    <th>Room</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th class="pe-4">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#each recentMaintenance}}
+                                {{#each recentBookings}}
                                 <tr>
-                                    <td>{{this.hotel.name}}</td>
-                                    <td>
-                                        <span class="badge bg-{{serviceTypeColor this.serviceType}}">
-                                            {{formatServiceType this.serviceType}}
-                                        </span>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-primary bg-opacity-10 text-primary">
+                                                {{firstLetter this.guest.name}}
+                                            </div>
+                                            <div class="ms-3">
+                                                <h6 class="mb-0">{{this.guest.name}}</h6>
+                                                <small class="text-muted">{{this.guest.email}}</small>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>
-                                        <span class="badge bg-{{priorityColor this.priority}}">
-                                            {{this.priority}}
+                                        <span class="badge bg-light text-dark">Room {{this.room.number}}</span>
+                                    </td>
+                                    <td>{{formatDate this.checkInDate}}</td>
+                                    <td>{{formatDate this.checkOutDate}}</td>
+                                    <td class="pe-4">
+                                        <span class="badge bg-{{bookingStatusColor this.status}}-soft text-{{bookingStatusColor this.status}}">
+                                            {{formatBookingStatus this.status}}
                                         </span>
                                     </td>
-                                    <td>
-                                        <span class="badge bg-{{statusColor this.status}}">
-                                            {{this.status}}
-                                        </span>
-                                    </td>
-                                    <td>{{formatDate this.createdAt}}</td>
                                 </tr>
                                 {{/each}}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions & Low Stock -->
+        <div class="col-xl-4">
+            <div class="row g-4">
+                <!-- Quick Actions -->
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-transparent py-3">
+                            <h5 class="mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <a href="/admin/bookings/create" class="card action-card border-0 text-center p-4">
+                                        <i class="fas fa-calendar-plus fa-2x mb-2 text-primary"></i>
+                                        <h6 class="mb-0">New Booking</h6>
+                                    </a>
+                                </div>
+                                <div class="col-6">
+                                    <a href="/admin/billing/invoices/create" class="card action-card border-0 text-center p-4">
+                                        <i class="fas fa-file-invoice-dollar fa-2x mb-2 text-success"></i>
+                                        <h6 class="mb-0">New Invoice</h6>
+                                    </a>
+                                </div>
+                                <div class="col-6">
+                                    <a href="/admin/inventory" class="card action-card border-0 text-center p-4">
+                                        <i class="fas fa-box fa-2x mb-2 text-warning"></i>
+                                        <h6 class="mb-0">Inventory</h6>
+                                    </a>
+                                </div>
+                                <div class="col-6">
+                                    <a href="/admin/reports" class="card action-card border-0 text-center p-4">
+                                        <i class="fas fa-chart-bar fa-2x mb-2 text-info"></i>
+                                        <h6 class="mb-0">Reports</h6>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Payments -->
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-transparent py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Recent Payments</h5>
+                                <a href="/admin/billing/invoices" class="btn btn-sm btn-primary">
+                                    View All <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush">
+                                {{#each recentPayments}}
+                                <div class="list-group-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-circle bg-success bg-opacity-10 text-success">
+                                                <i class="fas fa-dollar-sign"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0">Invoice #{{this.invoice.invoiceNumber}}</h6>
+                                                <span class="badge bg-success-soft text-success">
+                                                    ${{this.amount}}
+                                                </span>
+                                            </div>
+                                            <small class="text-muted d-block">
+                                                {{this.guest.name}} - {{formatPaymentMethod this.method}}
+                                            </small>
+                                            <small class="text-muted">
+                                                {{formatTimeAgo this.createdAt}}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{/each}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Invoices -->
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-transparent py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Pending Invoices</h5>
+                                <a href="/admin/billing/invoices?status=pending" class="btn btn-sm btn-primary">
+                                    View All <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush">
+                                {{#each pendingInvoices}}
+                                <div class="list-group-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-circle bg-warning bg-opacity-10 text-warning">
+                                                <i class="fas fa-file-invoice"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h6 class="mb-0">Invoice #{{this.invoiceNumber}}</h6>
+                                                <span class="badge bg-warning-soft text-warning">
+                                                    ${{this.total}}
+                                                </span>
+                                            </div>
+                                            <small class="text-muted d-block">
+                                                {{this.guest.name}}
+                                            </small>
+                                            <small class="text-muted">
+                                                Due {{formatTimeAgo this.dueDate}}
+                                            </small>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-primary ms-3" onclick="recordPayment('{{this._id}}')">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                {{/each}}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -163,81 +332,85 @@
     </div>
 
     <div class="row g-4 mt-4">
-        <!-- Recent Bookings -->
+        <!-- Recent Transactions -->
         <div class="col-xl-6">
-            <div class="card h-100">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Recent Bookings</h5>
-                    <a href="/admin/bookings" class="btn btn-primary btn-sm">
-                        <i class="fas fa-external-link-alt me-1"></i>View All
-                    </a>
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recent Transactions</h5>
+                        <a href="/admin/inventory/reports" class="btn btn-sm btn-primary">
+                            Reports <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th>Guest</th>
-                                    <th>Hotel</th>
-                                    <th>Check In</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {{#each recentBookings}}
-                                <tr>
-                                    <td>{{this.user.name}}</td>
-                                    <td>{{this.hotel.name}}</td>
-                                    <td>{{formatDate this.checkIn}}</td>
-                                    <td>
-                                        <span class="badge bg-{{#if (eq this.status 'confirmed')}}success{{else if (eq this.status 'pending')}}warning{{else}}danger{{/if}}">
-                                            {{this.status}}
-                                        </span>
-                                    </td>
-                                </tr>
-                                {{/each}}
-                            </tbody>
-                        </table>
+                    <div class="list-group list-group-flush">
+                        {{#each recentTransactions}}
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle p-2 {{transactionTypeColor this.transaction.type}} bg-opacity-10">
+                                        <i class="fas {{transactionTypeIcon this.transaction.type}} text-{{transactionTypeColor this.transaction.type}}"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{this.name}}</h6>
+                                        <small class="text-muted">{{formatTimeAgo this.transaction.date}}</small>
+                                    </div>
+                                    <small class="text-muted">
+                                        {{formatTransactionType this.transaction.type}} - 
+                                        {{this.transaction.quantity}} {{this.unit}}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {{/each}}
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Guests -->
+        <!-- Amenity Requests -->
         <div class="col-xl-6">
-            <div class="card h-100">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Recent Guests</h5>
-                    <a href="/admin/guests" class="btn btn-primary btn-sm">
-                        <i class="fas fa-external-link-alt me-1"></i>View All
-                    </a>
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-transparent py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Amenity Requests</h5>
+                        <a href="/admin/amenity-requests" class="btn btn-sm btn-primary">
+                            View All <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {{#each recentGuests}}
-                                <tr>
-                                    <td>{{this.name}}</td>
-                                    <td>{{this.email}}</td>
-                                    <td>{{this.phone}}</td>
-                                    <td>
-                                        <span class="badge bg-{{#if this.active}}success{{else}}danger{{/if}}">
-                                            {{#if this.active}}Active{{else}}Inactive{{/if}}
+                    <div class="list-group list-group-flush">
+                        {{#each amenityRequests}}
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="avatar-circle bg-primary bg-opacity-10 text-primary">
+                                        {{firstLetter this.guest.name}}
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{this.guest.name}}</h6>
+                                        <span class="badge bg-{{requestStatusColor this.status}}-soft text-{{requestStatusColor this.status}}">
+                                            {{formatRequestStatus this.status}}
                                         </span>
-                                    </td>
-                                </tr>
-                                {{/each}}
-                            </tbody>
-                        </table>
+                                    </div>
+                                    <small class="text-muted">Room {{this.room.number}}</small>
+                                    <div class="mt-2">
+                                        {{#each this.items}}
+                                        <span class="badge bg-light text-dark me-1">
+                                            {{this.item.name}} ({{this.quantity}})
+                                        </span>
+                                        {{/each}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{/each}}
                     </div>
                 </div>
             </div>
@@ -245,9 +418,30 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add any charts or additional JavaScript here
-});
+function showRestockModal(itemId) {
+    window.location.href = `/admin/inventory?restock=${itemId}`;
+}
+
+function calculateStockPercentage(current, minimum) {
+    return Math.min(100, (current / minimum) * 100);
+}
+
+function transactionTypeColor(type) {
+    const colors = {
+        restock: 'bg-success',
+        consumption: 'bg-warning',
+        adjustment: 'bg-info'
+    };
+    return colors[type] || 'bg-secondary';
+}
+
+function transactionTypeIcon(type) {
+    const icons = {
+        restock: 'fa-plus',
+        consumption: 'fa-minus',
+        adjustment: 'fa-sync'
+    };
+    return icons[type] || 'fa-dot-circle';
+}
 </script>

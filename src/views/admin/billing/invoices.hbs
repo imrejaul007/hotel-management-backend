@@ -1,0 +1,382 @@
+{{> admin/header}}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Invoices</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createInvoiceModal">
+            <i class="fas fa-plus me-2"></i>Create Invoice
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form id="filterForm" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" name="status">
+                        <option value="">All</option>
+                        <option value="draft">Draft</option>
+                        <option value="issued">Issued</option>
+                        <option value="paid">Paid</option>
+                        <option value="partially_paid">Partially Paid</option>
+                        <option value="overdue">Overdue</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="refunded">Refunded</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" name="startDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" name="endDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" name="search" placeholder="Invoice # or Guest Name">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-2"></i>Apply Filters
+                    </button>
+                    <button type="reset" class="btn btn-secondary">
+                        <i class="fas fa-undo me-2"></i>Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Invoices Table -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Guest</th>
+                            <th>Date</th>
+                            <th>Due Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoicesTableBody">
+                        {{#each invoices}}
+                        <tr>
+                            <td>
+                                <a href="/admin/billing/invoices/{{this._id}}" class="text-primary fw-semibold">
+                                    {{this.invoiceNumber}}
+                                </a>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-primary bg-opacity-10 text-primary">
+                                        {{firstLetter this.guest.name}}
+                                    </div>
+                                    <div class="ms-2">
+                                        <div class="fw-semibold">{{this.guest.name}}</div>
+                                        <small class="text-muted">{{this.guest.email}}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{formatDate this.createdAt}}</td>
+                            <td>{{formatDate this.dueDate}}</td>
+                            <td>${{this.total}}</td>
+                            <td>
+                                <span class="badge bg-{{invoiceStatusColor this.status}}-soft text-{{invoiceStatusColor this.status}}">
+                                    {{formatInvoiceStatus this.status}}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewInvoice('{{this._id}}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    {{#if (canEditInvoice this.status)}}
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="editInvoice('{{this._id}}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {{/if}}
+                                    <button class="btn btn-sm btn-outline-success" onclick="recordPayment('{{this._id}}')">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Invoice Modal -->
+<div class="modal fade" id="createInvoiceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New Invoice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createInvoiceForm">
+                    <div class="mb-3">
+                        <label class="form-label">Guest</label>
+                        <select class="form-select" name="guest" required>
+                            <option value="">Select Guest</option>
+                            {{#each guests}}
+                            <option value="{{this._id}}">{{this.name}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Booking</label>
+                        <select class="form-select" name="booking" required>
+                            <option value="">Select Booking</option>
+                        </select>
+                    </div>
+                    <div id="invoiceItems">
+                        <div class="row mb-3 invoice-item">
+                            <div class="col-md-5">
+                                <input type="text" class="form-control" name="items[0][description]" placeholder="Description" required>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" class="form-control" name="items[0][quantity]" placeholder="Qty" required>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" class="form-control" name="items[0][unitPrice]" placeholder="Unit Price" required>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-danger btn-sm remove-item">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="addItemBtn">
+                        <i class="fas fa-plus me-2"></i>Add Item
+                    </button>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Due Date</label>
+                                <input type="date" class="form-control" name="dueDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Payment Terms</label>
+                                <input type="text" class="form-control" name="paymentTerms" placeholder="Net 30">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitInvoice()">Create Invoice</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <input type="hidden" name="invoiceId">
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" class="form-control" name="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" name="method" required>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="debit_card">Debit Card</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="cash">Cash</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div id="cardDetails" class="mb-3">
+                        <label class="form-label">Card Details</label>
+                        <input type="text" class="form-control mb-2" name="cardNumber" placeholder="Card Number">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" name="expiryDate" placeholder="MM/YY">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" name="cvv" placeholder="CVV">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitPayment()">Process Payment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize DataTable
+$(document).ready(function() {
+    // Handle filter form submission
+    $('#filterForm').on('submit', function(e) {
+        e.preventDefault();
+        loadInvoices($(this).serialize());
+    });
+
+    // Handle payment method change
+    $('select[name="method"]').on('change', function() {
+        const method = $(this).val();
+        if (method === 'credit_card' || method === 'debit_card') {
+            $('#cardDetails').show();
+        } else {
+            $('#cardDetails').hide();
+        }
+    });
+
+    // Handle add item button
+    $('#addItemBtn').on('click', function() {
+        const itemCount = $('.invoice-item').length;
+        const newItem = `
+            <div class="row mb-3 invoice-item">
+                <div class="col-md-5">
+                    <input type="text" class="form-control" name="items[${itemCount}][description]" placeholder="Description" required>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" class="form-control" name="items[${itemCount}][quantity]" placeholder="Qty" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" name="items[${itemCount}][unitPrice]" placeholder="Unit Price" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm remove-item">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        $('#invoiceItems').append(newItem);
+    });
+
+    // Handle remove item button
+    $(document).on('click', '.remove-item', function() {
+        $(this).closest('.invoice-item').remove();
+    });
+
+    // Handle guest selection change
+    $('select[name="guest"]').on('change', function() {
+        const guestId = $(this).val();
+        if (guestId) {
+            loadGuestBookings(guestId);
+        } else {
+            $('select[name="booking"]').html('<option value="">Select Booking</option>');
+        }
+    });
+});
+
+function loadInvoices(filters) {
+    $.get('/api/billing/invoices?' + filters, function(data) {
+        // Update table body with new data
+        const tbody = $('#invoicesTableBody');
+        tbody.empty();
+        data.forEach(invoice => {
+            // Add row HTML here
+        });
+    });
+}
+
+function loadGuestBookings(guestId) {
+    $.get(`/api/bookings/guest/${guestId}`, function(data) {
+        const select = $('select[name="booking"]');
+        select.empty().append('<option value="">Select Booking</option>');
+        data.forEach(booking => {
+            select.append(`<option value="${booking._id}">
+                ${booking.roomType} (${new Date(booking.checkInDate).toLocaleDateString()} - 
+                ${new Date(booking.checkOutDate).toLocaleDateString()})
+            </option>`);
+        });
+    });
+}
+
+function viewInvoice(id) {
+    window.location.href = `/admin/billing/invoices/${id}`;
+}
+
+function editInvoice(id) {
+    window.location.href = `/admin/billing/invoices/${id}/edit`;
+}
+
+function recordPayment(id) {
+    $('input[name="invoiceId"]').val(id);
+    $('#paymentModal').modal('show');
+}
+
+function submitInvoice() {
+    const formData = new FormData($('#createInvoiceForm')[0]);
+    $.ajax({
+        url: '/api/billing/invoices',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            $('#createInvoiceModal').modal('hide');
+            loadInvoices('');
+            showToast('Success', 'Invoice created successfully');
+        },
+        error: function(xhr) {
+            showToast('Error', xhr.responseJSON.message || 'Failed to create invoice');
+        }
+    });
+}
+
+function submitPayment() {
+    const formData = new FormData($('#paymentForm')[0]);
+    const invoiceId = formData.get('invoiceId');
+    $.ajax({
+        url: `/api/billing/invoices/${invoiceId}/pay`,
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            $('#paymentModal').modal('hide');
+            loadInvoices('');
+            showToast('Success', 'Payment recorded successfully');
+        },
+        error: function(xhr) {
+            showToast('Error', xhr.responseJSON.message || 'Failed to process payment');
+        }
+    });
+}
+
+function showToast(title, message) {
+    // Implement toast notification
+}
+</script>

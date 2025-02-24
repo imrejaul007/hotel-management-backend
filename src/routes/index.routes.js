@@ -6,17 +6,19 @@ const Hotel = require('../models/hotel.model');
 router.get('/', async (req, res) => {
     try {
         // Get featured hotels
-        const hotels = await Hotel.find({ featured: true })
-            .select('name description images rating location')
-            .limit(6);
+        const featuredHotels = await Hotel.find({ featured: true })
+            .select('name description imageUrl startingPrice')
+            .limit(3);
 
         res.render('index', {
-            title: 'Welcome to Hotel Booking',
-            hotels
+            title: 'Welcome to Hotel Management System',
+            featuredHotels
         });
     } catch (error) {
-        console.error('Error loading homepage:', error);
-        res.status(500).send('Error loading homepage');
+        console.error('Home page error:', error);
+        res.status(500).render('error', {
+            message: 'Error loading home page'
+        });
     }
 });
 

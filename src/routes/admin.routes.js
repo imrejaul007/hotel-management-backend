@@ -1,181 +1,66 @@
 const express = require('express');
 const router = express.Router();
+const { protect, authorize } = require('../middlewares/auth.middleware');
+const adminController = require('../controllers/admin.controller');
 const User = require('../models/user.model');
 const Booking = require('../models/booking.model');
 const Hotel = require('../models/hotel.model');
 const Guest = require('../models/guest.model');
 const Maintenance = require('../models/maintenance.model');
-const { protect, authorize } = require('../middlewares/auth.middleware');
+const Inventory = require('../models/inventory.model');
+
+// Admin Dashboard
+router.get('/dashboard', protect, authorize('admin', 'manager'), adminController.getDashboard);
+
+// Include OTA routes
+router.use('/ota', require('./ota.routes'));
 
 // Import route modules
 const guestRoutes = require('./guest.routes');
 
-// Admin dashboard
-router.get('/dashboard', protect, authorize('admin'), async (req, res) => {
+// Billing routes
+router.get('/billing/invoices', protect, authorize('admin'), async (req, res) => {
     try {
-        const today = new Date();
-        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const invoices = await Invoice.find()
+            .populate('guest', 'name email')
+            .populate('booking', 'checkInDate checkOutDate')
+            .sort({ createdAt: -1 });
 
-        // Get all required data
-        const [
-            totalBookings,
-            bookingsThisMonth,
-            totalRevenue,
-            revenueThisMonth,
-            hotels,
-            users,
-            newUsersThisMonth,
-            recentBookings,
-            recentGuests,
-            maintenanceStats,
-            recentMaintenance
-        ] = await Promise.all([
-            Booking.countDocuments(),
-            Booking.countDocuments({ createdAt: { $gte: firstDayOfMonth } }),
-            Booking.aggregate([
-                { $group: { _id: null, total: { $sum: "$totalPrice" } } }
-            ]),
-            Booking.aggregate([
-                { $match: { createdAt: { $gte: firstDayOfMonth } } },
-                { $group: { _id: null, total: { $sum: "$totalPrice" } } }
-            ]),
-            Hotel.find(),
-            User.countDocuments(),
-            User.countDocuments({ createdAt: { $gte: firstDayOfMonth } }),
-            Booking.find()
-                .sort({ createdAt: -1 })
-                .limit(10)
-                .populate('user', 'name')
-                .populate('hotel', 'name'),
-            User.find({ role: 'user' })
-                .sort({ createdAt: -1 })
-                .limit(5)
-                .select('-password')
-                .then(async guests => {
-                    return Promise.all(guests.map(async guest => {
-                        const bookings = await Booking.find({ user: guest._id });
-                        const totalSpent = bookings.reduce((acc, booking) => acc + booking.totalPrice, 0);
-                        return {
-                            ...guest.toObject(),
-                            totalStays: bookings.length,
-                            totalSpent
-                        };
-                    }));
-                }),
-            Maintenance.aggregate([
-                {
-                    $group: {
-                        _id: '$status',
-                        count: { $sum: 1 }
-                    }
-                }
-            ]),
-            Maintenance.find()
-                .populate('hotel', 'name')
-                .populate('location.room', 'number')
-                .populate('guest', 'name')
-                .sort({ createdAt: -1 })
-                .limit(5)
-        ]);
+        const guests = await User.find({ role: 'user' }).select('name email');
 
-        // Calculate hotel status
-        const hotelStatus = await Promise.all(hotels.map(async (hotel) => {
-            const bookedRooms = await Booking.countDocuments({
-                hotel: hotel._id,
-                status: { $in: ['confirmed', 'pending'] },
-                checkIn: { $lte: new Date() },
-                checkOut: { $gte: new Date() }
-            });
-
-            return {
-                name: hotel.name,
-                totalRooms: hotel.rooms.length,
-                availableRooms: hotel.rooms.length - bookedRooms,
-                occupancyRate: Math.round((bookedRooms / hotel.rooms.length) * 100),
-                isOperational: hotel.status === 'operational'
-            };
-        }));
-
-        // Calculate room statistics
-        const totalRooms = hotels.reduce((acc, hotel) => acc + hotel.rooms.length, 0);
-        const occupiedRooms = await Booking.countDocuments({
-            status: { $in: ['confirmed', 'pending'] },
-            checkIn: { $lte: new Date() },
-            checkOut: { $gte: new Date() }
-        });
-        
-        const maintenanceRooms = hotels.reduce((acc, hotel) => {
-            return acc + hotel.rooms.filter(room => room.status === 'maintenance').length;
-        }, 0);
-        
-        const availableRooms = totalRooms - occupiedRooms - maintenanceRooms;
-
-        // Calculate percentages
-        const availableRoomsPercentage = Math.round((availableRooms / totalRooms) * 100);
-        const occupiedRoomsPercentage = Math.round((occupiedRooms / totalRooms) * 100);
-        const maintenanceRoomsPercentage = Math.round((maintenanceRooms / totalRooms) * 100);
-
-        // Process maintenance stats
-        const maintenanceCount = {
-            pending: 0,
-            'in-progress': 0,
-            completed: 0,
-            cancelled: 0
-        };
-        maintenanceStats.forEach(stat => {
-            maintenanceCount[stat._id] = stat.count;
-        });
-
-        // Get notifications (example data - you can modify based on your needs)
-        const notifications = [
-            {
-                title: 'New Booking',
-                message: 'A new booking has been created',
-                timeAgo: '5 minutes ago',
-                actionUrl: '/admin/bookings'
-            },
-            {
-                title: 'Room Maintenance',
-                message: 'Room 101 at Hotel Grand needs maintenance',
-                timeAgo: '1 hour ago'
-            },
-            {
-                title: 'Payment Received',
-                message: 'Payment received for booking #1234',
-                timeAgo: '2 hours ago',
-                actionUrl: '/admin/bookings/1234'
-            }
-        ];
-
-        res.render('admin/dashboard', {
-            title: 'Admin Dashboard',
-            active: 'dashboard',
-            stats: {
-                totalBookings,
-                bookingsThisMonth,
-                totalRevenue: totalRevenue[0]?.total || 0,
-                revenueThisMonth: revenueThisMonth[0]?.total || 0,
-                totalHotels: hotels.length,
-                totalRooms,
-                totalUsers: users,
-                newUsersThisMonth,
-                availableRooms,
-                occupiedRooms,
-                maintenanceRooms,
-                availableRoomsPercentage,
-                occupiedRoomsPercentage,
-                maintenanceRoomsPercentage,
-                maintenance: maintenanceCount
-            },
-            recentBookings,
-            hotelStatus,
-            notifications,
-            recentGuests,
-            recentMaintenance
+        res.render('admin/billing/invoices', {
+            title: 'Invoices',
+            invoices,
+            guests
         });
     } catch (error) {
-        console.error('Error loading admin dashboard:', error);
-        res.status(500).send('Error loading admin dashboard');
+        req.flash('error', error.message);
+        res.redirect('/admin/dashboard');
+    }
+});
+
+router.get('/billing/invoices/:id', protect, authorize('admin'), async (req, res) => {
+    try {
+        const invoice = await Invoice.findById(req.params.id)
+            .populate('guest', 'name email phone')
+            .populate('booking', 'checkInDate checkOutDate roomType');
+
+        if (!invoice) {
+            req.flash('error', 'Invoice not found');
+            return res.redirect('/admin/billing/invoices');
+        }
+
+        const transactions = await Transaction.find({ invoice: invoice._id })
+            .sort({ createdAt: -1 });
+
+        res.render('admin/billing/invoice-details', {
+            title: `Invoice #${invoice.invoiceNumber}`,
+            invoice,
+            transactions
+        });
+    } catch (error) {
+        req.flash('error', error.message);
+        res.redirect('/admin/billing/invoices');
     }
 });
 

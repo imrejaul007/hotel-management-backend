@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const exphbs = require('express-handlebars');
 const path = require('path');
 const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
 const hbsHelpers = require('./src/helpers/hbs.helper');
 
 // Load env vars
@@ -13,6 +14,7 @@ const app = express();
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
@@ -77,10 +79,18 @@ app.set('view engine', 'hbs');
 app.set('views', './src/views');
 
 // Routes
-app.use('/admin', require('./src/routes/admin.routes'));
-app.use('/auth', require('./src/routes/auth.routes'));
-app.use('/maintenance', require('./src/routes/maintenance.routes'));
-app.use('/', require('./src/routes/index.routes'));
+const authRoutes = require('./src/routes/auth.routes');
+const adminRoutes = require('./src/routes/admin.routes');
+const maintenanceRoutes = require('./src/routes/maintenance.routes');
+const otaRoutes = require('./src/routes/ota.routes');
+const indexRoutes = require('./src/routes/index.routes');
+
+// Mount routes
+app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
+app.use('/maintenance', maintenanceRoutes);
+app.use('/api/ota', otaRoutes);
+app.use('/', indexRoutes);
 
 const PORT = process.env.PORT || 3000;
 
