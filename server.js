@@ -143,9 +143,11 @@ app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', './src/views');
 
-// Routes
+// Import routes
 const authRoutes = require('./src/routes/auth.routes');
 const adminRoutes = require('./src/routes/admin.routes');
+const loyaltyRoutes = require('./src/routes/loyalty.routes');
+const adminRewardsRoutes = require('./src/routes/admin/rewards.routes');
 const maintenanceRoutes = require('./src/routes/maintenance.routes');
 const otaRoutes = require('./src/routes/ota.routes');
 const indexRoutes = require('./src/routes/index.routes');
@@ -154,6 +156,8 @@ const indexRoutes = require('./src/routes/index.routes');
 app.get('/login', (req, res) => res.redirect('/auth/login'));
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
+app.use('/api/loyalty', loyaltyRoutes);
+app.use('/api/admin/rewards', adminRewardsRoutes);
 app.use('/maintenance', maintenanceRoutes);
 app.use('/api/ota', otaRoutes);
 app.use('/', indexRoutes);
