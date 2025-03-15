@@ -1,22 +1,22 @@
 const moment = require('moment');
 
 module.exports = {
-    section: function(name, options) {
+    section: function (name, options) {
         if (!this._sections) this._sections = {};
         this._sections[name] = options.fn(this);
         return null;
     },
-    formatDate: function(date) {
+    formatDate: function (date) {
         return moment(date).format('MMM DD, YYYY');
     },
-    formatTimeAgo: function(date) {
+    formatTimeAgo: function (date) {
         return moment(date).fromNow();
     },
-    firstLetter: function(str) {
+    firstLetter: function (str) {
         return str ? str.charAt(0).toUpperCase() : '';
     },
     // Billing helpers
-    invoiceStatusColor: function(status) {
+    invoiceStatusColor: function (status) {
         const colors = {
             'draft': 'secondary',
             'issued': 'primary',
@@ -28,12 +28,12 @@ module.exports = {
         };
         return colors[status] || 'secondary';
     },
-    formatInvoiceStatus: function(status) {
-        return status.split('_').map(word => 
+    formatInvoiceStatus: function (status) {
+        return status.split('_').map(word =>
             word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
     },
-    transactionStatusColor: function(status) {
+    transactionStatusColor: function (status) {
         const colors = {
             'pending': 'warning',
             'completed': 'success',
@@ -43,19 +43,19 @@ module.exports = {
         };
         return colors[status] || 'secondary';
     },
-    formatTransactionStatus: function(status) {
+    formatTransactionStatus: function (status) {
         return status.charAt(0).toUpperCase() + status.slice(1);
     },
-    formatPaymentMethod: function(method) {
-        return method.split('_').map(word => 
+    formatPaymentMethod: function (method) {
+        return method.split('_').map(word =>
             word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
     },
-    canEditInvoice: function(status) {
+    canEditInvoice: function (status) {
         return ['draft', 'issued'].includes(status);
     },
     // Existing helpers
-    bookingStatusColor: function(status) {
+    bookingStatusColor: function (status) {
         const colors = {
             'pending': 'warning',
             'confirmed': 'success',
@@ -65,7 +65,7 @@ module.exports = {
         };
         return colors[status] || 'secondary';
     },
-    requestStatusColor: function(status) {
+    requestStatusColor: function (status) {
         const colors = {
             'pending': 'warning',
             'processing': 'info',
@@ -74,10 +74,39 @@ module.exports = {
         };
         return colors[status] || 'secondary';
     },
-    formatBookingStatus: function(status) {
+    formatBookingStatus: function (status) {
         return status.charAt(0).toUpperCase() + status.slice(1);
     },
-    formatRequestStatus: function(status) {
+    formatRequestStatus: function (status) {
         return status.charAt(0).toUpperCase() + status.slice(1);
+    }, formatDate: function (date) {
+        return moment(date).format('MMM DD, YYYY');
+    },
+    formatDateISO: function (date) {
+        return moment(date).format('YYYY-MM-DD');
+    },
+    getStatusColor: function (status) {
+        const colors = {
+            'pending': 'warning',
+            'confirmed': 'success',
+            'cancelled': 'danger',
+            'completed': 'info'
+        };
+        return colors[status.toLowerCase()] || 'secondary';
+    },
+    eq: function (a, b) {
+        return a === b;
+    },
+    getPaginationUrl: function (page, options) {
+        const currentUrl = options.data.root.currentUrl || '';
+        const url = new URL(currentUrl, 'http://localhost:3000');
+
+        if (page) {
+            url.searchParams.set('page', page);
+        } else {
+            url.searchParams.delete('page');
+        }
+
+        return url.pathname + url.search;
     }
 };

@@ -1455,6 +1455,25 @@ router.delete('/maintenance/:id', protect, authorize('admin'), async (req, res) 
     }
 });
 
+
+
+router.get('/hotels', protect, authorize('admin'), async (req, res) => {
+    try {
+        const hotels = await Hotel.find({});
+
+        res.render('admin/hotels', {
+            hotels
+        });
+    } catch (error) {
+        console.error('Error fetching hotels:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching rooms'
+        });
+    }
+});
+
+
 // Helper functions for UI
 function getPriorityColor(priority) {
     switch (priority) {
