@@ -1,0 +1,373 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <!-- Points Summary -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Available Points</p>
+                                <h5 class="font-weight-bolder">{{member.points}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Active Rewards</p>
+                                <h5 class="font-weight-bolder">{{activeRewardsCount}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="ni ni-box-2 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Membership Tier</p>
+                                <h5 class="font-weight-bolder">{{member.membershipTier}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="ni ni-trophy text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Redeemed</p>
+                                <h5 class="font-weight-bolder">{{totalRedemptions}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                                <i class="ni ni-cart text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Rewards -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Available Rewards</h6>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="row p-3">
+                        {{#each availableRewards}}
+                        <div class="col-xl-4 col-md-6 mb-4">
+                            <div class="card">
+                                {{#if image}}
+                                <img src="{{image}}" class="card-img-top" alt="{{name}}">
+                                {{/if}}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{name}}</h5>
+                                    <p class="card-text">{{description}}</p>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="badge bg-gradient-{{categoryColor category}}">{{category}}</span>
+                                        <span class="text-primary font-weight-bold">{{pointsRequired}} points</span>
+                                    </div>
+                                    {{#if limitedQuantity}}
+                                    <p class="text-sm text-warning mb-3">Only {{remainingQuantity}} left!</p>
+                                    {{/if}}
+                                    <button class="btn btn-primary w-100" 
+                                            onclick="redeemReward('{{_id}}')"
+                                            {{#if (lt ../member.points pointsRequired)}}disabled{{/if}}>
+                                        {{#if (lt ../member.points pointsRequired)}}
+                                        Need {{subtract pointsRequired ../member.points}} more points
+                                        {{else}}
+                                        Redeem Now
+                                        {{/if}}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Redemptions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>My Redemptions</h6>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Reward</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Points Used</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Expiry</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each redemptions}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div>
+                                                <img src="{{rewardId.image}}" class="avatar me-3">
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{rewardId.name}}</h6>
+                                                <p class="text-sm text-secondary mb-0">{{rewardId.category}}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{pointsUsed}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{formatDate date}}</p>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-{{statusColor status}}">
+                                            {{status}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0 {{#if (isExpiringSoon expiryDate)}}text-danger{{/if}}">
+                                            {{formatDate expiryDate}}
+                                        </p>
+                                    </td>
+                                    <td>
+                                        {{#if (eq status 'pending')}}
+                                        <button class="btn btn-link text-danger text-sm mb-0 px-3"
+                                                onclick="cancelRedemption('{{_id}}')">
+                                            <i class="fas fa-times text-danger me-2"></i>Cancel
+                                        </button>
+                                        {{/if}}
+                                        {{#if (eq status 'completed')}}
+                                        {{#unless rating}}
+                                        <button class="btn btn-link text-primary text-sm mb-0 px-3"
+                                                onclick="rateRedemption('{{_id}}')">
+                                            <i class="fas fa-star text-primary me-2"></i>Rate
+                                        </button>
+                                        {{/unless}}
+                                        {{/if}}
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rating Modal -->
+<div class="modal fade" id="ratingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rate Your Experience</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ratingForm">
+                    <input type="hidden" id="redemptionId" name="redemptionId">
+                    <div class="form-group">
+                        <label>Rating</label>
+                        <div class="rating-stars mb-3">
+                            <i class="far fa-star star-rating" data-rating="1"></i>
+                            <i class="far fa-star star-rating" data-rating="2"></i>
+                            <i class="far fa-star star-rating" data-rating="3"></i>
+                            <i class="far fa-star star-rating" data-rating="4"></i>
+                            <i class="far fa-star star-rating" data-rating="5"></i>
+                        </div>
+                        <input type="hidden" name="rating" id="ratingInput" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Feedback (Optional)</label>
+                        <textarea name="feedback" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitRating()">Submit Rating</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Star rating handling
+document.querySelectorAll('.star-rating').forEach(star => {
+    star.addEventListener('mouseover', function() {
+        const rating = this.dataset.rating;
+        document.querySelectorAll('.star-rating').forEach(s => {
+            if (s.dataset.rating <= rating) {
+                s.classList.remove('far');
+                s.classList.add('fas');
+            } else {
+                s.classList.remove('fas');
+                s.classList.add('far');
+            }
+        });
+    });
+
+    star.addEventListener('click', function() {
+        const rating = this.dataset.rating;
+        document.getElementById('ratingInput').value = rating;
+    });
+});
+
+document.querySelector('.rating-stars').addEventListener('mouseleave', function() {
+    const rating = document.getElementById('ratingInput').value;
+    document.querySelectorAll('.star-rating').forEach(s => {
+        if (s.dataset.rating <= rating) {
+            s.classList.remove('far');
+            s.classList.add('fas');
+        } else {
+            s.classList.remove('fas');
+            s.classList.add('far');
+        }
+    });
+});
+
+// Redemption functions
+function redeemReward(rewardId) {
+    if (!confirm('Are you sure you want to redeem this reward?')) return;
+
+    fetch('/api/v1/redemptions/redeem', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rewardId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Reward redeemed successfully!');
+            location.reload();
+        } else {
+            alert(data.message || 'Error redeeming reward');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error redeeming reward');
+    });
+}
+
+function cancelRedemption(redemptionId) {
+    if (!confirm('Are you sure you want to cancel this redemption?')) return;
+
+    fetch(`/api/v1/redemptions/${redemptionId}/cancel`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Redemption cancelled successfully!');
+            location.reload();
+        } else {
+            alert(data.message || 'Error cancelling redemption');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error cancelling redemption');
+    });
+}
+
+function rateRedemption(redemptionId) {
+    document.getElementById('redemptionId').value = redemptionId;
+    document.getElementById('ratingInput').value = '';
+    document.querySelectorAll('.star-rating').forEach(s => {
+        s.classList.remove('fas');
+        s.classList.add('far');
+    });
+    new bootstrap.Modal(document.getElementById('ratingModal')).show();
+}
+
+function submitRating() {
+    const form = document.getElementById('ratingForm');
+    const formData = new FormData(form);
+    const redemptionId = formData.get('redemptionId');
+    const data = {
+        rating: parseInt(formData.get('rating')),
+        feedback: formData.get('feedback')
+    };
+
+    if (!data.rating) {
+        alert('Please select a rating');
+        return;
+    }
+
+    fetch(`/api/v1/redemptions/${redemptionId}/rate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Rating submitted successfully!');
+            location.reload();
+        } else {
+            alert(data.message || 'Error submitting rating');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error submitting rating');
+    });
+}
+</script>
+
+{{> footer}}

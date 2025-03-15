@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4f46e5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .content {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .reward-box {
+            background: #4f46e5;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .details-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+        }
+        .expiry-box {
+            background: #ffc107;
+            color: black;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4f46e5;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Reward Redemption Confirmation</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{name}},</p>
+        
+        <p>Thank you for redeeming your loyalty points! Your reward has been successfully processed.</p>
+        
+        <div class="reward-box">
+            <h2>{{rewardName}}</h2>
+            <p>Your reward is now ready to use!</p>
+        </div>
+        
+        <div class="details-box">
+            <h3>Reward Details:</h3>
+            <ul>
+                <li><strong>Reward Type:</strong> {{rewardName}}</li>
+                <li><strong>Status:</strong> Active</li>
+                <li><strong>Expiry Date:</strong> {{formatDate expiryDate}}</li>
+            </ul>
+        </div>
+        
+        <div class="expiry-box">
+            <h3>Important Notice</h3>
+            <p>Please use your reward before {{formatDate expiryDate}} to avoid expiration.</p>
+        </div>
+        
+        <p>To view all your rewards and track your points:</p>
+        <a href="{{hotelWebsite}}/loyalty/rewards" class="button">View My Rewards</a>
+        
+        <p>Need help redeeming your reward? Our concierge team is here to assist you!</p>
+    </div>
+    
+    <div class="footer" style="text-align: center; padding: 20px; font-size: 0.9em; color: #6c757d;">
+        <p>For any questions about your reward, contact us at:</p>
+        <p>Email: loyalty@hotel.com | Phone: +1-234-567-8900</p>
+        <p>© {{currentYear}} Hotel Management System. All rights reserved.</p>
+    </div>
+</body>
+</html>

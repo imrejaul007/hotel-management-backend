@@ -1,0 +1,463 @@
+{{> admin/header}}
+{{> admin/sidebar}}
+
+<div class="main-content">
+    <div class="container-fluid p-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">Guest Profile</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/admin/guests">Guests</a></li>
+                                <li class="breadcrumb-item active">{{guest.name}}</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {{#if guest.currentStay}}
+                        <button class="btn btn-warning" onclick="processCheckOut('{{guest.currentStay._id}}')">
+                            <i class="fas fa-sign-out-alt me-2"></i>Process Check-out
+                        </button>
+                        {{/if}}
+                        <button class="btn btn-primary" onclick="createBooking('{{guest._id}}')">
+                            <i class="fas fa-calendar-plus me-2"></i>New Booking
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Guest Information -->
+            <div class="col-xl-4">
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <div class="mb-4">
+                            {{#if guest.avatar}}
+                            <img src="{{guest.avatar}}" class="rounded-circle img-thumbnail" style="width: 150px;">
+                            {{else}}
+                            <div class="avatar avatar-xl">
+                                <div class="avatar-initial rounded-circle bg-primary">
+                                    {{initials guest.name}}
+                                </div>
+                            </div>
+                            {{/if}}
+                        </div>
+                        <h4 class="mb-1">{{guest.name}}</h4>
+                        <p class="text-muted mb-3">{{guest.nationality}}</p>
+                        {{#if guest.loyaltyProgram}}
+                        <div class="mb-3">
+                            <span class="badge bg-{{loyaltyColor guest.loyaltyProgram.tier}} p-2">
+                                {{guest.loyaltyProgram.tier}} Member
+                            </span>
+                        </div>
+                        {{/if}}
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="mailto:{{guest.email}}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                            <a href="tel:{{guest.phone}}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-phone"></i>
+                            </a>
+                            <button class="btn btn-outline-primary btn-sm" onclick="sendMessage('{{guest._id}}')">
+                                <i class="fas fa-comment"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <div class="row text-center">
+                            <div class="col">
+                                <h5 class="mb-0">{{guest.totalStays}}</h5>
+                                <small class="text-muted">Stays</small>
+                            </div>
+                            <div class="col">
+                                <h5 class="mb-0">${{formatNumber guest.totalSpent}}</h5>
+                                <small class="text-muted">Spent</small>
+                            </div>
+                            <div class="col">
+                                <h5 class="mb-0">{{guest.avgRating}}</h5>
+                                <small class="text-muted">Rating</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Contact Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Email</label>
+                            <div>{{guest.email}}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Phone</label>
+                            <div>{{formatPhone guest.phone}}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Address</label>
+                            <div>{{guest.address}}</div>
+                        </div>
+                        <div>
+                            <label class="form-label text-muted">ID Information</label>
+                            <div>{{guest.idType}}: {{guest.idNumber}}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Guest Preferences</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editPreferences('{{guest._id}}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Room Preferences</label>
+                            <div>{{guest.preferences.roomType}}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Dietary Requirements</label>
+                            <div>{{guest.preferences.dietary}}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Special Requests</label>
+                            <div>{{guest.preferences.specialRequests}}</div>
+                        </div>
+                        <div>
+                            <label class="form-label text-muted">Communication Preferences</label>
+                            <div>
+                                {{#each guest.preferences.communication}}
+                                <span class="badge bg-light text-dark me-1">{{this}}</span>
+                                {{/each}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-8">
+                <!-- Current Stay -->
+                {{#if guest.currentStay}}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Current Stay</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar me-3 bg-light-primary">
+                                        <i class="fas fa-bed text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted">Room</div>
+                                        <div class="h5 mb-0">{{guest.currentStay.room.number}} - {{guest.currentStay.room.type}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar me-3 bg-light-success">
+                                        <i class="fas fa-calendar text-success"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted">Duration</div>
+                                        <div class="h5 mb-0">{{formatDate guest.currentStay.checkIn}} - {{formatDate guest.currentStay.checkOut}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar me-3 bg-light-warning">
+                                        <i class="fas fa-dollar-sign text-warning"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted">Total Charges</div>
+                                        <div class="h5 mb-0">${{formatNumber guest.currentStay.totalAmount}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar me-3 bg-light-info">
+                                        <i class="fas fa-concierge-bell text-info"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted">Services</div>
+                                        <div>
+                                            {{#each guest.currentStay.services}}
+                                            <span class="badge bg-light text-dark me-1">{{this}}</span>
+                                            {{/each}}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{/if}}
+
+                <!-- Loyalty Program -->
+                {{#if guest.loyaltyProgram}}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Loyalty Program</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card border-0 bg-light h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="avatar me-3 bg-{{loyaltyColor guest.loyaltyProgram.tier}}">
+                                                <i class="fas fa-star text-white"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{guest.loyaltyProgram.tier}} Member</h6>
+                                                <small class="text-muted">Since {{formatDate guest.loyaltyProgram.enrollmentDate}}</small>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <h3 class="mb-1">{{formatNumber guest.loyaltyProgram.points}} pts</h3>
+                                            <small class="text-muted">Available Points</small>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted">Progress to Next Tier</label>
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <small>{{guest.loyaltyProgram.tier}}</small>
+                                                <small>{{guest.loyaltyProgram.nextTier}}</small>
+                                            </div>
+                                            <div class="progress" style="height: 6px;">
+                                                <div class="progress-bar bg-{{loyaltyColor guest.loyaltyProgram.tier}}" 
+                                                    style="width: {{guest.loyaltyProgram.tierProgress}}%"></div>
+                                            </div>
+                                            <small class="text-muted">
+                                                {{guest.loyaltyProgram.pointsToNextTier}} points needed for {{guest.loyaltyProgram.nextTier}}
+                                            </small>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm w-100" onclick="viewLoyaltyDetails('{{guest._id}}')">
+                                            View Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-0 bg-light h-100">
+                                    <div class="card-body">
+                                        <h6 class="mb-3">Current Benefits</h6>
+                                        {{#each loyaltyBenefits}}
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="avatar me-3 bg-white">
+                                                <i class="fas fa-{{icon}} text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <div class="mb-0">{{name}}</div>
+                                                <small class="text-muted">{{description}}</small>
+                                            </div>
+                                        </div>
+                                        {{/each}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{/if}}
+
+                <!-- Recent Activity -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Recent Activity</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            {{#each recentActivity}}
+                            <div class="timeline-item">
+                                <div class="timeline-point bg-{{type}}">
+                                    <i class="fas fa-{{icon}}"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">{{title}}</h6>
+                                    <p class="mb-0">{{description}}</p>
+                                    <small class="text-muted">{{formatDateTime date}}</small>
+                                </div>
+                            </div>
+                            {{/each}}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stay History -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Stay History</h5>
+                        <a href="/admin/guests/{{guest._id}}/stays" class="btn btn-sm btn-outline-primary">
+                            View All
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Room</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Duration</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each recentStays}}
+                                    <tr>
+                                        <td>
+                                            <div>{{room.number}} - {{room.type}}</div>
+                                            <small class="text-muted">Floor {{room.floor}}</small>
+                                        </td>
+                                        <td>{{formatDateTime checkIn}}</td>
+                                        <td>{{formatDateTime checkOut}}</td>
+                                        <td>{{stayDuration}} nights</td>
+                                        <td>${{formatNumber totalAmount}}</td>
+                                        <td>
+                                            <span class="badge bg-{{statusColor status}}">{{status}}</span>
+                                        </td>
+                                    </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Preferences Modal -->
+<div class="modal fade" id="preferencesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Guest Preferences</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="preferencesForm">
+                    <div class="mb-3">
+                        <label class="form-label">Room Type Preference</label>
+                        <select class="form-select" name="roomType">
+                            <option value="">Select Room Type</option>
+                            {{#each roomTypes}}
+                            <option value="{{this}}" {{#if (eq ../guest.preferences.roomType this)}}selected{{/if}}>
+                                {{this}}
+                            </option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dietary Requirements</label>
+                        <textarea class="form-control" name="dietary" rows="2">{{guest.preferences.dietary}}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Special Requests</label>
+                        <textarea class="form-control" name="specialRequests" rows="3">{{guest.preferences.specialRequests}}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Communication Preferences</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="communication" value="email" 
+                                {{#if (includes guest.preferences.communication "email")}}checked{{/if}}>
+                            <label class="form-check-label">Email Updates</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="communication" value="sms"
+                                {{#if (includes guest.preferences.communication "sms")}}checked{{/if}}>
+                            <label class="form-check-label">SMS Notifications</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="communication" value="phone"
+                                {{#if (includes guest.preferences.communication "phone")}}checked{{/if}}>
+                            <label class="form-check-label">Phone Calls</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="savePreferences()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Process check-out
+function processCheckOut(bookingId) {
+    window.location.href = `/admin/check-in-out/check-out/${bookingId}`;
+}
+
+// Create new booking
+function createBooking(guestId) {
+    window.location.href = `/admin/bookings/create?guest=${guestId}`;
+}
+
+// Send message to guest
+function sendMessage(guestId) {
+    window.location.href = `/admin/messages/compose?guest=${guestId}`;
+}
+
+// View loyalty program details
+function viewLoyaltyDetails(guestId) {
+    window.location.href = `/admin/guests/${guestId}/loyalty`;
+}
+
+// Edit preferences
+function editPreferences(guestId) {
+    const modal = new bootstrap.Modal(document.getElementById('preferencesModal'));
+    modal.show();
+}
+
+// Save preferences
+async function savePreferences() {
+    const form = document.getElementById('preferencesForm');
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch(`/api/guests/${guestId}/preferences`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(Object.fromEntries(formData))
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            const error = await response.json();
+            alert(error.message || 'Failed to update preferences');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while updating preferences');
+    }
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>

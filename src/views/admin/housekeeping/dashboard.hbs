@@ -1,0 +1,538 @@
+{{#extend "layout"}}
+{{#content "head"}}
+<title>Housekeeping Dashboard - Hotel Management</title>
+<link href="/assets/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+<link href="/assets/vendor/select2/select2.min.css" rel="stylesheet">
+{{/content}}
+
+{{#content "body"}}
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Housekeeping Dashboard</h1>
+        <div>
+            <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm mr-2" data-toggle="modal" data-target="#newTaskModal">
+                <i class="fas fa-plus fa-sm text-white-50"></i> New Task
+            </a>
+            <a href="/api/housekeeping/export" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
+                <i class="fas fa-download fa-sm text-white-50"></i> Export Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Total Tasks Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Tasks</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.totalTasks}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Tasks Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Tasks</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.pendingTasks}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Progress Tasks Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">In Progress</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.inProgressTasks}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-spinner fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- High Priority Tasks Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">High Priority</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.highPriorityTasks}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Tasks Table -->
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Housekeeping Tasks</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
+                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterModal">
+                                <i class="fas fa-filter fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Filter Tasks
+                            </a>
+                            <a class="dropdown-item" href="/api/housekeeping/reports/staff-performance">
+                                <i class="fas fa-chart-line fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Staff Performance
+                            </a>
+                            <a class="dropdown-item" href="/api/housekeeping/reports/room-cleaning">
+                                <i class="fas fa-chart-bar fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Room Cleaning Report
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="tasksTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Room</th>
+                                    <th>Description</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                    <th>Scheduled</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each tasks}}
+                                <tr>
+                                    <td>{{room.number}}</td>
+                                    <td>{{description}}</td>
+                                    <td>
+                                        <span class="badge badge-{{priorityColor priority}}">
+                                            {{formatCategory priority}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{statusColor status}}">
+                                            {{formatCategory status}}
+                                        </span>
+                                    </td>
+                                    <td>{{assignedTo.name}}</td>
+                                    <td>{{formatDateTime scheduledDate}}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-info" onclick="viewTask('{{_id}}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-primary" onclick="editTask('{{_id}}')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            {{#if (eq status 'pending')}}
+                                            <button type="button" class="btn btn-sm btn-success" onclick="startTask('{{_id}}')">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                            {{/if}}
+                                            {{#if (eq status 'in-progress')}}
+                                            <button type="button" class="btn btn-sm btn-success" onclick="completeTask('{{_id}}')">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            {{/if}}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Task Modal -->
+<div class="modal fade" id="newTaskModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Housekeeping Task</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="newTaskForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Room</label>
+                        <select class="form-control select2" name="room" required>
+                            {{#each rooms}}
+                            <option value="{{_id}}">Room {{number}} ({{type}})</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" name="description" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Priority</label>
+                            <select class="form-control" name="priority">
+                                <option value="normal">Normal</option>
+                                <option value="high">High</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Assigned To</label>
+                            <select class="form-control select2" name="assignedTo">
+                                {{#each staff}}
+                                <option value="{{_id}}">{{name}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Scheduled Date</label>
+                        <input type="datetime-local" class="form-control" name="scheduledDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Checklist</label>
+                        <div id="checklistItems">
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" name="checklist[]" placeholder="Checklist item">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-danger" onclick="removeChecklistItem(this)">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="addChecklistItem()">
+                            <i class="fas fa-plus"></i> Add Item
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label>Supplies Needed</label>
+                        <div id="suppliesItems">
+                            <div class="input-group mb-2">
+                                <select class="form-control select2" name="supplies[][item]">
+                                    {{#each supplies}}
+                                    <option value="{{_id}}">{{name}} ({{unit}})</option>
+                                    {{/each}}
+                                </select>
+                                <input type="number" class="form-control" name="supplies[][quantity]" placeholder="Quantity" min="1">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-danger" onclick="removeSupplyItem(this)">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="addSupplyItem()">
+                            <i class="fas fa-plus"></i> Add Supply
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="isRecurring" name="recurring[isRecurring]">
+                            <label class="custom-control-label" for="isRecurring">Recurring Task</label>
+                        </div>
+                    </div>
+                    <div id="recurringOptions" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Frequency</label>
+                                <select class="form-control" name="recurring[frequency]">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>End Date</label>
+                                <input type="date" class="form-control" name="recurring[endDate]">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Filter Tasks</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="filterForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select class="form-control" name="status">
+                            <option value="">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select class="form-control" name="priority">
+                            <option value="">All</option>
+                            <option value="high">High</option>
+                            <option value="normal">Normal</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Room</label>
+                        <select class="form-control select2" name="room">
+                            <option value="">All</option>
+                            {{#each rooms}}
+                            <option value="{{_id}}">Room {{number}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Assigned To</label>
+                        <select class="form-control select2" name="assignedTo">
+                            <option value="">All</option>
+                            {{#each staff}}
+                            <option value="{{_id}}">{{name}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" class="form-control" name="date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{/content}}
+
+{{#content "scripts"}}
+<script src="/assets/vendor/datatables/jquery.dataTables.min.js"></script>
+<script src="/assets/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+<script src="/assets/vendor/select2/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize DataTables
+        $('#tasksTable').DataTable();
+
+        // Initialize Select2
+        $('.select2').select2({
+            theme: 'bootstrap4'
+        });
+
+        // Toggle recurring options
+        $('#isRecurring').change(function() {
+            $('#recurringOptions').toggle(this.checked);
+        });
+
+        // Handle new task form submission
+        $('#newTaskForm').submit(function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+
+            // Convert checklist items to array
+            data.checklist = Array.from(formData.getAll('checklist[]'))
+                .filter(item => item)
+                .map(item => ({ item }));
+
+            // Convert supplies to array of objects
+            const supplies = [];
+            const supplyItems = formData.getAll('supplies[][item]');
+            const supplyQuantities = formData.getAll('supplies[][quantity]');
+            supplyItems.forEach((item, index) => {
+                if (item && supplyQuantities[index]) {
+                    supplies.push({
+                        item,
+                        quantity: parseInt(supplyQuantities[index])
+                    });
+                }
+            });
+            data.supplies = supplies;
+
+            // Handle recurring options
+            if (data.recurring?.isRecurring) {
+                data.recurring.daysOfWeek = [];
+                if (data.recurring.frequency === 'weekly') {
+                    const selectedDays = formData.getAll('recurring[daysOfWeek][]');
+                    data.recurring.daysOfWeek = selectedDays.map(day => parseInt(day));
+                }
+            }
+
+            $.ajax({
+                url: '/api/housekeeping',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(response) {
+                    $('#newTaskModal').modal('hide');
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert('Error creating task: ' + xhr.responseText);
+                }
+            });
+        });
+
+        // Handle filter form submission
+        $('#filterForm').submit(function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const params = new URLSearchParams(formData);
+            window.location.search = params.toString();
+        });
+    });
+
+    // Add checklist item
+    function addChecklistItem() {
+        const item = `
+            <div class="input-group mb-2">
+                <input type="text" class="form-control" name="checklist[]" placeholder="Checklist item">
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-danger" onclick="removeChecklistItem(this)">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        $('#checklistItems').append(item);
+    }
+
+    // Remove checklist item
+    function removeChecklistItem(button) {
+        $(button).closest('.input-group').remove();
+    }
+
+    // Add supply item
+    function addSupplyItem() {
+        const item = `
+            <div class="input-group mb-2">
+                <select class="form-control select2" name="supplies[][item]">
+                    {{#each supplies}}
+                    <option value="{{_id}}">{{name}} ({{unit}})</option>
+                    {{/each}}
+                </select>
+                <input type="number" class="form-control" name="supplies[][quantity]" placeholder="Quantity" min="1">
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-danger" onclick="removeSupplyItem(this)">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        const $item = $(item);
+        $('#suppliesItems').append($item);
+        $item.find('.select2').select2({
+            theme: 'bootstrap4'
+        });
+    }
+
+    // Remove supply item
+    function removeSupplyItem(button) {
+        $(button).closest('.input-group').remove();
+    }
+
+    // View task details
+    function viewTask(id) {
+        window.location.href = `/admin/housekeeping/tasks/${id}`;
+    }
+
+    // Edit task
+    function editTask(id) {
+        window.location.href = `/admin/housekeeping/tasks/${id}/edit`;
+    }
+
+    // Start task
+    function startTask(id) {
+        if (confirm('Start this task?')) {
+            $.ajax({
+                url: `/api/housekeeping/${id}`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({ status: 'in-progress' }),
+                success: function(response) {
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert('Error starting task: ' + xhr.responseText);
+                }
+            });
+        }
+    }
+
+    // Complete task
+    function completeTask(id) {
+        if (confirm('Mark this task as completed?')) {
+            $.ajax({
+                url: `/api/housekeeping/${id}`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({ status: 'completed' }),
+                success: function(response) {
+                    location.reload();
+                },
+                error: function(xhr) {
+                    alert('Error completing task: ' + xhr.responseText);
+                }
+            });
+        }
+    }
+</script>
+{{/content}}
+{{/extend}}

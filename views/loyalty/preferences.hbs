@@ -1,0 +1,198 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Stay Preferences</h6>
+                    <p class="text-sm mb-0">
+                        Customize your preferences to enhance your stay experience. These preferences will be automatically applied to your future bookings.
+                    </p>
+                </div>
+                <div class="card-body">
+                    <form action="/loyalty/preferences" method="POST">
+                        <!-- Room Preferences -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Room Preferences</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Preferred Room Type</label>
+                                    <select name="preferences[roomType]" class="form-control">
+                                        <option value="">No Preference</option>
+                                        <option value="standard" {{#if (eq loyalty.preferences.roomType 'standard')}}selected{{/if}}>Standard Room</option>
+                                        <option value="deluxe" {{#if (eq loyalty.preferences.roomType 'deluxe')}}selected{{/if}}>Deluxe Room</option>
+                                        <option value="suite" {{#if (eq loyalty.preferences.roomType 'suite')}}selected{{/if}}>Suite</option>
+                                        <option value="executive" {{#if (eq loyalty.preferences.roomType 'executive')}}selected{{/if}}>Executive Room</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Floor Preference</label>
+                                    <select name="preferences[floorPreference]" class="form-control">
+                                        <option value="">No Preference</option>
+                                        <option value="low" {{#if (eq loyalty.preferences.floorPreference 'low')}}selected{{/if}}>Lower Floor</option>
+                                        <option value="middle" {{#if (eq loyalty.preferences.floorPreference 'middle')}}selected{{/if}}>Middle Floor</option>
+                                        <option value="high" {{#if (eq loyalty.preferences.floorPreference 'high')}}selected{{/if}}>Higher Floor</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bed & Pillow Preferences -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm mt-4">Bed & Pillow Preferences</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Pillow Type</label>
+                                    <select name="preferences[pillowType]" class="form-control">
+                                        <option value="">No Preference</option>
+                                        <option value="soft" {{#if (eq loyalty.preferences.pillowType 'soft')}}selected{{/if}}>Soft</option>
+                                        <option value="medium" {{#if (eq loyalty.preferences.pillowType 'medium')}}selected{{/if}}>Medium</option>
+                                        <option value="firm" {{#if (eq loyalty.preferences.pillowType 'firm')}}selected{{/if}}>Firm</option>
+                                        <option value="memory_foam" {{#if (eq loyalty.preferences.pillowType 'memory_foam')}}selected{{/if}}>Memory Foam</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Extra Pillows/Blankets</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="preferences[extraPillows]" {{#if loyalty.preferences.extraPillows}}checked{{/if}}>
+                                        <label class="form-check-label">Request extra pillows and blankets</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dining Preferences -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm mt-4">Dining Preferences</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Dietary Restrictions</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="preferences[dietaryRestrictions][]" value="vegetarian" {{#if (includes loyalty.preferences.dietaryRestrictions 'vegetarian')}}checked{{/if}}>
+                                        <label class="form-check-label">Vegetarian</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="preferences[dietaryRestrictions][]" value="vegan" {{#if (includes loyalty.preferences.dietaryRestrictions 'vegan')}}checked{{/if}}>
+                                        <label class="form-check-label">Vegan</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="preferences[dietaryRestrictions][]" value="gluten_free" {{#if (includes loyalty.preferences.dietaryRestrictions 'gluten_free')}}checked{{/if}}>
+                                        <label class="form-check-label">Gluten Free</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="preferences[dietaryRestrictions][]" value="dairy_free" {{#if (includes loyalty.preferences.dietaryRestrictions 'dairy_free')}}checked{{/if}}>
+                                        <label class="form-check-label">Dairy Free</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Newspaper Preference</label>
+                                    <select name="preferences[newspaper]" class="form-control">
+                                        <option value="">No Newspaper</option>
+                                        <option value="local" {{#if (eq loyalty.preferences.newspaper 'local')}}selected{{/if}}>Local Newspaper</option>
+                                        <option value="international" {{#if (eq loyalty.preferences.newspaper 'international')}}selected{{/if}}>International Newspaper</option>
+                                        <option value="business" {{#if (eq loyalty.preferences.newspaper 'business')}}selected{{/if}}>Business News</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Special Requests -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm mt-4">Additional Preferences</h6>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-control-label">Special Requests</label>
+                                    <textarea name="preferences[specialRequests]" class="form-control" rows="3" placeholder="Enter any special requests or notes for your stays...">{{loyalty.preferences.specialRequests}}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-primary">Save Preferences</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Notice -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Privacy Notice</h6>
+                    <p class="text-sm mb-0">
+                        Your preferences are stored securely and will only be used to enhance your stay experience. 
+                        You can update or remove these preferences at any time. For more information, please refer to our 
+                        <a href="/privacy-policy">Privacy Policy</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation and submission handling
+document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (key.includes('[]')) {
+            // Handle array values (checkboxes)
+            const arrayKey = key.replace('[]', '');
+            if (!data[arrayKey]) {
+                data[arrayKey] = [];
+            }
+            data[arrayKey].push(value);
+        } else {
+            data[key] = value;
+        }
+    }
+
+    fetch('/loyalty/preferences', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Preferences saved successfully!');
+            location.reload();
+        } else {
+            alert(data.message || 'Error saving preferences');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving preferences');
+    });
+});
+</script>
+
+{{> footer}}

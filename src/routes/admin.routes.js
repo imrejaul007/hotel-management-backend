@@ -3,14 +3,19 @@ const router = express.Router();
 const { protect, authorize } = require('../middlewares/auth.middleware');
 const adminController = require('../controllers/admin.controller');
 const emailService = require('../services/email.service');
-const User = require('../models/user.model');
-const Booking = require('../models/booking.model');
-const Hotel = require('../models/hotel.model');
-const Guest = require('../models/guest.model');
-const Maintenance = require('../models/maintenance.model');
-const Inventory = require('../models/inventory.model');
-const Invoice = require('../models/invoice.model');
-const Transaction = require('../models/transaction.model');
+const User = require('../models/User');
+const Booking = require('../models/Booking');
+const Hotel = require('../models/Hotel');
+const Room = require('../models/Room');
+const Maintenance = require('../models/Maintenance');
+const Inventory = require('../models/Inventory');
+const Invoice = require('../models/Invoice');
+const Transaction = require('../models/Transaction');
+const adminLoyaltyController = require('../controllers/admin.loyalty.controller');
+const adminRewardsController = require('../controllers/admin.rewards.controller');
+const checkInOutController = require('../controllers/check-in-out.controller');
+const guestController = require('../controllers/guest.controller');
+const guestAnalyticsController = require('../controllers/admin/guest-analytics.controller');
 
 // Admin Dashboard
 router.get('/dashboard', protect, authorize('admin', 'manager'), adminController.getDashboard);
@@ -62,7 +67,7 @@ router.get('/billing/invoices/:id', protect, authorize('admin'), async (req, res
             transactions
         });
     } catch (error) {
-        req.flash('error', error.message);
+        // req.flash('error', error.message);
         res.redirect('/admin/billing/invoices');
     }
 });
@@ -1455,8 +1460,154 @@ router.delete('/maintenance/:id', protect, authorize('admin'), async (req, res) 
     }
 });
 
+// Loyalty Program Management Routes
+router.get('/loyalty/dashboard', protect, authorize('admin'), async (req, res) => {
+    try {
+        const stats = await adminLoyaltyController.getDashboardStats();
+        const recentActivity = await adminLoyaltyController.getRecentActivity();
+        const memberTrends = await adminLoyaltyController.getMemberTrends();
+        const topMembers = await adminLoyaltyController.getTopMembers();
 
+        res.render('admin/loyalty/dashboard', {
+            title: 'Loyalty Program Dashboard',
+            active: 'loyalty-dashboard',
+            stats,
+            recentActivity,
+            memberTrends,
+            topMembers
+        });
+    } catch (error) {
+        console.error('Error loading loyalty dashboard:', error);
+        res.status(500).render('error', { message: 'Error loading loyalty dashboard' });
+    }
+});
 
+router.get('/loyalty/members', protect, authorize('admin'), async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const searchQuery = req.query.search;
+        const tierFilter = req.query.tier;
+        const statusFilter = req.query.status;
+
+        const query = {};
+        if (searchQuery) {
+            query.$or = [
+                { name: { $regex: searchQuery, $options: 'i' } },
+                { email: { $regex: searchQuery, $options: 'i' } },
+                { phone: { $regex: searchQuery, $options: 'i' } }
+            ];
+        }
+        if (tierFilter) query.currentTier = tierFilter;
+        if (statusFilter) query.status = statusFilter;
+
+        const members = await User.find(query)
+            .where('role').equals('member')
+            .populate('currentTier')
+            .sort({ points: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        const stats = await adminLoyaltyController.getMemberStats();
+        const memberGrowth = await adminLoyaltyController.getMemberGrowth();
+        const topEarners = await adminLoyaltyController.getTopPointEarners();
+
+        res.render('admin/loyalty/members', {
+            title: 'Loyalty Members',
+            active: 'loyalty-members',
+            members,
+            stats,
+            memberGrowth,
+            topEarners
+        });
+    } catch (error) {
+        console.error('Error loading loyalty members:', error);
+        res.status(500).render('error', { message: 'Error loading loyalty members' });
+    }
+});
+
+router.get('/loyalty/rewards', protect, authorize('admin'), async (req, res) => {
+    try {
+        const rewards = await adminRewardsController.getAllRewards();
+        const categories = await adminRewardsController.getCategories();
+        const stats = await adminRewardsController.getRewardStats();
+        const popularRewards = await adminRewardsController.getPopularRewards();
+        const recentRedemptions = await adminRewardsController.getRecentRedemptions();
+
+        res.render('admin/loyalty/rewards', {
+            title: 'Loyalty Rewards',
+            active: 'loyalty-rewards',
+            rewards,
+            categories,
+            stats,
+            popularRewards,
+            recentRedemptions
+        });
+    } catch (error) {
+        console.error('Error loading loyalty rewards:', error);
+        res.status(500).render('error', { message: 'Error loading loyalty rewards' });
+    }
+});
+
+router.get('/loyalty/tiers', protect, authorize('admin'), async (req, res) => {
+    try {
+        const tiers = await Tier.find().sort({ minimumPoints: 1 });
+        const stats = await adminLoyaltyController.getTierStats();
+        const upgradeCandidates = await adminLoyaltyController.getUpgradeCandidates();
+
+        res.render('admin/loyalty/tiers', {
+            title: 'Loyalty Tiers',
+            active: 'loyalty-tiers',
+            tiers,
+            stats,
+            upgradeCandidates,
+            tierDistributionLabels: tiers.map(tier => tier.name),
+            tierDistributionData: tiers.map(tier => tier.memberCount),
+            tierColors: tiers.map(tier => tier.color)
+        });
+    } catch (error) {
+        console.error('Error loading loyalty tiers:', error);
+        res.status(500).render('error', { message: 'Error loading loyalty tiers' });
+    }
+});
+
+router.get('/loyalty/referrals', protect, authorize('admin'), async (req, res) => {
+    try {
+        const stats = await adminLoyaltyController.getReferralStats();
+        const topReferrers = await adminLoyaltyController.getTopReferrers();
+        const recentReferrals = await Referral.find()
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .populate('referrerId', 'name email')
+            .populate('refereeId', 'name email');
+
+        const monthlyTrends = await adminLoyaltyController.getMonthlyReferralTrends();
+        const settings = await adminLoyaltyController.getReferralSettings();
+
+        res.render('admin/loyalty/referrals', {
+            title: 'Referral Management',
+            active: 'loyalty-referrals',
+            stats,
+            topReferrers,
+            recentReferrals,
+            monthlyTrends,
+            settings
+        });
+    } catch (error) {
+        console.error('Error loading referral management:', error);
+        res.status(500).render('error', { message: 'Error loading referral management' });
+    }
+});
+
+// Reward Management Routes
+router.get('/loyalty/rewards', protect, authorize('admin'), adminRewardsController.getRewardsStats);
+router.get('/loyalty/rewards/:id', protect, authorize('admin'), adminRewardsController.getReward);
+router.post('/loyalty/rewards', protect, authorize('admin'), adminRewardsController.createReward);
+router.put('/loyalty/rewards/:id', protect, authorize('admin'), adminRewardsController.updateReward);
+router.post('/loyalty/rewards/:id/toggle', protect, authorize('admin'), adminRewardsController.toggleReward);
+router.get('/loyalty/rewards/export-redemptions', protect, authorize('admin'), adminRewardsController.exportRedemptions);
+
+// Hotels routes
 router.get('/hotels', protect, authorize('admin'), async (req, res) => {
     try {
         const hotels = await Hotel.find({});
@@ -1473,6 +1624,30 @@ router.get('/hotels', protect, authorize('admin'), async (req, res) => {
     }
 });
 
+// Check-in/out Routes
+router.get('/check-in-out', protect, authorize('admin'), checkInOutController.getDashboard);
+router.post('/check-in-out/check-in/:bookingId', protect, authorize('admin'), checkInOutController.processCheckIn);
+router.post('/check-in-out/check-out/:bookingId', protect, authorize('admin'), checkInOutController.processCheckOut);
+router.get('/check-in-out/check-in/:bookingId', protect, authorize('admin'), checkInOutController.getCheckInDetails);
+router.get('/check-in-out/check-out/:bookingId', protect, authorize('admin'), checkInOutController.getCheckOutDetails);
+
+// Guest Management Routes
+router.get('/guests', protect, authorize('admin'), guestController.getDashboard);
+router.post('/guests', protect, authorize('admin'), guestController.createGuest);
+router.get('/guests/:id', protect, authorize('admin'), guestController.getGuestProfile);
+router.get('/guests/:id/stays', protect, authorize('admin'), guestController.getGuestStays);
+router.get('/guests/:id/preferences', protect, authorize('admin'), guestController.getGuestPreferences);
+
+// Guest Analytics Routes
+router.get('/guests/analytics', protect, authorize('admin'), guestAnalyticsController.getAnalytics);
+router.get('/guests/analytics/export', protect, authorize('admin'), guestAnalyticsController.exportAnalytics);
+router.get('/guests/analytics/segments/:segmentId', protect, authorize('admin'), guestAnalyticsController.getSegmentDetails);
+
+// Guest Profile Routes
+router.get('/guests/:id', protect, authorize('admin'), guestController.getGuestProfile);
+router.put('/guests/:id/preferences', protect, authorize('admin'), guestController.updateGuestPreferences);
+router.get('/guests/:id/loyalty', protect, authorize('admin'), guestController.getLoyaltyDetails);
+router.get('/guests/:id/stays', protect, authorize('admin'), guestController.getStayHistory);
 
 // Helper functions for UI
 function getPriorityColor(priority) {

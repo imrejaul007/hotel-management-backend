@@ -1,0 +1,161 @@
+{{#if error}}
+<div class="alert alert-danger">{{error}}</div>
+{{/if}}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Guest Check-Out</h5>
+                        <a href="/bookings" class="btn btn-secondary btn-sm">Back to Bookings</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form action="/check-in-out/check-out/{{checkInOut.bookingId._id}}" method="POST">
+                        <!-- Booking Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Booking Information</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Booking Reference</label>
+                                    <input type="text" class="form-control" value="{{checkInOut.bookingId.reference}}" disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Room Number</label>
+                                    <input type="text" class="form-control" value="{{checkInOut.roomId.number}}" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Guest Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Guest Information</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Guest Name</label>
+                                    <input type="text" class="form-control" value="{{checkInOut.guestId.name}}" disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Check-In Time</label>
+                                    <input type="text" class="form-control" value="{{formatDate checkInOut.checkInTime}}" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Room Inspection -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Room Inspection</h6>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="roomChecked" required>
+                                    <label class="form-check-label" for="roomChecked">
+                                        Room has been inspected for damages and inventory
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="keyReturned" required>
+                                    <label class="form-check-label" for="keyReturned">
+                                        Key card returned (Card #: {{checkInOut.keyCardNumber}})
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Charges -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Additional Charges</h6>
+                                <div id="additionalCharges">
+                                    <div class="row charge-entry mb-3">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-control-label">Description</label>
+                                                <input type="text" name="charges[0][description]" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="form-control-label">Amount</label>
+                                                <input type="number" name="charges[0][amount]" class="form-control" step="0.01">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addChargeEntry()">
+                                    Add Additional Charge
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Check-Out Notes</h6>
+                                <div class="form-group">
+                                    <textarea name="notes" class="form-control" rows="3" placeholder="Enter any notes about the check-out process..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-primary">Complete Check-Out</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let chargeCount = 1;
+
+function addChargeEntry() {
+    const chargeHtml = `
+        <div class="row charge-entry mb-3">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-control-label">Description</label>
+                    <input type="text" name="charges[${chargeCount}][description]" class="form-control">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-control-label">Amount</label>
+                    <input type="number" name="charges[${chargeCount}][amount]" class="form-control" step="0.01">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label class="form-control-label">&nbsp;</label>
+                    <button type="button" class="btn btn-danger btn-sm form-control" onclick="removeChargeEntry(this)">
+                        Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('additionalCharges').insertAdjacentHTML('beforeend', chargeHtml);
+    chargeCount++;
+}
+
+function removeChargeEntry(button) {
+    button.closest('.charge-entry').remove();
+}
+</script>

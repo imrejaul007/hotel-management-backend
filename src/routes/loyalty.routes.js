@@ -3,9 +3,13 @@ const router = express.Router();
 const { authenticateUser } = require('../middleware/auth');
 const Loyalty = require('../models/Loyalty');
 const Reward = require('../models/Reward');
+const loyaltyController = require('../controllers/loyalty.controller');
+
+// Protect all routes
+router.use(authenticateUser);
 
 // Get user's loyalty info
-router.get('/my-points', authenticateUser, async (req, res) => {
+router.get('/my-points', async (req, res) => {
     try {
         let loyalty = await Loyalty.findOne({ user: req.user._id });
         
@@ -26,7 +30,7 @@ router.get('/my-points', authenticateUser, async (req, res) => {
 });
 
 // Get points history
-router.get('/points-history', authenticateUser, async (req, res) => {
+router.get('/points-history', async (req, res) => {
     try {
         const loyalty = await Loyalty.findOne({ user: req.user._id })
             .populate('pointsHistory.reference');
@@ -51,7 +55,7 @@ router.get('/points-history', authenticateUser, async (req, res) => {
 });
 
 // Get available rewards
-router.get('/rewards', authenticateUser, async (req, res) => {
+router.get('/rewards', async (req, res) => {
     try {
         const loyalty = await Loyalty.findOne({ user: req.user._id });
         const rewards = await Reward.find({ 
@@ -72,7 +76,7 @@ router.get('/rewards', authenticateUser, async (req, res) => {
 });
 
 // Redeem a reward
-router.post('/redeem/:rewardId', authenticateUser, async (req, res) => {
+router.post('/redeem/:rewardId', async (req, res) => {
     try {
         const reward = await Reward.findById(req.params.rewardId);
         if (!reward || !reward.isActive) {
@@ -130,7 +134,7 @@ router.post('/redeem/:rewardId', authenticateUser, async (req, res) => {
 });
 
 // Get user's redeemed rewards
-router.get('/my-rewards', authenticateUser, async (req, res) => {
+router.get('/my-rewards', async (req, res) => {
     try {
         const rewards = await Reward.find({
             'redemptions.user': req.user._id
@@ -160,5 +164,20 @@ router.get('/my-rewards', authenticateUser, async (req, res) => {
         });
     }
 });
+
+// Get loyalty program details
+router.get('/details', loyaltyController.getLoyaltyDetails);
+
+// Enroll in loyalty program
+router.post('/enroll', loyaltyController.enrollInProgram);
+
+// Update preferences
+router.put('/preferences', loyaltyController.updatePreferences);
+
+// Redeem points for reward
+router.post('/redeem', loyaltyController.redeemReward);
+
+// Get available rewards
+router.get('/available-rewards', loyaltyController.getAvailableRewards);
 
 module.exports = router;

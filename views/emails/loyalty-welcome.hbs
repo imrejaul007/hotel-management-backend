@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4f46e5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .content {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .tier-box {
+            background: #4f46e5;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .benefits-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+        }
+        .referral-box {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4f46e5;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome to Our Loyalty Program!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{name}},</p>
+        
+        <p>Welcome to our exclusive loyalty program! We're excited to have you join our community of valued guests.</p>
+        
+        <div class="tier-box">
+            <h2>Your Current Tier: {{membershipTier}}</h2>
+            <p>Start earning points with every stay and unlock amazing rewards!</p>
+        </div>
+        
+        <div class="benefits-box">
+            <h3>Your Benefits Include:</h3>
+            <ul>
+                <li>Earn points on every stay</li>
+                <li>Room upgrades (subject to availability)</li>
+                <li>Early check-in and late check-out options</li>
+                <li>Special member-only rates</li>
+                <li>Exclusive access to seasonal promotions</li>
+            </ul>
+        </div>
+        
+        <div class="referral-box">
+            <h3>Share the Joy!</h3>
+            <p>Invite your friends and family using your unique referral code:</p>
+            <h2>{{referralCode}}</h2>
+            <p>You'll earn 1,000 bonus points for each successful referral!</p>
+        </div>
+        
+        <p>Download our mobile app to track your points, view rewards, and manage your preferences:</p>
+        <a href="{{hotelWebsite}}/app" class="button">Download App</a>
+        
+        <p>We look forward to rewarding your loyalty and making your stays even more special!</p>
+    </div>
+    
+    <div class="footer" style="text-align: center; padding: 20px; font-size: 0.9em; color: #6c757d;">
+        <p>For any questions about our loyalty program, contact us at:</p>
+        <p>Email: loyalty@hotel.com | Phone: +1-234-567-8900</p>
+        <p>© {{currentYear}} Hotel Management System. All rights reserved.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #6f42c1;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+        }
+        .upgrade-details {
+            background-color: white;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .tier {
+            font-size: 24px;
+            color: #6f42c1;
+            font-weight: bold;
+        }
+        .points {
+            font-size: 20px;
+            color: #28a745;
+            font-weight: bold;
+        }
+        .benefits {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .benefit-item {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        .benefit-item:before {
+            content: '✓';
+            color: #28a745;
+            position: absolute;
+            left: 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #6f42c1;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .confetti {
+            text-align: center;
+            font-size: 30px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Congratulations on Your Tier Upgrade! 🎉</h2>
+    </div>
+    
+    <div class="content">
+        <div class="confetti">
+            🎊 🌟 🎊
+        </div>
+
+        <p>Dear {{name}},</p>
+        
+        <p>Fantastic news! Your loyalty and continued support have earned you an upgrade to our <span class="tier">{{newTier}}</span> tier!</p>
+        
+        <div class="upgrade-details">
+            <h3>Upgrade Details:</h3>
+            <p>Previous Tier: {{oldTier}}</p>
+            <p>New Tier: <span class="tier">{{newTier}}</span></p>
+            {{#if bonusPoints}}
+            <p>Upgrade Bonus: <span class="points">{{bonusPoints}} points</span></p>
+            {{/if}}
+        </div>
+
+        <div class="benefits">
+            <h3>Your New Benefits Include:</h3>
+            {{#each benefits}}
+            <div class="benefit-item">{{this}}</div>
+            {{/each}}
+        </div>
+
+        <p>Visit your dashboard to explore all your new benefits and exclusive rewards!</p>
+        
+        <div style="text-align: center;">
+            <a href="{{dashboardUrl}}" class="button">View Your Benefits</a>
+        </div>
+        
+        <div class="footer">
+            <p>Thank you for your continued loyalty!</p>
+            <p>Keep enjoying the perks of being a valued {{newTier}} member.</p>
+        </div>
+
+        <div class="confetti">
+            🎊 🌟 🎊
+        </div>
+    </div>
+</body>
+</html>

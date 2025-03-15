@@ -1,0 +1,380 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <!-- Campaign Stats -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Campaigns</p>
+                                <h5 class="font-weight-bolder">{{stats.totalCampaigns}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.activeCampaigns}}</span>
+                                    active
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="ni ni-email-83 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Open Rate</p>
+                                <h5 class="font-weight-bolder">{{stats.openRate}}%</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-{{stats.openRateTrend.color}} text-sm font-weight-bolder">{{stats.openRateTrend.value}}%</span>
+                                    vs avg
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="ni ni-send text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Click Rate</p>
+                                <h5 class="font-weight-bolder">{{stats.clickRate}}%</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-{{stats.clickRateTrend.color}} text-sm font-weight-bolder">{{stats.clickRateTrend.value}}%</span>
+                                    vs avg
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="ni ni-curved-next text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Recipients</p>
+                                <h5 class="font-weight-bolder">{{stats.totalRecipients}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.deliveryRate}}%</span>
+                                    delivery rate
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                                <i class="ni ni-world text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaigns List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6>Email Campaigns</h6>
+                        <button class="btn btn-primary btn-sm mb-0" data-bs-toggle="modal" data-bs-target="#newCampaignModal">
+                            <i class="fas fa-plus"></i> New Campaign
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Campaign</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Recipients</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Open Rate</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Click Rate</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Sent Date</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each campaigns}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{name}}</h6>
+                                                <p class="text-xs text-secondary mb-0">{{subject}}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-{{statusColor status}}">{{status}}</span>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{recipientCount}}</p>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="text-sm font-weight-bold me-2">{{openRate}}%</span>
+                                            <div class="progress" style="width: 100px">
+                                                <div class="progress-bar bg-gradient-info" role="progressbar" 
+                                                    aria-valuenow="{{openRate}}" aria-valuemin="0" aria-valuemax="100" 
+                                                    style="width: {{openRate}}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="text-sm font-weight-bold me-2">{{clickRate}}%</span>
+                                            <div class="progress" style="width: 100px">
+                                                <div class="progress-bar bg-gradient-success" role="progressbar" 
+                                                    aria-valuenow="{{clickRate}}" aria-valuemin="0" aria-valuemax="100" 
+                                                    style="width: {{clickRate}}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{formatDateTime sentAt}}</p>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-link text-secondary mb-0" onclick="viewCampaignStats('{{_id}}')">
+                                                <i class="fas fa-chart-line fa-fw"></i>
+                                            </button>
+                                            <button class="btn btn-link text-secondary mb-0" onclick="duplicateCampaign('{{_id}}')">
+                                                <i class="fas fa-copy fa-fw"></i>
+                                            </button>
+                                            {{#if (eq status "draft")}}
+                                            <button class="btn btn-link text-secondary mb-0" onclick="editCampaign('{{_id}}')">
+                                                <i class="fas fa-edit fa-fw"></i>
+                                            </button>
+                                            {{/if}}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card z-index-2">
+                <div class="card-header pb-0">
+                    <h6>Campaign Performance Trends</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="chart">
+                        <canvas id="campaignChart" class="chart-canvas" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Top Performing Campaigns</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="timeline timeline-one-side">
+                        {{#each topCampaigns}}
+                        <div class="timeline-block mb-3">
+                            <span class="timeline-step">
+                                <i class="ni ni-trophy text-success text-gradient"></i>
+                            </span>
+                            <div class="timeline-content">
+                                <h6 class="text-dark text-sm font-weight-bold mb-0">{{name}}</h6>
+                                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                                    {{openRate}}% open rate | {{clickRate}}% click rate
+                                </p>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Campaign Modal -->
+<div class="modal fade" id="newCampaignModal" tabindex="-1" role="dialog" aria-labelledby="newCampaignModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newCampaignModalLabel">New Email Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newCampaignForm">
+                    <div class="form-group">
+                        <label>Campaign Name</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject Line</label>
+                        <input type="text" class="form-control" name="subject" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Template</label>
+                        <select class="form-control" name="template" required>
+                            <option value="promotion">Promotion</option>
+                            <option value="newsletter">Newsletter</option>
+                            <option value="event">Event</option>
+                            <option value="loyalty">Loyalty Program</option>
+                            <option value="seasonal">Seasonal</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Audience</label>
+                        <select class="form-control" name="targetAudience" required>
+                            <option value="all_guests">All Guests</option>
+                            <option value="loyalty_members">Loyalty Members</option>
+                            <option value="recent_guests">Recent Guests</option>
+                            <option value="inactive_guests">Inactive Guests</option>
+                            <option value="custom">Custom Segment</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Content</label>
+                        <textarea class="form-control" name="content" rows="10" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Schedule Send</label>
+                        <input type="datetime-local" class="form-control" name="scheduledDate">
+                        <small class="text-muted">Leave blank to send immediately</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-info" onclick="previewCampaign()">Preview</button>
+                <button type="button" class="btn btn-primary" onclick="createCampaign()">Create Campaign</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize campaign performance chart
+const ctx = document.getElementById('campaignChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{{json chartData.labels}}},
+        datasets: [
+            {
+                label: 'Open Rate',
+                data: {{{json chartData.openRates}}},
+                borderColor: '#5e72e4',
+                tension: 0.4,
+                fill: false
+            },
+            {
+                label: 'Click Rate',
+                data: {{{json chartData.clickRates}}},
+                borderColor: '#2dce89',
+                tension: 0.4,
+                fill: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+async function createCampaign() {
+    try {
+        const form = document.getElementById('newCampaignForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        const response = await fetch('/api/marketing/campaigns', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Error creating campaign');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error creating campaign');
+    }
+}
+
+function previewCampaign() {
+    // Implement campaign preview functionality
+}
+
+function viewCampaignStats(id) {
+    // Implement campaign statistics view
+}
+
+function duplicateCampaign(id) {
+    // Implement campaign duplication
+}
+
+function editCampaign(id) {
+    // Implement campaign editing
+}
+</script>
+
+{{> footer}}

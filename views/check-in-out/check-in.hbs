@@ -1,0 +1,167 @@
+{{#if error}}
+<div class="alert alert-danger">{{error}}</div>
+{{/if}}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Guest Check-In</h5>
+                        <a href="/bookings" class="btn btn-secondary btn-sm">Back to Bookings</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form action="/check-in-out/check-in/{{booking._id}}" method="POST">
+                        <!-- Booking Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Booking Information</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Booking Reference</label>
+                                    <input type="text" class="form-control" value="{{booking.reference}}" disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Room Number</label>
+                                    <input type="text" class="form-control" value="{{booking.roomId.number}}" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Guest Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Primary Guest Information</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Guest Name</label>
+                                    <input type="text" class="form-control" value="{{booking.guestId.name}}" disabled>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Email</label>
+                                    <input type="email" class="form-control" value="{{booking.guestId.email}}" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Guests -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Additional Guests</h6>
+                                <div id="additionalGuests">
+                                    <div class="row guest-entry mb-3">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="form-control-label">Name</label>
+                                                <input type="text" name="additionalGuests[0][name]" class="form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="form-control-label">ID Type</label>
+                                                <select name="additionalGuests[0][idType]" class="form-control" required>
+                                                    <option value="passport">Passport</option>
+                                                    <option value="drivers_license">Driver's License</option>
+                                                    <option value="national_id">National ID</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label class="form-control-label">ID Number</label>
+                                                <input type="text" name="additionalGuests[0][idNumber]" class="form-control" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addGuestEntry()">
+                                    Add Another Guest
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Vehicle Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Vehicle Information</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">License Plate</label>
+                                    <input type="text" name="vehicleInfo[plateNumber]" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-control-label">Parking Spot</label>
+                                    <input type="text" name="vehicleInfo[parkingSpot]" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Special Requests -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-sm">Special Requests</h6>
+                                <div class="form-group">
+                                    <textarea name="specialRequests" class="form-control" rows="3" placeholder="Enter any special requests..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <button type="submit" class="btn btn-primary">Complete Check-In</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let guestCount = 1;
+
+function addGuestEntry() {
+    const guestHtml = `
+        <div class="row guest-entry mb-3">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-control-label">Name</label>
+                    <input type="text" name="additionalGuests[${guestCount}][name]" class="form-control" required>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-control-label">ID Type</label>
+                    <select name="additionalGuests[${guestCount}][idType]" class="form-control" required>
+                        <option value="passport">Passport</option>
+                        <option value="drivers_license">Driver's License</option>
+                        <option value="national_id">National ID</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="form-control-label">ID Number</label>
+                    <input type="text" name="additionalGuests[${guestCount}][idNumber]" class="form-control" required>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('additionalGuests').insertAdjacentHTML('beforeend', guestHtml);
+    guestCount++;
+}
+</script>

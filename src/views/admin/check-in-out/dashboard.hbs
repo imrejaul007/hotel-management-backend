@@ -1,0 +1,329 @@
+{{> admin/header}}
+{{> admin/sidebar}}
+
+<div class="main-content">
+    <div class="container-fluid p-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">Check-in / Check-out</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item active">Check-in/out</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary active" onclick="filterBookings('today')">Today</button>
+                            <button class="btn btn-outline-secondary" onclick="filterBookings('tomorrow')">Tomorrow</button>
+                            <button class="btn btn-outline-secondary" onclick="filterBookings('week')">This Week</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-2">Expected Check-ins</h6>
+                                <h4 class="mb-0">{{stats.expectedCheckins}}</h4>
+                                <small class="text-muted">Today</small>
+                            </div>
+                            <div class="avatar bg-light-primary">
+                                <i class="fas fa-sign-in-alt text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-2">Expected Check-outs</h6>
+                                <h4 class="mb-0">{{stats.expectedCheckouts}}</h4>
+                                <small class="text-muted">Today</small>
+                            </div>
+                            <div class="avatar bg-light-warning">
+                                <i class="fas fa-sign-out-alt text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-2">Current Stays</h6>
+                                <h4 class="mb-0">{{stats.currentStays}}</h4>
+                                <small class="text-muted">Active guests</small>
+                            </div>
+                            <div class="avatar bg-light-success">
+                                <i class="fas fa-bed text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div>
+                                <h6 class="text-muted mb-2">Available Rooms</h6>
+                                <h4 class="mb-0">{{stats.availableRooms}}</h4>
+                                <small class="text-muted">Ready for check-in</small>
+                            </div>
+                            <div class="avatar bg-light-info">
+                                <i class="fas fa-door-open text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check-in/out Tabs -->
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#checkins">
+                            <i class="fas fa-sign-in-alt me-2"></i>Check-ins
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#checkouts">
+                            <i class="fas fa-sign-out-alt me-2"></i>Check-outs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#current">
+                            <i class="fas fa-bed me-2"></i>Current Stays
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Check-ins Tab -->
+                    <div class="tab-pane fade show active" id="checkins">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Guest</th>
+                                        <th>Booking ID</th>
+                                        <th>Room</th>
+                                        <th>Check-in Time</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each checkins}}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar me-2">
+                                                    {{#if user.avatar}}
+                                                    <img src="{{user.avatar}}" alt="Avatar">
+                                                    {{else}}
+                                                    <div class="avatar-initial">{{initials user.name}}</div>
+                                                    {{/if}}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{user.name}}</h6>
+                                                    <small class="text-muted">{{user.email}}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><a href="/admin/bookings/{{_id}}">#{{bookingId}}</a></td>
+                                        <td>{{room.number}} - {{room.type}}</td>
+                                        <td>{{formatTime checkIn}}</td>
+                                        <td>
+                                            <span class="badge bg-{{statusColor status}}">{{status}}</span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-primary btn-sm" onclick="processCheckIn('{{_id}}')">
+                                                Check-in
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Check-outs Tab -->
+                    <div class="tab-pane fade" id="checkouts">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Guest</th>
+                                        <th>Booking ID</th>
+                                        <th>Room</th>
+                                        <th>Check-out Time</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each checkouts}}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar me-2">
+                                                    {{#if user.avatar}}
+                                                    <img src="{{user.avatar}}" alt="Avatar">
+                                                    {{else}}
+                                                    <div class="avatar-initial">{{initials user.name}}</div>
+                                                    {{/if}}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{user.name}}</h6>
+                                                    <small class="text-muted">{{user.email}}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><a href="/admin/bookings/{{_id}}">#{{bookingId}}</a></td>
+                                        <td>{{room.number}} - {{room.type}}</td>
+                                        <td>{{formatTime checkOut}}</td>
+                                        <td>
+                                            <span class="badge bg-{{statusColor status}}">{{status}}</span>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-warning btn-sm" onclick="processCheckOut('{{_id}}')">
+                                                Check-out
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Current Stays Tab -->
+                    <div class="tab-pane fade" id="current">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Guest</th>
+                                        <th>Room</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Duration</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each currentStays}}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar me-2">
+                                                    {{#if user.avatar}}
+                                                    <img src="{{user.avatar}}" alt="Avatar">
+                                                    {{else}}
+                                                    <div class="avatar-initial">{{initials user.name}}</div>
+                                                    {{/if}}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{user.name}}</h6>
+                                                    <small class="text-muted">{{user.email}}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{room.number}} - {{room.type}}</td>
+                                        <td>{{formatDateTime checkIn}}</td>
+                                        <td>{{formatDateTime checkOut}}</td>
+                                        <td>{{stayDuration}} nights</td>
+                                        <td>
+                                            <span class="badge bg-{{statusColor status}}">{{status}}</span>
+                                        </td>
+                                    </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Filter bookings based on date range
+function filterBookings(range) {
+    window.location.href = `/admin/check-in-out?range=${range}`;
+}
+
+// Process check-in
+async function processCheckIn(bookingId) {
+    try {
+        const response = await fetch(`/api/check-in-out/check-in/${bookingId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            const error = await response.json();
+            alert(error.message || 'Failed to process check-in');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while processing check-in');
+    }
+}
+
+// Process check-out
+async function processCheckOut(bookingId) {
+    try {
+        const response = await fetch(`/api/check-in-out/check-out/${bookingId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            const error = await response.json();
+            alert(error.message || 'Failed to process check-out');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while processing check-out');
+    }
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>

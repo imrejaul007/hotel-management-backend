@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #f8f9fa;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .benefits {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            font-size: 12px;
+            color: #666;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to Our Loyalty Program!</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{guest.name}},</p>
+            
+            <p>Welcome to our exclusive loyalty program! We're thrilled to have you as a member of our {{tier}} tier.</p>
+            
+            <div class="benefits">
+                <h3>Your {{tier}} Benefits:</h3>
+                <ul>
+                    {{#each benefits}}
+                    <li>{{this.name}} - {{this.description}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            
+            <p>Your current points balance: <strong>{{points}} points</strong></p>
+            
+            <p>Start earning points with every stay and enjoy exclusive benefits:</p>
+            <ul>
+                <li>Earn {{pointsMultiplier}}x points for every dollar spent</li>
+                <li>Access to member-only rates and promotions</li>
+                <li>Priority check-in and late check-out</li>
+                <li>Special amenities during your stay</li>
+            </ul>
+            
+            <a href="{{dashboardUrl}}" class="button">View Your Account</a>
+            
+            <p>Thank you for choosing us. We look forward to making your stays even more rewarding!</p>
+        </div>
+        
+        <div class="footer">
+            <p>This email was sent to {{guest.email}}. To update your email preferences, click <a href="{{preferencesUrl}}">here</a>.</p>
+        </div>
+    </div>
+</body>
+</html>

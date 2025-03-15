@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #dc3545;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .content {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+        }
+        .priority-high {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .priority-normal {
+            background-color: #ffc107;
+            color: black;
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #0d6efd;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Room Cleaning Request</h1>
+    </div>
+    
+    <div class="content">
+        <div class="info-box">
+            <h3>Room Details:</h3>
+            <p><strong>Room Number:</strong> {{roomNumber}}</p>
+            <p><strong>Cleaning Type:</strong> {{cleaningType}}</p>
+            <p><strong>Priority:</strong> 
+                {{#if (eq priority 'High')}}
+                <span class="priority-high">High Priority</span>
+                {{else}}
+                <span class="priority-normal">Normal Priority</span>
+                {{/if}}
+            </p>
+        </div>
+        
+        {{#if (eq cleaningType 'checkout')}}
+        <div class="info-box">
+            <h3>Checkout Cleaning Requirements:</h3>
+            <ul>
+                <li>Complete room sanitization</li>
+                <li>Change all linens and towels</li>
+                <li>Restock all amenities</li>
+                <li>Deep clean bathroom</li>
+                <li>Check and report any damages</li>
+                <li>Verify all items in inventory checklist</li>
+            </ul>
+        </div>
+        {{else}}
+        <div class="info-box">
+            <h3>Regular Cleaning Requirements:</h3>
+            <ul>
+                <li>Make bed and change towels if needed</li>
+                <li>Clean bathroom and surfaces</li>
+                <li>Empty trash bins</li>
+                <li>Vacuum/sweep floors</li>
+                <li>Restock basic amenities</li>
+            </ul>
+        </div>
+        {{/if}}
+        
+        <p>Please mark the room as clean in the system once completed.</p>
+        
+        <a href="{{hotelWebsite}}/housekeeping/tasks" class="button">View Task Details</a>
+    </div>
+    
+    <div class="footer" style="text-align: center; padding: 20px; font-size: 0.9em; color: #6c757d;">
+        <p>This is an automated message from the Hotel Management System.</p>
+        <p>© {{currentYear}} Hotel Management System. All rights reserved.</p>
+    </div>
+</body>
+</html>

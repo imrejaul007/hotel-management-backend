@@ -1,0 +1,609 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <!-- Inventory Stats -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Items</p>
+                                <h5 class="font-weight-bolder">{{stats.totalItems}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-{{stats.itemsTrend.color}} text-sm font-weight-bolder">{{stats.itemsTrend.value}}%</span>
+                                    vs last month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="ni ni-box-2 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Value</p>
+                                <h5 class="font-weight-bolder">{{formatCurrency stats.totalValue}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-{{stats.valueTrend.color}} text-sm font-weight-bolder">{{stats.valueTrend.value}}%</span>
+                                    vs last month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Low Stock Items</p>
+                                <h5 class="font-weight-bolder text-warning">{{stats.lowStockItems}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-danger text-sm font-weight-bolder">{{stats.outOfStockItems}}</span>
+                                    out of stock
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="ni ni-notification-70 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Stock Movement</p>
+                                <h5 class="font-weight-bolder">{{stats.stockMovement}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.stockMovementTrend}}%</span>
+                                    this week
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                                <i class="ni ni-chart-bar-32 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alerts -->
+    <div class="row mt-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6>Low Stock Alerts</h6>
+                        <button class="btn btn-primary btn-sm" onclick="generatePurchaseOrders()">
+                            Generate Purchase Orders
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Item</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Current Stock</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Minimum Stock</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Reorder Point</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Supplier</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each lowStockItems}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{name}}</h6>
+                                                <p class="text-xs text-secondary mb-0">{{sku}}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-sm font-weight-bold {{#if (eq status 'out_of_stock')}}text-danger{{else}}text-warning{{/if}}">
+                                            {{currentStock}} {{unit}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-sm font-weight-bold">{{minimumStock}} {{unit}}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-sm font-weight-bold">{{reorderPoint}} {{unit}}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <h6 class="mb-0 text-sm">{{supplier.name}}</h6>
+                                            <p class="text-xs text-secondary mb-0">Lead time: {{supplier.leadTime}} days</p>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-link text-primary mb-0" onclick="reorderItem('{{_id}}')">
+                                            <i class="fas fa-shopping-cart fa-fw"></i> Reorder
+                                        </button>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Movement Chart -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Stock Movement</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="stockMovementChart" class="chart-canvas" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Items -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6>Inventory Items</h6>
+                        <div>
+                            <button class="btn btn-success btn-sm me-2" onclick="exportInventory()">
+                                <i class="fas fa-file-export"></i> Export
+                            </button>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newItemModal">
+                                <i class="fas fa-plus"></i> New Item
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Filters -->
+                    <div class="row mt-3">
+                        <div class="col-md-3">
+                            <select class="form-control" id="categoryFilter" onchange="filterInventory()">
+                                <option value="">All Categories</option>
+                                <option value="amenities">Amenities</option>
+                                <option value="supplies">Supplies</option>
+                                <option value="equipment">Equipment</option>
+                                <option value="furniture">Furniture</option>
+                                <option value="linens">Linens</option>
+                                <option value="cleaning">Cleaning</option>
+                                <option value="food_beverage">Food & Beverage</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-control" id="statusFilter" onchange="filterInventory()">
+                                <option value="">All Status</option>
+                                <option value="in_stock">In Stock</option>
+                                <option value="low_stock">Low Stock</option>
+                                <option value="out_of_stock">Out of Stock</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" id="searchFilter" placeholder="Search items..." onkeyup="filterInventory()">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Item</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Category</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Stock</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Value</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Last Restocked</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each items}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{name}}</h6>
+                                                <p class="text-xs text-secondary mb-0">SKU: {{sku}}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-sm font-weight-bold">{{formatCategory category}}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="text-sm font-weight-bold">{{currentStock}} {{unit}}</span>
+                                            <span class="text-xs text-secondary">Min: {{minimumStock}}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="text-sm font-weight-bold">{{formatCurrency totalValue}}</span>
+                                            <span class="text-xs text-secondary">@{{formatCurrency cost}}/{{unit}}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-sm font-weight-bold">{{formatDate lastRestocked}}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-{{statusColor status}}">{{status}}</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-link text-secondary mb-0" onclick="viewStockHistory('{{_id}}')">
+                                                <i class="fas fa-history fa-fw"></i>
+                                            </button>
+                                            <button class="btn btn-link text-secondary mb-0" onclick="adjustStock('{{_id}}')">
+                                                <i class="fas fa-plus-minus fa-fw"></i>
+                                            </button>
+                                            <button class="btn btn-link text-secondary mb-0" onclick="editItem('{{_id}}')">
+                                                <i class="fas fa-edit fa-fw"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Item Modal -->
+<div class="modal fade" id="newItemModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Inventory Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newItemForm">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select class="form-control" name="category" required>
+                            <option value="amenities">Amenities</option>
+                            <option value="supplies">Supplies</option>
+                            <option value="equipment">Equipment</option>
+                            <option value="furniture">Furniture</option>
+                            <option value="linens">Linens</option>
+                            <option value="cleaning">Cleaning</option>
+                            <option value="food_beverage">Food & Beverage</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>SKU</label>
+                        <input type="text" class="form-control" name="sku" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" name="description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit</label>
+                        <input type="text" class="form-control" name="unit" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Current Stock</label>
+                        <input type="number" class="form-control" name="currentStock" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum Stock</label>
+                        <input type="number" class="form-control" name="minimumStock" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Reorder Point</label>
+                        <input type="number" class="form-control" name="reorderPoint" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Cost per Unit</label>
+                        <input type="number" class="form-control" name="cost" required min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" class="form-control" name="location" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier</label>
+                        <input type="text" class="form-control" name="supplier.name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier Contact Person</label>
+                        <input type="text" class="form-control" name="supplier.contactPerson">
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier Email</label>
+                        <input type="email" class="form-control" name="supplier.email">
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier Phone</label>
+                        <input type="text" class="form-control" name="supplier.phone">
+                    </div>
+                    <div class="form-group">
+                        <label>Lead Time (days)</label>
+                        <input type="number" class="form-control" name="supplier.leadTime" min="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createItem()">Create Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock History Modal -->
+<div class="modal fade" id="stockHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Stock History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="stockHistoryContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Stock Modal -->
+<div class="modal fade" id="adjustStockModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adjust Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustStockForm">
+                    <input type="hidden" name="itemId">
+                    <div class="form-group">
+                        <label>Action</label>
+                        <select class="form-control" name="action" required>
+                            <option value="add">Add Stock</option>
+                            <option value="remove">Remove Stock</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" class="form-control" name="quantity" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Reason</label>
+                        <textarea class="form-control" name="reason" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitStockAdjustment()">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize stock movement chart
+const ctx = document.getElementById('stockMovementChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{{json chartData.labels}}},
+        datasets: [
+            {
+                label: 'Stock In',
+                data: {{{json chartData.stockIn}}},
+                backgroundColor: '#2dce89'
+            },
+            {
+                label: 'Stock Out',
+                data: {{{json chartData.stockOut}}},
+                backgroundColor: '#f5365c'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+function filterInventory() {
+    const category = document.getElementById('categoryFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const search = document.getElementById('searchFilter').value;
+    
+    window.location.href = `/inventory?category=${category}&status=${status}&search=${search}`;
+}
+
+async function createItem() {
+    try {
+        const form = document.getElementById('newItemForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        const response = await fetch('/api/inventory', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Error creating item');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error creating item');
+    }
+}
+
+async function viewStockHistory(itemId) {
+    try {
+        const response = await fetch(`/api/inventory/${itemId}/history`);
+        const history = await response.json();
+
+        const content = document.getElementById('stockHistoryContent');
+        content.innerHTML = `
+            <div class="table-responsive">
+                <table class="table align-items-center mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Quantity</th>
+                            <th>Reason</th>
+                            <th>Performed By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${history.map(record => `
+                            <tr>
+                                <td>${formatDate(record.date)}</td>
+                                <td>
+                                    <span class="badge badge-sm bg-gradient-${record.type === 'in' ? 'success' : 'danger'}">
+                                        ${record.type === 'in' ? 'Stock In' : 'Stock Out'}
+                                    </span>
+                                </td>
+                                <td>${record.quantity}</td>
+                                <td>${record.reason}</td>
+                                <td>${record.performedBy.name}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        $('#stockHistoryModal').modal('show');
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error fetching stock history');
+    }
+}
+
+function adjustStock(itemId) {
+    document.querySelector('#adjustStockForm input[name="itemId"]').value = itemId;
+    $('#adjustStockModal').modal('show');
+}
+
+async function submitStockAdjustment() {
+    try {
+        const form = document.getElementById('adjustStockForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        const endpoint = data.action === 'add' ? 'add-stock' : 'remove-stock';
+        const response = await fetch(`/api/inventory/${data.itemId}/${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                quantity: parseInt(data.quantity),
+                reason: data.reason
+            })
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Error adjusting stock');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error adjusting stock');
+    }
+}
+
+function editItem(id) {
+    // Implement edit item functionality
+}
+
+function exportInventory() {
+    window.location.href = '/api/inventory/export';
+}
+
+function generatePurchaseOrders() {
+    window.location.href = '/api/inventory/generate-purchase-orders';
+}
+
+// Helper function to format dates
+function formatDate(date) {
+    return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+</script>
+
+{{> footer}}

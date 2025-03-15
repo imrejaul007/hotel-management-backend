@@ -1,0 +1,439 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <!-- Marketing Stats -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Active Promotions</p>
+                                <h5 class="font-weight-bolder">{{stats.activePromotions}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.redemptionRate}}%</span>
+                                    redemption rate
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="ni ni-tag text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Revenue</p>
+                                <h5 class="font-weight-bolder">{{formatCurrency stats.totalRevenue}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.revenueGrowth}}%</span>
+                                    vs last month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Discounts</p>
+                                <h5 class="font-weight-bolder">{{formatCurrency stats.totalDiscounts}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.discountCount}}</span>
+                                    redemptions
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="ni ni-chart-bar-32 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Avg. Booking Value</p>
+                                <h5 class="font-weight-bolder">{{formatCurrency stats.avgBookingValue}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-{{stats.avgValueTrend.color}} text-sm font-weight-bolder">{{stats.avgValueTrend.percentage}}%</span>
+                                    vs baseline
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                                <i class="ni ni-chart-line text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promotions List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6>Active Promotions</h6>
+                        <button class="btn btn-primary btn-sm mb-0" data-bs-toggle="modal" data-bs-target="#newPromotionModal">
+                            <i class="fas fa-plus"></i> New Promotion
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Name</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Code</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Type</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Value</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Period</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Usage</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each promotions}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{name}}</h6>
+                                                <p class="text-xs text-secondary mb-0">{{description}}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{code}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{type}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">
+                                            {{#if (eq type "percentage")}}
+                                            {{value}}%
+                                            {{else}}
+                                            {{formatCurrency value}}
+                                            {{/if}}
+                                        </p>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{formatDate startDate}}</p>
+                                        <p class="text-xs text-secondary mb-0">{{formatDate endDate}}</p>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-{{statusColor status}}">{{status}}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="text-sm font-weight-bold me-2">{{redemptions.length}}</span>
+                                            <div class="progress" style="width: 100px">
+                                                <div class="progress-bar bg-gradient-info" role="progressbar" 
+                                                    aria-valuenow="{{usagePercentage}}" aria-valuemin="0" aria-valuemax="100" 
+                                                    style="width: {{usagePercentage}}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-link text-secondary mb-0" onclick="editPromotion('{{_id}}')">
+                                                <i class="fas fa-edit fa-fw"></i>
+                                            </button>
+                                            <button class="btn btn-link text-secondary mb-0" onclick="togglePromotion('{{_id}}', '{{status}}')">
+                                                {{#if (eq status "active")}}
+                                                <i class="fas fa-pause fa-fw"></i>
+                                                {{else}}
+                                                <i class="fas fa-play fa-fw"></i>
+                                                {{/if}}
+                                            </button>
+                                            <button class="btn btn-link text-secondary mb-0" onclick="viewPromotionDetails('{{_id}}')">
+                                                <i class="fas fa-info-circle fa-fw"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Chart -->
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card z-index-2">
+                <div class="card-header pb-0">
+                    <h6>Promotion Performance</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="chart">
+                        <canvas id="promotionChart" class="chart-canvas" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Top Performing Promotions</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="timeline timeline-one-side">
+                        {{#each topPromotions}}
+                        <div class="timeline-block mb-3">
+                            <span class="timeline-step">
+                                <i class="ni ni-trophy text-success text-gradient"></i>
+                            </span>
+                            <div class="timeline-content">
+                                <h6 class="text-dark text-sm font-weight-bold mb-0">{{name}}</h6>
+                                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                                    {{redemptions.length}} uses | {{formatCurrency totalRevenue}} revenue
+                                </p>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Promotion Modal -->
+<div class="modal fade" id="newPromotionModal" tabindex="-1" role="dialog" aria-labelledby="newPromotionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newPromotionModalLabel">New Promotion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newPromotionForm">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Code</label>
+                        <input type="text" class="form-control" name="code" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select class="form-control" name="type" required onchange="updateValueLabel()">
+                            <option value="percentage">Percentage Off</option>
+                            <option value="fixed_amount">Fixed Amount</option>
+                            <option value="free_night">Free Night</option>
+                            <option value="room_upgrade">Room Upgrade</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label id="valueLabel">Value (%)</label>
+                        <input type="number" class="form-control" name="value" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum Booking Amount</label>
+                        <input type="number" class="form-control" name="minBookingAmount">
+                    </div>
+                    <div class="form-group">
+                        <label>Maximum Discount</label>
+                        <input type="number" class="form-control" name="maxDiscount">
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="datetime-local" class="form-control" name="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="datetime-local" class="form-control" name="endDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" name="description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Terms & Conditions</label>
+                        <textarea class="form-control" name="terms"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Applicable Room Types</label>
+                        <select class="form-control" name="applicableRoomTypes" multiple>
+                            {{#each roomTypes}}
+                            <option value="{{_id}}">{{name}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>User Type</label>
+                        <select class="form-control" name="userType">
+                            <option value="all">All Users</option>
+                            <option value="new_users">New Users Only</option>
+                            <option value="loyalty_members">Loyalty Members Only</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createPromotion()">Create Promotion</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize promotion performance chart
+const ctx = document.getElementById('promotionChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{{json chartData.labels}}},
+        datasets: [
+            {
+                label: 'Revenue',
+                data: {{{json chartData.revenue}}},
+                borderColor: '#5e72e4',
+                tension: 0.4,
+                fill: false
+            },
+            {
+                label: 'Redemptions',
+                data: {{{json chartData.redemptions}}},
+                borderColor: '#2dce89',
+                tension: 0.4,
+                fill: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+function updateValueLabel() {
+    const type = document.querySelector('select[name="type"]').value;
+    const label = document.getElementById('valueLabel');
+    switch (type) {
+        case 'percentage':
+            label.textContent = 'Value (%)';
+            break;
+        case 'fixed_amount':
+            label.textContent = 'Value ($)';
+            break;
+        case 'free_night':
+            label.textContent = 'Minimum Nights Required';
+            break;
+        case 'room_upgrade':
+            label.textContent = 'Upgrade Level';
+            break;
+    }
+}
+
+async function createPromotion() {
+    try {
+        const form = document.getElementById('newPromotionForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        const response = await fetch('/api/marketing/promotions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Error creating promotion');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error creating promotion');
+    }
+}
+
+async function togglePromotion(id, currentStatus) {
+    try {
+        const newStatus = currentStatus === 'active' ? 'disabled' : 'active';
+        const response = await fetch(`/api/marketing/promotions/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            alert('Error updating promotion status');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating promotion status');
+    }
+}
+
+function editPromotion(id) {
+    // Implement edit promotion functionality
+}
+
+function viewPromotionDetails(id) {
+    // Implement view promotion details functionality
+}
+</script>
+
+{{> footer}}

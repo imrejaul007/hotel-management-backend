@@ -1,0 +1,341 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Members</p>
+                                <h5 class="font-weight-bolder">{{stats.totalMembers}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">+{{stats.newMembersThisMonth}}</span>
+                                    this month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="ni ni-circle-08 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Points Issued</p>
+                                <h5 class="font-weight-bolder">{{stats.totalPointsIssued}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.pointsIssuedThisMonth}}</span>
+                                    this month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Points Redeemed</p>
+                                <h5 class="font-weight-bolder">{{stats.totalPointsRedeemed}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-danger text-sm font-weight-bolder">{{stats.pointsRedeemedThisMonth}}</span>
+                                    this month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="ni ni-cart text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Active Rewards</p>
+                                <h5 class="font-weight-bolder">{{stats.activeRewards}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.rewardsRedeemedThisMonth}}</span>
+                                    redeemed this month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                                <i class="ni ni-trophy text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tier Distribution Chart -->
+    <div class="row mt-4">
+        <div class="col-lg-7 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Membership Tier Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="tierDistributionChart" class="chart-canvas" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-5 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Recent Activity</h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="timeline timeline-one-side">
+                        {{#each recentActivity}}
+                        <div class="timeline-block mb-3">
+                            <span class="timeline-step">
+                                <i class="ni {{icon}} text-{{color}}"></i>
+                            </span>
+                            <div class="timeline-content">
+                                <h6 class="text-dark text-sm font-weight-bold mb-0">{{description}}</h6>
+                                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{formatDate date}}</p>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Member List -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6>Loyalty Program Members</h6>
+                        <div>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#adjustPointsModal">
+                                Adjust Points
+                            </button>
+                            <button class="btn btn-success btn-sm" onclick="exportMemberData()">
+                                Export Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Member</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tier</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Points</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Lifetime Points</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Member Since</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each members}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div>
+                                                <img src="{{profileImage}}" class="avatar me-3">
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{name}}</h6>
+                                                <p class="text-sm text-secondary mb-0">{{email}}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-{{tierColor membershipTier}}">
+                                            {{membershipTier}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{points}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{lifetimePoints}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{formatDate memberSince}}</p>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-link text-dark px-3 mb-0" 
+                                                onclick="viewMemberDetails('{{_id}}')">
+                                            <i class="fas fa-eye text-dark me-2"></i>View
+                                        </button>
+                                        <button class="btn btn-link text-primary px-3 mb-0"
+                                                onclick="adjustPoints('{{_id}}', '{{name}}')">
+                                            <i class="fas fa-plus text-primary me-2"></i>Points
+                                        </button>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Points Modal -->
+<div class="modal fade" id="adjustPointsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adjust Member Points</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustPointsForm">
+                    <input type="hidden" id="memberId" name="memberId">
+                    <div class="form-group">
+                        <label>Member Name</label>
+                        <input type="text" id="memberName" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Points Adjustment</label>
+                        <input type="number" name="points" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Reason</label>
+                        <select name="reason" class="form-control" required>
+                            <option value="bonus">Bonus Points</option>
+                            <option value="correction">Point Correction</option>
+                            <option value="compensation">Service Compensation</option>
+                            <option value="promotion">Promotional Offer</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitPointsAdjustment()">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize Charts
+document.addEventListener('DOMContentLoaded', function() {
+    // Tier Distribution Chart
+    const ctx = document.getElementById('tierDistributionChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Bronze', 'Silver', 'Gold', 'Platinum'],
+            datasets: [{
+                data: [{{stats.tierDistribution.bronze}}, 
+                       {{stats.tierDistribution.silver}}, 
+                       {{stats.tierDistribution.gold}}, 
+                       {{stats.tierDistribution.platinum}}],
+                backgroundColor: [
+                    '#cd7f32',
+                    '#c0c0c0',
+                    '#ffd700',
+                    '#e5e4e2'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+
+// Member Management Functions
+function viewMemberDetails(memberId) {
+    window.location.href = `/admin/loyalty/members/${memberId}`;
+}
+
+function adjustPoints(memberId, memberName) {
+    document.getElementById('memberId').value = memberId;
+    document.getElementById('memberName').value = memberName;
+    new bootstrap.Modal(document.getElementById('adjustPointsModal')).show();
+}
+
+function submitPointsAdjustment() {
+    const form = document.getElementById('adjustPointsForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    fetch('/admin/loyalty/adjust-points', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Points adjusted successfully!');
+            location.reload();
+        } else {
+            alert(data.message || 'Error adjusting points');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error adjusting points');
+    });
+}
+
+function exportMemberData() {
+    window.location.href = '/admin/loyalty/export';
+}
+</script>
+
+{{> footer}}

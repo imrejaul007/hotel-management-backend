@@ -1,5 +1,110 @@
 const OTAChannel = require('../models/ota-channel.model');
 const OTABooking = require('../models/ota-booking.model');
+const User = require('../models/user.model');
+const Booking = require('../models/booking.model');
+const Tier = require('../models/Tier');
+const Referral = require('../models/Referral');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
+const adminLoyaltyController = require('./admin.loyalty.controller');
+
+const getDashboardStats = async () => {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    // Get total revenue and active bookings
+    const [totalRevenue, activeBookings] = await Promise.all([
+        Booking.aggregate([
+            { $match: { status: 'confirmed' } },
+            { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+        ]),
+        Booking.countDocuments({ 
+            status: 'active',
+            checkInDate: { $lte: today },
+            checkOutDate: { $gte: today }
+        })
+    ]);
+
+    // Get loyalty program stats
+    const [loyaltyMembers, bronzeMembers, silverMembers, goldMembers, platinumMembers] = await Promise.all([
+        User.countDocuments({ role: 'member' }),
+        User.countDocuments({ role: 'member', 'currentTier.name': 'Bronze' }),
+        User.countDocuments({ role: 'member', 'currentTier.name': 'Silver' }),
+        User.countDocuments({ role: 'member', 'currentTier.name': 'Gold' }),
+        User.countDocuments({ role: 'member', 'currentTier.name': 'Platinum' })
+    ]);
+
+    // Get new members this month
+    const newMembersThisMonth = await User.countDocuments({
+        role: 'member',
+        createdAt: { 
+            $gte: firstDayOfMonth,
+            $lte: lastDayOfMonth
+        }
+    });
+
+    // Get recent loyalty activity
+    const recentLoyaltyActivity = await adminLoyaltyController.getRecentActivity();
+
+    // Get loyalty trends data
+    const loyaltyTrends = await adminLoyaltyController.getMemberTrends();
+
+    // Calculate revenue growth
+    const lastMonthRevenue = await Booking.aggregate([
+        {
+            $match: {
+                status: 'confirmed',
+                createdAt: {
+                    $gte: new Date(today.getFullYear(), today.getMonth() - 1, 1),
+                    $lt: firstDayOfMonth
+                }
+            }
+        },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+
+    const currentMonthRevenue = await Booking.aggregate([
+        {
+            $match: {
+                status: 'confirmed',
+                createdAt: {
+                    $gte: firstDayOfMonth,
+                    $lte: lastDayOfMonth
+                }
+            }
+        },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+    ]);
+
+    const revenueGrowth = lastMonthRevenue.length && currentMonthRevenue.length ?
+        ((currentMonthRevenue[0].total - lastMonthRevenue[0].total) / lastMonthRevenue[0].total * 100).toFixed(1) :
+        0;
+
+    // Get recent bookings
+    const recentBookings = await Booking.find()
+        .populate('guest', 'name email')
+        .populate('room', 'number type')
+        .sort({ createdAt: -1 })
+        .limit(5);
+
+    return {
+        totalRevenue: totalRevenue.length ? totalRevenue[0].total : 0,
+        revenueGrowth,
+        activeBookings,
+        occupancyRate: ((activeBookings / totalRooms) * 100).toFixed(1),
+        loyaltyMembers,
+        newMembersThisMonth,
+        satisfactionRate: 92, // Example static value, implement actual calculation
+        reviewCount: 150, // Example static value, implement actual calculation
+        bronzeMembers,
+        silverMembers,
+        goldMembers,
+        platinumMembers,
+        recentLoyaltyActivity,
+        loyaltyTrends,
+        recentBookings
+    };
+};
 
 exports.getDashboard = async (req, res) => {
     try {
@@ -108,12 +213,15 @@ exports.getDashboard = async (req, res) => {
             .limit(5)
             .populate('channel');
 
+        const dashboardStats = await getDashboardStats();
+
         res.render('admin/dashboard', {
             title: 'Admin Dashboard',
             otaStats,
             chartData: JSON.stringify(chartData),
             channelPerformance,
-            recentBookings
+            recentBookings,
+            dashboardStats
         });
     } catch (error) {
         console.error('Admin Dashboard Error:', error);

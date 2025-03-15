@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #2563eb;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .content {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome to Our Hotel!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{guestName}},</p>
+        
+        <p>Welcome to our hotel! We're delighted to have you as our guest. Your check-in has been completed successfully.</p>
+        
+        <div class="info-box">
+            <h3>Your Stay Details:</h3>
+            <p><strong>Room Number:</strong> {{roomNumber}}</p>
+            <p><strong>Key Card Number:</strong> {{keyCardNumber}}</p>
+            <p><strong>Check-in Time:</strong> {{checkInTime}}</p>
+        </div>
+        
+        <h3>Important Information:</h3>
+        <ul>
+            <li>Breakfast is served from 6:30 AM to 10:30 AM</li>
+            <li>WiFi Network: "Hotel_Guest"</li>
+            <li>Room service is available 24/7</li>
+            <li>Check-out time is 11:00 AM</li>
+        </ul>
+        
+        <p>For any assistance during your stay, please dial '0' from your room phone to reach our front desk.</p>
+        
+        <a href="{{hotelWebsite}}/guest-services" class="button">View Guest Services</a>
+    </div>
+    
+    <div class="footer">
+        <p>Thank you for choosing our hotel. We wish you a pleasant stay!</p>
+        <p>© {{currentYear}} Hotel Management System. All rights reserved.</p>
+    </div>
+</body>
+</html>

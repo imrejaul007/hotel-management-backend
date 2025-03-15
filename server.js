@@ -151,6 +151,7 @@ const adminRewardsRoutes = require('./src/routes/admin/rewards.routes');
 const maintenanceRoutes = require('./src/routes/maintenance.routes');
 const otaRoutes = require('./src/routes/ota.routes');
 const indexRoutes = require('./src/routes/index.routes');
+const checkInOutRoutes = require('./src/routes/checkInOut.routes');
 
 // Mount routes
 app.get('/login', (req, res) => res.redirect('/auth/login'));
@@ -161,6 +162,7 @@ app.use('/api/admin/rewards', adminRewardsRoutes);
 app.use('/maintenance', maintenanceRoutes);
 app.use('/api/ota', otaRoutes);
 app.use('/', indexRoutes);
+app.use('/check-in-out', checkInOutRoutes);
 
 const PORT = process.env.PORT || 3000;
 

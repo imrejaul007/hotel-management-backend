@@ -1,0 +1,348 @@
+{{> admin/header}}
+{{> admin/sidebar}}
+
+<div class="main-content">
+    <div class="container-fluid p-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">Guest Analytics</h1>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/admin/guests">Guests</a></li>
+                                <li class="breadcrumb-item active">Analytics</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary {{#if (eq range 'month')}}active{{/if}}" 
+                                onclick="changeRange('month')">Month</button>
+                            <button class="btn btn-outline-primary {{#if (eq range 'quarter')}}active{{/if}}" 
+                                onclick="changeRange('quarter')">Quarter</button>
+                            <button class="btn btn-outline-primary {{#if (eq range 'year')}}active{{/if}}" 
+                                onclick="changeRange('year')">Year</button>
+                        </div>
+                        <button class="btn btn-primary" onclick="exportAnalytics()">
+                            <i class="fas fa-download me-2"></i>Export Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="row g-4 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div class="content-left">
+                                <h5 class="mb-3">Guest Satisfaction</h5>
+                                <h2 class="mb-2">{{stats.satisfaction}}/5.0</h2>
+                                <p class="mb-0 {{stats.satisfactionTrend.color}}">
+                                    <i class="fas fa-{{stats.satisfactionTrend.icon}} me-1"></i>
+                                    {{stats.satisfactionTrend.value}}%
+                                </p>
+                            </div>
+                            <div class="avatar bg-light-primary p-2">
+                                <i class="fas fa-smile text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div class="content-left">
+                                <h5 class="mb-3">Repeat Rate</h5>
+                                <h2 class="mb-2">{{stats.repeatRate}}%</h2>
+                                <p class="mb-0 {{stats.repeatRateTrend.color}}">
+                                    <i class="fas fa-{{stats.repeatRateTrend.icon}} me-1"></i>
+                                    {{stats.repeatRateTrend.value}}%
+                                </p>
+                            </div>
+                            <div class="avatar bg-light-success p-2">
+                                <i class="fas fa-redo text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div class="content-left">
+                                <h5 class="mb-3">Avg Guest Value</h5>
+                                <h2 class="mb-2">${{stats.avgGuestValue}}</h2>
+                                <p class="mb-0 {{stats.avgValueTrend.color}}">
+                                    <i class="fas fa-{{stats.avgValueTrend.icon}} me-1"></i>
+                                    {{stats.avgValueTrend.value}}%
+                                </p>
+                            </div>
+                            <div class="avatar bg-light-warning p-2">
+                                <i class="fas fa-dollar-sign text-warning"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div class="content-left">
+                                <h5 class="mb-3">Loyalty Conversion</h5>
+                                <h2 class="mb-2">{{stats.loyaltyConversion}}%</h2>
+                                <p class="mb-0 {{stats.loyaltyTrend.color}}">
+                                    <i class="fas fa-{{stats.loyaltyTrend.icon}} me-1"></i>
+                                    {{stats.loyaltyTrend.value}}%
+                                </p>
+                            </div>
+                            <div class="avatar bg-light-info p-2">
+                                <i class="fas fa-star text-info"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Demographics -->
+            <div class="col-12 col-xl-8">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Guest Demographics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Age Distribution</h6>
+                                <canvas id="ageChart"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Top Nationalities</h6>
+                                <canvas id="nationalityChart"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Purpose of Stay</h6>
+                                <canvas id="purposeChart"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Loyalty Distribution</h6>
+                                <canvas id="loyaltyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guest Segments -->
+            <div class="col-12 col-xl-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Guest Segments</h5>
+                    </div>
+                    <div class="card-body">
+                        {{#each segments}}
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="avatar me-3 bg-light-{{color}}">
+                                <i class="fas fa-{{icon}} text-{{color}}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="mb-0">{{name}}</h6>
+                                    <small class="text-muted">{{percentage}}%</small>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="progress w-75" style="height: 4px;">
+                                        <div class="progress-bar bg-{{color}}" style="width: {{percentage}}%"></div>
+                                    </div>
+                                    <a href="/admin/guests/analytics/segments/{{id}}" class="text-muted">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Booking Trends -->
+            <div class="col-12 col-xl-8">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Booking Trends</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="bookingTrendsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guest Preferences -->
+            <div class="col-12 col-xl-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Guest Preferences</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-3">Room Type Preferences</h6>
+                            {{#each preferences.roomTypes}}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>{{name}}</div>
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2">{{percentage}}%</span>
+                                    <div class="progress" style="width: 100px; height: 4px;">
+                                        <div class="progress-bar" style="width: {{percentage}}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            {{/each}}
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-3">Most Requested Services</h6>
+                            {{#each preferences.services}}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>{{name}}</div>
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2">{{percentage}}%</span>
+                                    <div class="progress" style="width: 100px; height: 4px;">
+                                        <div class="progress-bar" style="width: {{percentage}}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            {{/each}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Chart configurations
+const chartConfig = {
+    type: 'doughnut',
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+};
+
+// Age distribution chart
+const ageChart = new Chart(document.getElementById('ageChart'), {
+    ...chartConfig,
+    data: {
+        labels: {{{json ageData.labels}}},
+        datasets: [{
+            data: {{{json ageData.values}}},
+            backgroundColor: ['#696cff', '#8592a3', '#71dd37', '#ff3e1d', '#03c3ec']
+        }]
+    }
+});
+
+// Nationality chart
+const nationalityChart = new Chart(document.getElementById('nationalityChart'), {
+    ...chartConfig,
+    data: {
+        labels: {{{json nationalityData.labels}}},
+        datasets: [{
+            data: {{{json nationalityData.values}}},
+            backgroundColor: ['#696cff', '#8592a3', '#71dd37', '#ff3e1d', '#03c3ec']
+        }]
+    }
+});
+
+// Purpose chart
+const purposeChart = new Chart(document.getElementById('purposeChart'), {
+    ...chartConfig,
+    data: {
+        labels: {{{json purposeData.labels}}},
+        datasets: [{
+            data: {{{json purposeData.values}}},
+            backgroundColor: ['#696cff', '#8592a3', '#71dd37', '#ff3e1d']
+        }]
+    }
+});
+
+// Loyalty chart
+const loyaltyChart = new Chart(document.getElementById('loyaltyChart'), {
+    ...chartConfig,
+    data: {
+        labels: {{{json loyaltyData.labels}}},
+        datasets: [{
+            data: {{{json loyaltyData.values}}},
+            backgroundColor: ['#ff3e1d', '#71dd37', '#696cff', '#03c3ec']
+        }]
+    }
+});
+
+// Booking trends chart
+const bookingTrendsChart = new Chart(document.getElementById('bookingTrendsChart'), {
+    type: 'line',
+    data: {
+        labels: {{{json bookingTrends.labels}}},
+        datasets: [
+            {
+                label: 'New Guests',
+                data: {{{json bookingTrends.newGuests}}},
+                borderColor: '#696cff',
+                tension: 0.4,
+                fill: false
+            },
+            {
+                label: 'Returning Guests',
+                data: {{{json bookingTrends.returningGuests}}},
+                borderColor: '#71dd37',
+                tension: 0.4,
+                fill: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Change date range
+function changeRange(range) {
+    window.location.href = `/admin/guests/analytics?range=${range}`;
+}
+
+// Export analytics
+function exportAnalytics() {
+    const range = new URLSearchParams(window.location.search).get('range') || 'month';
+    window.location.href = `/admin/guests/analytics/export?range=${range}`;
+}
+</script>

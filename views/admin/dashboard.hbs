@@ -1,0 +1,313 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <!-- Main Stats -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Revenue</p>
+                                <h5 class="font-weight-bolder">{{formatCurrency stats.totalRevenue}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">+{{stats.revenueGrowth}}%</span>
+                                    vs last month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Active Bookings</p>
+                                <h5 class="font-weight-bolder">{{stats.activeBookings}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.occupancyRate}}%</span>
+                                    occupancy rate
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="ni ni-calendar-grid-58 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Loyalty Members</p>
+                                <h5 class="font-weight-bolder">{{stats.loyaltyMembers}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">+{{stats.newMembersThisMonth}}</span>
+                                    this month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="ni ni-trophy text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Guest Satisfaction</p>
+                                <h5 class="font-weight-bolder">{{stats.satisfactionRate}}%</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.reviewCount}}</span>
+                                    reviews
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                                <i class="ni ni-like-2 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loyalty Program Overview -->
+    <div class="row">
+        <div class="col-lg-7 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between">
+                        <h6>Loyalty Program Overview</h6>
+                        <a href="/admin/loyalty/dashboard" class="btn btn-primary btn-sm">View Details</a>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="chart">
+                        <canvas id="loyaltyTrendsChart" class="chart-canvas" height="300"></canvas>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-3">
+                            <div class="d-flex px-2 py-1">
+                                <div>
+                                    <div class="icon icon-shape bg-primary-soft text-center rounded">
+                                        <i class="ni ni-circle-08 text-primary text-lg opacity-10"></i>
+                                    </div>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="text-xs mb-0">Bronze</p>
+                                    <h6 class="font-weight-bolder mb-0">{{stats.bronzeMembers}}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="d-flex px-2 py-1">
+                                <div>
+                                    <div class="icon icon-shape bg-secondary-soft text-center rounded">
+                                        <i class="ni ni-circle-08 text-secondary text-lg opacity-10"></i>
+                                    </div>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="text-xs mb-0">Silver</p>
+                                    <h6 class="font-weight-bolder mb-0">{{stats.silverMembers}}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="d-flex px-2 py-1">
+                                <div>
+                                    <div class="icon icon-shape bg-warning-soft text-center rounded">
+                                        <i class="ni ni-circle-08 text-warning text-lg opacity-10"></i>
+                                    </div>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="text-xs mb-0">Gold</p>
+                                    <h6 class="font-weight-bolder mb-0">{{stats.goldMembers}}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="d-flex px-2 py-1">
+                                <div>
+                                    <div class="icon icon-shape bg-success-soft text-center rounded">
+                                        <i class="ni ni-circle-08 text-success text-lg opacity-10"></i>
+                                    </div>
+                                </div>
+                                <div class="ms-3">
+                                    <p class="text-xs mb-0">Platinum</p>
+                                    <h6 class="font-weight-bolder mb-0">{{stats.platinumMembers}}</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Loyalty Activity -->
+        <div class="col-lg-5 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between">
+                        <h6>Recent Loyalty Activity</h6>
+                        <a href="/admin/loyalty/members" class="btn btn-primary btn-sm">View All</a>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="timeline timeline-one-side">
+                        {{#each recentLoyaltyActivity}}
+                        <div class="timeline-block mb-3">
+                            <span class="timeline-step">
+                                <i class="ni {{icon}} text-{{color}}"></i>
+                            </span>
+                            <div class="timeline-content">
+                                <h6 class="text-dark text-sm font-weight-bold mb-0">{{description}}</h6>
+                                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">{{formatDateTime timestamp}}</p>
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between">
+                        <h6>Recent Bookings</h6>
+                        <a href="/admin/bookings" class="btn btn-primary btn-sm">View All</a>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Guest</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Room</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Check In</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Check Out</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each recentBookings}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{guest.name}}</h6>
+                                                <p class="text-xs text-secondary mb-0">{{guest.email}}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{room.number}}</p>
+                                        <p class="text-xs text-secondary mb-0">{{room.type}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{formatDate checkInDate}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{formatDate checkOutDate}}</p>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-{{statusColor status}}">{{status}}</span>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{formatCurrency totalAmount}}</p>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize loyalty trends chart
+const ctx = document.getElementById('loyaltyTrendsChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{{json loyaltyTrends.labels}}},
+        datasets: [
+            {
+                label: 'Total Members',
+                data: {{{json loyaltyTrends.totalMembers}}},
+                borderColor: '#5e72e4',
+                tension: 0.4,
+                fill: false
+            },
+            {
+                label: 'Points Awarded',
+                data: {{{json loyaltyTrends.pointsAwarded}}},
+                borderColor: '#2dce89',
+                tension: 0.4,
+                fill: false
+            },
+            {
+                label: 'Rewards Redeemed',
+                data: {{{json loyaltyTrends.rewardsRedeemed}}},
+                borderColor: '#fb6340',
+                tension: 0.4,
+                fill: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+
+{{> footer}}

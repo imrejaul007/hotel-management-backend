@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #f8f9fa;
+        }
+        .points-card {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .points-value {
+            font-size: 36px;
+            color: #007bff;
+            margin: 10px 0;
+        }
+        .tier-progress {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            font-size: 12px;
+            color: #666;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Points Update</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{guest.name}},</p>
+            
+            {{#if isEarned}}
+            <p>Great news! You've earned points from your recent activity:</p>
+            {{else}}
+            <p>You've redeemed points for a reward:</p>
+            {{/if}}
+            
+            <div class="points-card">
+                {{#if isEarned}}
+                <h3>Points Earned</h3>
+                <div class="points-value">+{{points}}</div>
+                {{else}}
+                <h3>Points Redeemed</h3>
+                <div class="points-value">-{{points}}</div>
+                {{/if}}
+                <p>{{description}}</p>
+            </div>
+            
+            <div class="tier-progress">
+                <h3>Your {{currentTier}} Status</h3>
+                <p>Current Points Balance: <strong>{{totalPoints}}</strong></p>
+                
+                {{#if nextTier}}
+                <p>Progress to {{nextTier}}:</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{tierProgress}}%"></div>
+                </div>
+                <p>{{pointsToNextTier}} more points needed</p>
+                {{else}}
+                <p>Congratulations! You've reached our highest tier!</p>
+                {{/if}}
+            </div>
+            
+            {{#if isEarned}}
+            <p>Ways to earn more points:</p>
+            <ul>
+                <li>Book direct for {{pointsMultiplier}}x points</li>
+                <li>Refer friends and earn bonus points</li>
+                <li>Participate in special promotions</li>
+            </ul>
+            {{else}}
+            <p>Thank you for being a valued member. Enjoy your reward!</p>
+            {{/if}}
+            
+            <div style="text-align: center;">
+                <a href="{{dashboardUrl}}" class="button">View Your Account</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>This email was sent to {{guest.email}}. To update your email preferences, click <a href="{{preferencesUrl}}">here</a>.</p>
+        </div>
+    </div>
+</body>
+</html>

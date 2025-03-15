@@ -1,0 +1,322 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <!-- Referral Summary -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Referrals</p>
+                                <h5 class="font-weight-bolder">{{stats.totalReferrals}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="ni ni-send text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Completed Referrals</p>
+                                <h5 class="font-weight-bolder">{{stats.completedReferrals}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="ni ni-check-bold text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Points Earned</p>
+                                <h5 class="font-weight-bolder">{{formatPoints stats.totalPointsEarned}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Pending Referrals</p>
+                                <h5 class="font-weight-bolder">{{stats.pendingReferrals}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                                <i class="ni ni-time-alarm text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Code -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Your Referral Code</h6>
+                </div>
+                <div class="card-body">
+                    {{#if currentReferral}}
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Share this code with friends:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="referralCode" value="{{currentReferral.code}}" readonly>
+                                    <button class="btn btn-outline-primary mb-0" onclick="copyReferralCode()">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="text-muted">Expires on {{formatDate currentReferral.expiryDate}}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-end">
+                                <button class="btn btn-primary" onclick="shareReferral()">
+                                    <i class="fas fa-share-alt"></i> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {{else}}
+                    <div class="text-center">
+                        <p>You don't have an active referral code.</p>
+                        <button class="btn btn-primary" onclick="generateReferralCode()">
+                            <i class="fas fa-plus"></i> Generate Code
+                        </button>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Benefits -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5>Referral Program Benefits</h5>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card bg-gradient-primary">
+                                <div class="card-body">
+                                    <h5 class="text-white">For You (Referrer)</h5>
+                                    <p class="text-white">Earn {{formatPoints settings.referrerPoints}} points for each successful referral!</p>
+                                    <ul class="text-white">
+                                        <li>Points awarded after friend's first booking</li>
+                                        <li>No limit on number of referrals</li>
+                                        <li>Track your referrals and earnings</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-gradient-info">
+                                <div class="card-body">
+                                    <h5 class="text-white">For Your Friends</h5>
+                                    <p class="text-white">They get {{formatPoints settings.refereePoints}} welcome points!</p>
+                                    <ul class="text-white">
+                                        <li>Instant points upon joining</li>
+                                        <li>Access to member-exclusive rates</li>
+                                        <li>Special new member perks</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Your Referral History</h6>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Referred Friend</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Code</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each referrals}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                {{#if refereeId}}
+                                                <h6 class="mb-0 text-sm">{{refereeId.name}}</h6>
+                                                <p class="text-xs text-secondary mb-0">{{refereeId.email}}</p>
+                                                {{else}}
+                                                <p class="text-xs text-muted mb-0">Pending</p>
+                                                {{/if}}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{code}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{formatDate createdAt}}</p>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-{{statusColor status}}">
+                                            {{status}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{#if bonusPointsAwarded}}
+                                        <p class="text-sm font-weight-bold mb-0 text-success">
+                                            +{{formatPoints referrerPoints}}
+                                        </p>
+                                        {{else}}
+                                        <p class="text-sm text-muted mb-0">Pending</p>
+                                        {{/if}}
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Share Your Referral Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4">
+                    <p>Share this link with your friends:</p>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="referralLink" value="{{referralLink}}" readonly>
+                        <button class="btn btn-outline-primary mb-0" onclick="copyReferralLink()">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-primary mx-2" onclick="shareViaEmail()">
+                        <i class="fas fa-envelope"></i> Email
+                    </button>
+                    <button class="btn btn-info mx-2" onclick="shareViaWhatsApp()">
+                        <i class="fab fa-whatsapp"></i> WhatsApp
+                    </button>
+                    <button class="btn btn-primary mx-2" onclick="shareViaFacebook()">
+                        <i class="fab fa-facebook"></i> Facebook
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyReferralCode() {
+    const codeInput = document.getElementById('referralCode');
+    codeInput.select();
+    document.execCommand('copy');
+    alert('Referral code copied to clipboard!');
+}
+
+function copyReferralLink() {
+    const linkInput = document.getElementById('referralLink');
+    linkInput.select();
+    document.execCommand('copy');
+    alert('Referral link copied to clipboard!');
+}
+
+function generateReferralCode() {
+    fetch('/api/v1/referrals/generate', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error generating referral code');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error generating referral code');
+    });
+}
+
+function shareReferral() {
+    new bootstrap.Modal(document.getElementById('shareModal')).show();
+}
+
+function shareViaEmail() {
+    const subject = 'Join our Hotel Loyalty Program';
+    const body = `Hi!\n\nI thought you might be interested in joining our hotel loyalty program. Use my referral code ${document.getElementById('referralCode').value} to get ${{{settings.refereePoints}}} bonus points when you join!\n\nSign up here: ${document.getElementById('referralLink').value}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function shareViaWhatsApp() {
+    const message = `Join our hotel loyalty program using my referral code ${document.getElementById('referralCode').value} and get ${{{settings.refereePoints}}} bonus points! Sign up here: ${document.getElementById('referralLink').value}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+}
+
+function shareViaFacebook() {
+    const url = document.getElementById('referralLink').value;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+}
+</script>
+
+{{> footer}}

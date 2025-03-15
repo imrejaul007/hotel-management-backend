@@ -1,0 +1,470 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <!-- Tier Statistics -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Members</p>
+                                <h5 class="font-weight-bolder">{{stats.totalMembers}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="ni ni-single-02 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Upgrade Candidates</p>
+                                <h5 class="font-weight-bolder">{{stats.upgradeCandidates}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="ni ni-trophy text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Average Points</p>
+                                <h5 class="font-weight-bolder">{{stats.averagePoints}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Upgrades This Month</p>
+                                <h5 class="font-weight-bolder">{{stats.monthlyUpgrades}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                                <i class="ni ni-chart-bar-32 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tier Management -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                    <h6>Membership Tiers</h6>
+                    <button class="btn btn-primary btn-sm" onclick="showCreateTierModal()">
+                        <i class="fas fa-plus"></i> Add Tier
+                    </button>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Tier</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Points Required</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Multiplier</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Members</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each tiers}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div>
+                                                <i class="{{icon}} text-lg me-3" style="color: {{color}}"></i>
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{name}}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{minimumPoints}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{pointsMultiplier}}x</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{memberCount}}</p>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-{{#if isActive}}success{{else}}danger{{/if}}">
+                                            {{#if isActive}}Active{{else}}Inactive{{/if}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-link text-dark px-3 mb-0" onclick="editTier('{{_id}}')">
+                                            <i class="fas fa-pencil-alt text-dark me-2"></i>Edit
+                                        </button>
+                                        <button class="btn btn-link text-{{#if isActive}}danger{{else}}success{{/if}} px-3 mb-0"
+                                                onclick="toggleTier('{{_id}}')">
+                                            <i class="fas fa-{{#if isActive}}times{{else}}check{{/if}} text-{{#if isActive}}danger{{else}}success{{/if}} me-2"></i>
+                                            {{#if isActive}}Deactivate{{else}}Activate{{/if}}
+                                        </button>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tier Distribution Chart -->
+    <div class="row mt-4">
+        <div class="col-lg-7 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h6>Member Distribution by Tier</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="tierDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upgrade Candidates -->
+        <div class="col-lg-5 mb-4">
+            <div class="card">
+                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                    <h6>Upgrade Candidates</h6>
+                    <button class="btn btn-success btn-sm" onclick="processUpgrades()">
+                        Process Upgrades
+                    </button>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Member</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Current Tier</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Next Tier</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each upgradeCandidates}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{name}}</h6>
+                                                <p class="text-xs text-secondary mb-0">{{email}}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge" style="background-color: {{currentTier.color}}">
+                                            {{currentTier.name}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge" style="background-color: {{nextTier.color}}">
+                                            {{nextTier.name}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{points}}</p>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Tier Modal -->
+<div class="modal fade" id="tierModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tierModalTitle">Add New Tier</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="tierForm">
+                    <input type="hidden" id="tierId" name="tierId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Tier Name</label>
+                                <select class="form-control" name="name" id="tierName" required>
+                                    <option value="Bronze">Bronze</option>
+                                    <option value="Silver">Silver</option>
+                                    <option value="Gold">Gold</option>
+                                    <option value="Platinum">Platinum</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Minimum Points</label>
+                                <input type="number" class="form-control" name="minimumPoints" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Points Multiplier</label>
+                                <input type="number" class="form-control" name="pointsMultiplier" step="0.1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Upgrade Bonus Points</label>
+                                <input type="number" class="form-control" name="upgradeBonusPoints" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label>Benefits</label>
+                        <div id="benefitsContainer">
+                            <div class="benefit-item d-flex mb-2">
+                                <input type="text" class="form-control" name="benefits[]" required>
+                                <button type="button" class="btn btn-danger ms-2" onclick="removeBenefit(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-success btn-sm mt-2" onclick="addBenefit()">
+                            <i class="fas fa-plus"></i> Add Benefit
+                        </button>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Color</label>
+                                <input type="color" class="form-control" name="color" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Icon</label>
+                                <select class="form-control" name="icon" required>
+                                    <option value="fas fa-medal">Medal</option>
+                                    <option value="fas fa-star">Star</option>
+                                    <option value="fas fa-crown">Crown</option>
+                                    <option value="fas fa-gem">Gem</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveTier()">Save Tier</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize tier distribution chart
+const ctx = document.getElementById('tierDistributionChart').getContext('2d');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: {{{json tierDistributionLabels}}},
+        datasets: [{
+            data: {{{json tierDistributionData}}},
+            backgroundColor: {{{json tierColors}}},
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right'
+            }
+        }
+    }
+});
+
+// Tier management functions
+function showCreateTierModal() {
+    document.getElementById('tierModalTitle').textContent = 'Add New Tier';
+    document.getElementById('tierForm').reset();
+    document.getElementById('tierId').value = '';
+    new bootstrap.Modal(document.getElementById('tierModal')).show();
+}
+
+function editTier(tierId) {
+    fetch(`/api/v1/tiers/${tierId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const tier = data.data;
+                document.getElementById('tierModalTitle').textContent = 'Edit Tier';
+                document.getElementById('tierId').value = tier._id;
+                document.getElementById('tierName').value = tier.name;
+                document.querySelector('input[name="minimumPoints"]').value = tier.minimumPoints;
+                document.querySelector('input[name="pointsMultiplier"]').value = tier.pointsMultiplier;
+                document.querySelector('input[name="upgradeBonusPoints"]').value = tier.upgradeBonusPoints;
+                document.querySelector('input[name="color"]').value = tier.color;
+                document.querySelector('select[name="icon"]').value = tier.icon;
+
+                // Clear and repopulate benefits
+                const container = document.getElementById('benefitsContainer');
+                container.innerHTML = '';
+                tier.benefits.forEach(benefit => {
+                    addBenefit(benefit);
+                });
+
+                new bootstrap.Modal(document.getElementById('tierModal')).show();
+            }
+        });
+}
+
+function toggleTier(tierId) {
+    if (!confirm('Are you sure you want to change this tier\'s status?')) return;
+
+    fetch(`/api/v1/tiers/${tierId}/toggle`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error toggling tier status');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error toggling tier status');
+    });
+}
+
+function saveTier() {
+    const form = document.getElementById('tierForm');
+    const formData = new FormData(form);
+    const tierId = formData.get('tierId');
+    
+    const data = {
+        name: formData.get('name'),
+        minimumPoints: parseInt(formData.get('minimumPoints')),
+        pointsMultiplier: parseFloat(formData.get('pointsMultiplier')),
+        upgradeBonusPoints: parseInt(formData.get('upgradeBonusPoints')),
+        benefits: Array.from(formData.getAll('benefits[]')),
+        color: formData.get('color'),
+        icon: formData.get('icon')
+    };
+
+    const url = tierId ? `/api/v1/tiers/${tierId}` : '/api/v1/tiers';
+    const method = tierId ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error saving tier');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving tier');
+    });
+}
+
+function addBenefit(value = '') {
+    const container = document.getElementById('benefitsContainer');
+    const div = document.createElement('div');
+    div.className = 'benefit-item d-flex mb-2';
+    div.innerHTML = `
+        <input type="text" class="form-control" name="benefits[]" value="${value}" required>
+        <button type="button" class="btn btn-danger ms-2" onclick="removeBenefit(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(div);
+}
+
+function removeBenefit(button) {
+    button.closest('.benefit-item').remove();
+}
+
+function processUpgrades() {
+    if (!confirm('Are you sure you want to process tier upgrades?')) return;
+
+    fetch('/api/v1/tiers/process-upgrades', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Processed ${data.data.length} tier upgrades successfully!`);
+            location.reload();
+        } else {
+            alert(data.message || 'Error processing upgrades');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error processing upgrades');
+    });
+}
+</script>
+
+{{> footer}}

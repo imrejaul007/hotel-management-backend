@@ -1,0 +1,437 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <!-- Rewards Overview -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Active Rewards</p>
+                                <h5 class="font-weight-bolder">{{stats.activeRewards}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="ni ni-box-2 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Total Redemptions</p>
+                                <h5 class="font-weight-bolder">{{stats.totalRedemptions}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.redemptionsThisMonth}}</span>
+                                    this month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="ni ni-cart text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Points Redeemed</p>
+                                <h5 class="font-weight-bolder">{{stats.totalPointsRedeemed}}</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">{{stats.pointsRedeemedThisMonth}}</span>
+                                    this month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Avg. Satisfaction</p>
+                                <h5 class="font-weight-bolder">{{stats.averageSatisfaction}}/5</h5>
+                                <p class="mb-0 text-sm">
+                                    <span class="text-success text-sm font-weight-bolder">+{{stats.satisfactionIncrease}}%</span>
+                                    vs last month
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                                <i class="ni ni-like-2 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rewards List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6>Rewards Catalog</h6>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRewardModal">
+                            Add New Reward
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Reward</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Category</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Points Required</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Availability</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Redemptions</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each rewards}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div>
+                                                <img src="{{image}}" class="avatar me-3">
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{name}}</h6>
+                                                <p class="text-sm text-secondary mb-0">{{description}}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-{{categoryColor category}}">
+                                            {{category}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{pointsRequired}}</p>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {{#if isActive}}
+                                            <span class="badge badge-sm bg-gradient-success me-2">Active</span>
+                                            {{else}}
+                                            <span class="badge badge-sm bg-gradient-secondary me-2">Inactive</span>
+                                            {{/if}}
+                                            {{#if limitedQuantity}}
+                                            <span class="text-xs">{{remainingQuantity}} left</span>
+                                            {{else}}
+                                            <span class="text-xs">Unlimited</span>
+                                            {{/if}}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{redemptionCount}}</p>
+                                        <p class="text-xs text-secondary mb-0">Last: {{formatDate lastRedemption}}</p>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-link text-dark px-3 mb-0" 
+                                                onclick="editReward('{{_id}}')">
+                                            <i class="fas fa-pencil-alt text-dark me-2"></i>Edit
+                                        </button>
+                                        <button class="btn btn-link text-danger px-3 mb-0"
+                                                onclick="toggleReward('{{_id}}', {{isActive}})">
+                                            {{#if isActive}}
+                                            <i class="fas fa-times text-danger me-2"></i>Deactivate
+                                            {{else}}
+                                            <i class="fas fa-check text-success me-2"></i>Activate
+                                            {{/if}}
+                                        </button>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Redemption History -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6>Recent Redemptions</h6>
+                        <button class="btn btn-info btn-sm" onclick="exportRedemptions()">
+                            Export Data
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Member</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Reward</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Points Used</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Date</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Rating</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each redemptions}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div>
+                                                <img src="{{member.profileImage}}" class="avatar me-3">
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{member.name}}</h6>
+                                                <p class="text-sm text-secondary mb-0">{{member.email}}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{reward.name}}</p>
+                                        <p class="text-xs text-secondary mb-0">{{reward.category}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{pointsUsed}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{formatDate date}}</p>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-{{statusColor status}}">
+                                            {{status}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{#if rating}}
+                                        <div class="d-flex align-items-center">
+                                            <span class="text-sm font-weight-bold me-2">{{rating}}</span>
+                                            <div class="rating-stars">
+                                                {{#times rating}}
+                                                <i class="fas fa-star text-warning"></i>
+                                                {{/times}}
+                                                {{#times (subtract 5 rating)}}
+                                                <i class="far fa-star text-warning"></i>
+                                                {{/times}}
+                                            </div>
+                                        </div>
+                                        {{else}}
+                                        <span class="text-xs text-secondary">Not rated</span>
+                                        {{/if}}
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Reward Modal -->
+<div class="modal fade" id="rewardModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rewardModalTitle">Add New Reward</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rewardForm">
+                    <input type="hidden" id="rewardId" name="rewardId">
+                    <div class="form-group">
+                        <label>Reward Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category" class="form-control" required>
+                            <option value="room_upgrade">Room Upgrade</option>
+                            <option value="dining">Dining</option>
+                            <option value="spa">Spa & Wellness</option>
+                            <option value="experience">Experience</option>
+                            <option value="service">Service</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Points Required</label>
+                        <input type="number" name="pointsRequired" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Image URL</label>
+                        <input type="url" name="image" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="limitedQuantity" id="limitedQuantitySwitch">
+                            <label class="form-check-label">Limited Quantity</label>
+                        </div>
+                    </div>
+                    <div class="form-group" id="quantityGroup" style="display: none;">
+                        <label>Available Quantity</label>
+                        <input type="number" name="quantity" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Validity Period (days)</label>
+                        <input type="number" name="validityPeriod" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Terms & Conditions</label>
+                        <textarea name="terms" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveReward()">Save Reward</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form handling
+document.getElementById('limitedQuantitySwitch').addEventListener('change', function() {
+    document.getElementById('quantityGroup').style.display = this.checked ? 'block' : 'none';
+});
+
+// Reward management functions
+function editReward(rewardId) {
+    fetch(`/admin/loyalty/rewards/${rewardId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const reward = data.reward;
+                document.getElementById('rewardModalTitle').textContent = 'Edit Reward';
+                document.getElementById('rewardId').value = reward._id;
+                
+                const form = document.getElementById('rewardForm');
+                form.name.value = reward.name;
+                form.description.value = reward.description;
+                form.category.value = reward.category;
+                form.pointsRequired.value = reward.pointsRequired;
+                form.image.value = reward.image;
+                form.validityPeriod.value = reward.validityPeriod;
+                form.terms.value = reward.terms;
+                
+                const limitedSwitch = document.getElementById('limitedQuantitySwitch');
+                limitedSwitch.checked = reward.limitedQuantity;
+                document.getElementById('quantityGroup').style.display = reward.limitedQuantity ? 'block' : 'none';
+                if (reward.limitedQuantity) {
+                    form.quantity.value = reward.quantity;
+                }
+                
+                new bootstrap.Modal(document.getElementById('rewardModal')).show();
+            } else {
+                alert(data.message || 'Error loading reward details');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading reward details');
+        });
+}
+
+function saveReward() {
+    const form = document.getElementById('rewardForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    const rewardId = data.rewardId;
+    
+    const url = rewardId ? 
+        `/admin/loyalty/rewards/${rewardId}` : 
+        '/admin/loyalty/rewards';
+        
+    fetch(url, {
+        method: rewardId ? 'PUT' : 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Reward saved successfully!');
+            location.reload();
+        } else {
+            alert(data.message || 'Error saving reward');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving reward');
+    });
+}
+
+function toggleReward(rewardId, currentStatus) {
+    const action = currentStatus ? 'deactivate' : 'activate';
+    if (!confirm(`Are you sure you want to ${action} this reward?`)) return;
+    
+    fetch(`/admin/loyalty/rewards/${rewardId}/toggle`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || `Error ${action}ing reward`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(`Error ${action}ing reward`);
+    });
+}
+
+function exportRedemptions() {
+    window.location.href = '/admin/loyalty/rewards/export-redemptions';
+}
+</script>
+
+{{> footer}}

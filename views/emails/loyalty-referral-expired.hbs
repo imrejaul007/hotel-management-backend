@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #dc3545;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+        }
+        .code-details {
+            background-color: white;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .code {
+            font-size: 24px;
+            color: #dc3545;
+            font-weight: bold;
+            text-decoration: line-through;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .note {
+            font-size: 14px;
+            color: #6c757d;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f1f3f4;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Referral Code Expired</h2>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{name}},</p>
+        
+        <p>Your referral code has expired:</p>
+        
+        <div class="code-details">
+            <h3>Expired Code:</h3>
+            <p class="code">{{code}}</p>
+        </div>
+
+        <p>Don't worry! You can generate a new referral code anytime to continue earning bonus points.</p>
+        
+        <div style="text-align: center;">
+            <a href="{{dashboardUrl}}" class="button">Generate New Code</a>
+        </div>
+
+        <div class="note">
+            <p><strong>Tip:</strong> Share your referral code with friends and family as soon as you generate it to maximize your chances of earning bonus points!</p>
+        </div>
+        
+        <div class="footer">
+            <p>Thank you for being a valued member of our loyalty program!</p>
+            <p>Keep referring and keep earning!</p>
+        </div>
+    </div>
+</body>
+</html>

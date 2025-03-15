@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #2563eb;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .content {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border: 1px solid #dee2e6;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .survey-box {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Thank You for Your Stay!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear {{guestName}},</p>
+        
+        <p>Thank you for choosing our hotel for your stay. We hope you had a wonderful experience with us!</p>
+        
+        <div class="info-box">
+            <h3>Stay Details:</h3>
+            <p><strong>Booking Reference:</strong> {{bookingReference}}</p>
+            <p><strong>Room Number:</strong> {{roomNumber}}</p>
+            <p><strong>Check-in:</strong> {{checkInTime}}</p>
+            <p><strong>Check-out:</strong> {{checkOutTime}}</p>
+        </div>
+        
+        <div class="survey-box">
+            <h3>Share Your Experience</h3>
+            <p>We value your feedback! Please take a moment to rate your stay and help us improve our services.</p>
+            <a href="{{hotelWebsite}}/feedback/{{bookingReference}}" class="button">Rate Your Stay</a>
+        </div>
+        
+        <h3>Loyalty Program Update:</h3>
+        <p>Points earned from this stay will be added to your account within 24 hours. Visit our website to check your updated points balance and redeem rewards.</p>
+        
+        <p>We look forward to welcoming you back on your next visit!</p>
+    </div>
+    
+    <div class="footer">
+        <p>For any inquiries about your stay or future bookings, please contact us at:</p>
+        <p>Email: reservations@hotel.com | Phone: +1-234-567-8900</p>
+        <p>© {{currentYear}} Hotel Management System. All rights reserved.</p>
+    </div>
+</body>
+</html>

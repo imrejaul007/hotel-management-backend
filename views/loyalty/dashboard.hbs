@@ -1,0 +1,229 @@
+{{> header}}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Points Summary Card -->
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Available Points</p>
+                                <h5 class="font-weight-bolder">{{loyalty.points}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-primary shadow-primary text-center rounded-circle">
+                                <i class="ni ni-money-coins text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Membership Tier Card -->
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Membership Tier</p>
+                                <h5 class="font-weight-bolder">{{loyalty.membershipTier}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-success shadow-success text-center rounded-circle">
+                                <i class="ni ni-trophy text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lifetime Points Card -->
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Lifetime Points</p>
+                                <h5 class="font-weight-bolder">{{loyalty.lifetimePoints}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-warning shadow-warning text-center rounded-circle">
+                                <i class="ni ni-chart-bar-32 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral Count Card -->
+        <div class="col-xl-3 col-sm-6 mb-4">
+            <div class="card">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-8">
+                            <div class="numbers">
+                                <p class="text-sm mb-0 text-uppercase font-weight-bold">Successful Referrals</p>
+                                <h5 class="font-weight-bolder">{{loyalty.referralCount}}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="icon icon-shape bg-gradient-info shadow-info text-center rounded-circle">
+                                <i class="ni ni-favourite-28 text-lg opacity-10" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Points History -->
+        <div class="col-12 col-xl-8 mb-4">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-flex justify-content-between">
+                        <h6>Points History</h6>
+                        <button type="button" class="btn btn-primary btn-sm mb-0" onclick="exportPointsHistory()">Export</button>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Date</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Points</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Type</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Source</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each loyalty.pointsHistory}}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{formatDate date}}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0 {{#if (lt points 0)}}text-danger{{else}}text-success{{/if}}">
+                                            {{#if (lt points 0)}}{{points}}{{else}}+{{points}}{{/if}}
+                                        </p>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm bg-gradient-success">{{type}}</span>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{source}}</p>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm text-secondary mb-0">{{description}}</p>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Rewards -->
+        <div class="col-12 col-xl-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header pb-0">
+                    <h6>Available Rewards</h6>
+                </div>
+                <div class="card-body p-3">
+                    {{#each loyalty.rewards}}
+                    {{#if (eq status 'available')}}
+                    <div class="timeline timeline-one-side">
+                        <div class="timeline-block mb-3">
+                            <span class="timeline-step">
+                                <i class="ni ni-gift-2 text-success text-gradient"></i>
+                            </span>
+                            <div class="timeline-content">
+                                <h6 class="text-dark text-sm font-weight-bold mb-0">{{name}}</h6>
+                                <p class="text-secondary font-weight-bold text-xs mt-1 mb-0">
+                                    Expires: {{formatDate expiryDate}}
+                                </p>
+                                <button onclick="useReward('{{_id}}')" class="btn btn-link text-success text-sm mb-0 px-0">
+                                    <i class="fas fa-arrow-right text-sm ms-1"></i> Use Reward
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {{/if}}
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h6>Refer a Friend</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Your Referral Code</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{loyalty.referralCode}}" id="referralCode" readonly>
+                                    <button class="btn btn-outline-primary mb-0" onclick="copyReferralCode()">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-info mb-0">
+                                <strong>Earn 1,000 points</strong> for each friend who joins using your referral code!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyReferralCode() {
+    const referralCode = document.getElementById('referralCode');
+    referralCode.select();
+    document.execCommand('copy');
+    alert('Referral code copied to clipboard!');
+}
+
+function exportPointsHistory() {
+    // Implementation for exporting points history
+    alert('Exporting points history...');
+}
+
+function useReward(rewardId) {
+    if (confirm('Are you sure you want to use this reward?')) {
+        window.location.href = `/loyalty/use-reward/${rewardId}`;
+    }
+}
+</script>
+
+{{> footer}}

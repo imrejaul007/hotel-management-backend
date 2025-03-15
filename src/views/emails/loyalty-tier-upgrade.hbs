@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #f8f9fa;
+        }
+        .tier-badge {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .tier-badge .icon {
+            font-size: 48px;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .tier-badge .tier-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .benefits {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .benefit-icon {
+            width: 30px;
+            text-align: center;
+            margin-right: 15px;
+            color: #007bff;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            font-size: 12px;
+            color: #666;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .celebration {
+            text-align: center;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Congratulations on Your Tier Upgrade!</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{guest.name}},</p>
+            
+            <div class="celebration">
+                🎉 Welcome to {{newTier}}! 🎉
+            </div>
+            
+            <div class="tier-badge">
+                <div class="icon">⭐</div>
+                <div class="tier-name">{{newTier}} Member</div>
+            </div>
+            
+            <p>We're thrilled to announce that you've been upgraded to our {{newTier}} tier! This upgrade reflects your loyalty and trust in our services.</p>
+            
+            <div class="benefits">
+                <h3>Your Enhanced {{newTier}} Benefits:</h3>
+                {{#each benefits}}
+                <div class="benefit-item">
+                    <div class="benefit-icon">✓</div>
+                    <div>
+                        <strong>{{name}}</strong>
+                        <p>{{description}}</p>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
+            
+            <p>As a {{newTier}} member, you now earn:</p>
+            <ul>
+                <li>{{pointsMultiplier}}x points for every dollar spent</li>
+                <li>Priority access to room upgrades</li>
+                <li>Extended late check-out privileges</li>
+                <li>Exclusive {{newTier}} member events and offers</li>
+            </ul>
+            
+            <p>Your current status:</p>
+            <ul>
+                <li>Total Points: <strong>{{totalPoints}}</strong></li>
+                <li>Points earned this year: <strong>{{yearlyPoints}}</strong></li>
+                <li>Available rewards: <strong>{{availableRewards}}</strong></li>
+            </ul>
+            
+            <div style="text-align: center;">
+                <p>Ready to explore your new benefits?</p>
+                <a href="{{dashboardUrl}}" class="button">View Your Account</a>
+            </div>
+            
+            <p>Thank you for your continued loyalty. We look forward to providing you with an even more exceptional experience!</p>
+            
+            <p>Best regards,<br>The Hotel Management Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This email was sent to {{guest.email}}. To update your email preferences, click <a href="{{preferencesUrl}}">here</a>.</p>
+        </div>
+    </div>
+</body>
+</html>
