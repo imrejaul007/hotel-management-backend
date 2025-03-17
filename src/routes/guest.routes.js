@@ -1,130 +1,160 @@
 const express = require('express');
 const router = express.Router();
-const Guest = require('../models/Guest');
+const guestController = require('../controllers/guest.controller');
 const { protect, authorize } = require('../middlewares/auth.middleware');
 
-// Get all guests with pagination and filters
-router.get('/', protect, authorize('admin'), async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = 10;
-        const skip = (page - 1) * limit;
+/**
+ * @swagger
+ * /api/guests:
+ *   get:
+ *     summary: Get all guests (Admin only)
+ *     tags: [Guests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of guests
+ *       403:
+ *         description: Not authorized
+ */
+router.get('/', protect, authorize('admin'), guestController.getAllGuests);
 
-        // Build query
-        const query = {};
-        if (req.query.status) query.status = req.query.status;
-        if (req.query.search) {
-            query.$or = [
-                { name: { $regex: req.query.search, $options: 'i' } },
-                { email: { $regex: req.query.search, $options: 'i' } },
-                { phone: { $regex: req.query.search, $options: 'i' } }
-            ];
-        }
+/**
+ * @swagger
+ * /api/guests:
+ *   post:
+ *     summary: Create a new guest (Admin only)
+ *     tags: [Guests]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               preferences:
+ *                 type: object
+ *     responses:
+ *       201:
+ *         description: Guest created successfully
+ *       400:
+ *         description: Invalid input data
+ */
+router.post('/', protect, authorize('admin'), guestController.createGuest);
 
-        // Get guests with pagination
-        const [guests, total] = await Promise.all([
-            Guest.find(query)
-                .sort('-createdAt')
-                .skip(skip)
-                .limit(limit),
-            Guest.countDocuments(query)
-        ]);
+/**
+ * @swagger
+ * /api/guests/{id}:
+ *   get:
+ *     summary: Get guest by ID (Admin only)
+ *     tags: [Guests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Guest details
+ *       404:
+ *         description: Guest not found
+ */
+router.get('/:id', protect, authorize('admin'), guestController.getGuestById);
 
-        // Calculate pagination
-        const totalPages = Math.ceil(total / limit);
-        const pagination = {
-            page,
-            totalPages,
-            hasPrev: page > 1,
-            hasNext: page < totalPages
-        };
+/**
+ * @swagger
+ * /api/guests/{id}:
+ *   put:
+ *     summary: Update guest (Admin only)
+ *     tags: [Guests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               preferences:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Guest updated successfully
+ *       404:
+ *         description: Guest not found
+ */
+router.put('/:id', protect, authorize('admin'), guestController.updateGuest);
 
-        res.render('admin/guests/list', {
-            title: 'Guest Management',
-            active: 'guests',
-            guests,
-            pagination,
-            query: req.query
-        });
-    } catch (error) {
-        console.error('Error loading guests:', error);
-        res.status(500).send('Error loading guests');
-    }
-});
-
-// Create new guest
-router.post('/', protect, authorize('admin'), async (req, res) => {
-    try {
-        const guest = await Guest.create({
-            ...req.body,
-            createdBy: req.user._id
-        });
-
-        res.json({
-            success: true,
-            data: guest
-        });
-    } catch (error) {
-        console.error('Error creating guest:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message || 'Error creating guest'
-        });
-    }
-});
-
-// Get single guest
-router.get('/:id', protect, authorize('admin'), async (req, res) => {
-    try {
-        const guest = await Guest.findById(req.params.id);
-        
-        if (!guest) {
-            return res.status(404).json({
-                success: false,
-                message: 'Guest not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            data: guest
-        });
-    } catch (error) {
-        console.error('Error fetching guest:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching guest'
-        });
-    }
-});
-
-// Update guest
-router.put('/:id', protect, authorize('admin'), async (req, res) => {
-    try {
-        const guest = await Guest.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
-
-        if (!guest) {
-            return res.status(404).json({
-                success: false,
-                message: 'Guest not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            data: guest
-        });
-    } catch (error) {
-        console.error('Error updating guest:', error);
-        res.status(500).json({
-            success: false,
-            message: error.message || 'Error updating guest'
-        });
-    }
-});
+/**
+ * @swagger
+ * /api/guests/{id}:
+ *   delete:
+ *     summary: Delete guest (Admin only)
+ *     tags: [Guests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Guest deleted successfully
+ *       404:
+ *         description: Guest not found
+ */
+router.delete('/:id', protect, authorize('admin'), guestController.deleteGuest);
 
 module.exports = router;

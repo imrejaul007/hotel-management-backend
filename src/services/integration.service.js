@@ -1,262 +1,261 @@
 const axios = require('axios');
-const config = require('../config');
+const config = require('../config/env');
 const Guest = require('../models/Guest');
 const Booking = require('../models/Booking');
 const notificationService = require('./notification.service');
-const stripe = require('stripe');
+const stripe = config.stripe?.secretKey ? require('stripe')(config.stripe.secretKey) : null;
 const Razorpay = require('razorpay');
 
 class IntegrationService {
     constructor() {
         this.initializeAPIs();
+        if (config.razorpay?.keyId && config.razorpay?.keySecret) {
+            this.razorpay = new Razorpay({
+                key_id: config.razorpay.keyId,
+                key_secret: config.razorpay.keySecret
+            });
+        }
     }
 
     initializeAPIs() {
         // Initialize API clients
         this.bookingAPIs = {
-            booking: axios.create({
+            booking: config.bookingAPI?.token ? axios.create({
                 baseURL: config.bookingAPI.baseURL,
                 headers: { 'Authorization': `Bearer ${config.bookingAPI.token}` }
-            }),
-            expedia: axios.create({
+            }) : null,
+            expedia: config.expediaAPI?.token ? axios.create({
                 baseURL: config.expediaAPI.baseURL,
                 headers: { 'Authorization': `Bearer ${config.expediaAPI.token}` }
-            }),
-            airbnb: axios.create({
+            }) : null,
+            airbnb: config.airbnbAPI?.token ? axios.create({
                 baseURL: config.airbnbAPI.baseURL,
                 headers: { 'Authorization': `Bearer ${config.airbnbAPI.token}` }
-            })
-        };
-
-        // Initialize payment gateways if credentials are available
-        this.paymentGateways = {};
-        
-        if (config.stripe?.secretKey) {
-            this.paymentGateways.stripe = stripe(config.stripe.secretKey);
-        }
-        
-        if (config.razorpay?.keyId && config.razorpay?.keySecret) {
-            this.paymentGateways.razorpay = new Razorpay({
-                key_id: config.razorpay.keyId,
-                key_secret: config.razorpay.keySecret
-            });
-        }
-
-        // Initialize social media APIs
-        this.socialAPIs = {
-            facebook: axios.create({
-                baseURL: 'https://graph.facebook.com/v12.0'
-            }),
-            twitter: axios.create({
-                baseURL: 'https://api.twitter.com/2'
-            }),
-            instagram: axios.create({
-                baseURL: 'https://graph.instagram.com'
-            })
+            }) : null
         };
     }
 
-    // Booking Platform Integration Methods
-    async syncBookings() {
+    // Payment Gateway Integration Methods
+    async createStripePayment(amount, currency, description, customer) {
         try {
-            const platforms = ['booking', 'expedia', 'airbnb'];
-            const newBookings = [];
-
-            for (const platform of platforms) {
-                try {
-                    const bookings = await this.fetchBookingsFromPlatform(platform);
-                    newBookings.push(...bookings);
-                } catch (error) {
-                    console.error(`Error fetching bookings from ${platform}:`, error);
-                }
+            if (!stripe) {
+                throw new Error('Stripe is not configured');
             }
 
-            await this.processNewBookings(newBookings);
-            return newBookings;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount,
+                currency,
+                description,
+                customer,
+                payment_method_types: ['card']
+            });
+
+            return paymentIntent;
         } catch (error) {
-            console.error('Error syncing bookings:', error);
+            console.error('Stripe payment creation error:', error);
             throw error;
         }
     }
 
-    async fetchBookingsFromPlatform(platform) {
+    async createRazorpayPayment(amount, currency, description) {
         try {
-            const api = this.bookingAPIs[platform];
-            if (!api) {
-                console.warn(`API client not configured for platform: ${platform}`);
+            if (!this.razorpay) {
+                throw new Error('Razorpay is not configured');
+            }
+
+            const order = await this.razorpay.orders.create({
+                amount,
+                currency,
+                notes: { description }
+            });
+
+            return order;
+        } catch (error) {
+            console.error('Razorpay payment creation error:', error);
+            throw error;
+        }
+    }
+
+    // OTA Integration Methods
+    async syncBookings() {
+        try {
+            const [bookingComBookings, expediaBookings, airbnbBookings] = await Promise.all([
+                this.fetchBookingComBookings(),
+                this.fetchExpediaBookings(),
+                this.fetchAirbnbBookings()
+            ]);
+
+            // Process and store bookings
+            await this.processOTABookings([
+                ...bookingComBookings,
+                ...expediaBookings,
+                ...airbnbBookings
+            ]);
+
+            return true;
+        } catch (error) {
+            console.error('Booking sync error:', error);
+            throw error;
+        }
+    }
+
+    async fetchBookingComBookings() {
+        try {
+            if (!this.bookingAPIs.booking) {
+                console.log('Booking.com API not configured');
                 return [];
             }
 
-            const response = await api.get('/bookings', {
-                params: {
-                    from: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-                }
-            });
-
-            return response.data.bookings.map(booking => ({
-                ...booking,
-                platform
-            }));
+            const response = await this.bookingAPIs.booking.get('/bookings');
+            return response.data;
         } catch (error) {
-            console.error(`Error fetching bookings from ${platform}:`, error);
+            console.error('Booking.com API error:', error);
             return [];
         }
     }
 
-    async processNewBookings(bookings) {
+    async fetchExpediaBookings() {
+        try {
+            if (!this.bookingAPIs.expedia) {
+                console.log('Expedia API not configured');
+                return [];
+            }
+
+            const response = await this.bookingAPIs.expedia.get('/bookings');
+            return response.data;
+        } catch (error) {
+            console.error('Expedia API error:', error);
+            return [];
+        }
+    }
+
+    async fetchAirbnbBookings() {
+        try {
+            if (!this.bookingAPIs.airbnb) {
+                console.log('Airbnb API not configured');
+                return [];
+            }
+
+            const response = await this.bookingAPIs.airbnb.get('/bookings');
+            return response.data;
+        } catch (error) {
+            console.error('Airbnb API error:', error);
+            return [];
+        }
+    }
+
+    async processOTABookings(bookings) {
         for (const booking of bookings) {
             try {
-                const guest = await this.createOrUpdateGuest(booking.guest);
-                const newBooking = await Booking.create({
-                    ...booking,
-                    guest: guest._id,
-                    platform: booking.platform
+                // Check if booking already exists
+                const existingBooking = await Booking.findOne({
+                    otaBookingId: booking.id,
+                    otaProvider: booking.provider
                 });
 
-                await notificationService.notifyBookingConfirmation(
-                    guest._id,
-                    newBooking
-                );
+                if (!existingBooking) {
+                    // Create guest if not exists
+                    let guest = await Guest.findOne({ email: booking.guestEmail });
+                    if (!guest) {
+                        guest = await Guest.create({
+                            name: booking.guestName,
+                            email: booking.guestEmail,
+                            phone: booking.guestPhone
+                        });
+                    }
+
+                    // Create booking
+                    const newBooking = await Booking.create({
+                        guest: guest._id,
+                        otaBookingId: booking.id,
+                        otaProvider: booking.provider,
+                        checkIn: booking.checkIn,
+                        checkOut: booking.checkOut,
+                        roomType: booking.roomType,
+                        totalAmount: booking.totalAmount,
+                        status: 'confirmed'
+                    });
+
+                    // Notify about new booking
+                    await notificationService.notifyUser('admin', {
+                        type: 'new_booking',
+                        message: `New booking received from ${booking.provider}`,
+                        booking: newBooking._id
+                    });
+                }
             } catch (error) {
                 console.error(`Error processing booking ${booking.id}:`, error);
             }
         }
     }
 
-    // Payment Gateway Integration Methods
-    async processPayment(bookingId, paymentData) {
-        const booking = await Booking.findById(bookingId);
-        if (!booking) {
-            throw new Error('Booking not found');
-        }
-
-        const { gateway, ...data } = paymentData;
-        const paymentGateway = this.paymentGateways[gateway];
-
-        if (!paymentGateway) {
-            throw new Error('Payment gateway not configured');
-        }
-
-        try {
-            let payment;
-            switch (gateway) {
-                case 'stripe':
-                    payment = await this.processStripePayment(paymentGateway, data);
-                    break;
-                case 'razorpay':
-                    payment = await this.processRazorpayPayment(paymentGateway, data);
-                    break;
-                default:
-                    throw new Error('Unsupported payment gateway');
-            }
-
-            booking.payment = {
-                id: payment.id,
-                amount: payment.amount,
-                status: payment.status,
-                gateway
-            };
-
-            await booking.save();
-            return payment;
-        } catch (error) {
-            console.error('Payment processing error:', error);
-            throw error;
-        }
-    }
-
-    async processStripePayment(stripe, data) {
-        const { amount, currency, source, description } = data;
-        return await stripe.paymentIntents.create({
-            amount,
-            currency,
-            payment_method: source,
-            description,
-            confirm: true
-        });
-    }
-
-    async processRazorpayPayment(razorpay, data) {
-        const { amount, currency } = data;
-        return await razorpay.orders.create({
-            amount,
-            currency,
-            receipt: `receipt_${Date.now()}`,
-            payment_capture: 1
-        });
-    }
-
     // Social Media Integration Methods
-    async connectSocialMedia(guestId, platform, token) {
-        try {
-            const guest = await Guest.findById(guestId);
-            if (!guest) {
-                throw new Error('Guest not found');
+    async postToSocialMedia(content, platforms = ['facebook', 'twitter', 'instagram']) {
+        const posts = [];
+
+        if (platforms.includes('facebook') && config.facebook?.accessToken) {
+            try {
+                const response = await axios.post(
+                    `https://graph.facebook.com/v12.0/me/feed`,
+                    {
+                        message: content.text,
+                        link: content.link
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${config.facebook.accessToken}`
+                        }
+                    }
+                );
+                posts.push({ platform: 'facebook', success: true, id: response.data.id });
+            } catch (error) {
+                console.error('Facebook post error:', error);
+                posts.push({ platform: 'facebook', success: false, error: error.message });
             }
-
-            const profile = await this.fetchSocialProfile(platform, token);
-            
-            guest.socialConnections = guest.socialConnections || {};
-            guest.socialConnections[platform] = {
-                id: profile.id,
-                username: profile.username,
-                connected: true,
-                connectedAt: new Date()
-            };
-
-            await guest.save();
-            return profile;
-        } catch (error) {
-            console.error(`Error connecting ${platform}:`, error);
-            throw error;
-        }
-    }
-
-    async fetchSocialProfile(platform, token) {
-        const api = this.socialAPIs[platform];
-        if (!api) {
-            throw new Error('Unsupported social platform');
         }
 
-        try {
-            const response = await api.get('/me', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            return response.data;
-        } catch (error) {
-            console.error(`Error fetching ${platform} profile:`, error);
-            throw error;
-        }
-    }
-
-    // Helper Methods
-    async createOrUpdateGuest(guestData) {
-        try {
-            const existingGuest = await Guest.findOne({
-                $or: [
-                    { email: guestData.email },
-                    { phone: guestData.phone }
-                ]
-            });
-
-            if (existingGuest) {
-                Object.assign(existingGuest, guestData);
-                await existingGuest.save();
-                return existingGuest;
+        if (platforms.includes('twitter') && config.twitter?.bearerToken) {
+            try {
+                const response = await axios.post(
+                    'https://api.twitter.com/2/tweets',
+                    {
+                        text: content.text
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${config.twitter.bearerToken}`
+                        }
+                    }
+                );
+                posts.push({ platform: 'twitter', success: true, id: response.data.id });
+            } catch (error) {
+                console.error('Twitter post error:', error);
+                posts.push({ platform: 'twitter', success: false, error: error.message });
             }
-
-            return await Guest.create(guestData);
-        } catch (error) {
-            console.error('Error creating/updating guest:', error);
-            throw error;
         }
-    }
 
-    // Review Integration Methods
-    async syncReviews() {
-        // Implement review sync logic
-        console.log('Review sync not implemented yet');
-        return [];
+        if (platforms.includes('instagram') && config.instagram?.accessToken) {
+            try {
+                const response = await axios.post(
+                    `https://graph.instagram.com/me/media`,
+                    {
+                        caption: content.text,
+                        image_url: content.image
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${config.instagram.accessToken}`
+                        }
+                    }
+                );
+                posts.push({ platform: 'instagram', success: true, id: response.data.id });
+            } catch (error) {
+                console.error('Instagram post error:', error);
+                posts.push({ platform: 'instagram', success: false, error: error.message });
+            }
+        }
+
+        return posts;
     }
 }
 

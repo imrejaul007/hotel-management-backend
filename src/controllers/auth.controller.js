@@ -14,34 +14,14 @@ const cookieOptions = {
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
 };
 
-// Initialize loyalty program for new user
-const initializeLoyaltyProgram = async (userId) => {
-    await LoyaltyProgram.create({
-        user: userId,
-        tier: 'Bronze',
-        points: 100, // Welcome bonus
-        pointsHistory: [{
-            points: 100,
-            type: 'welcome_bonus',
-            description: 'Welcome Bonus Points',
-            date: new Date()
-        }]
-    });
-};
-
+/**
+ * Register a new user
+ * @route POST /api/auth/register
+ * @access Public
+ */
 exports.register = async (req, res) => {
     try {
-        const { name, email, password, confirmPassword } = req.body;
-
-        // Check if passwords match
-        if (password !== confirmPassword) {
-            return res.render('auth/register', {
-                title: 'Create Account',
-                error: 'Passwords do not match',
-                name,
-                email
-            });
-        }
+        const { name, email, password } = req.body;
 
         // Register user through auth service
         const { user, token } = await authService.register({
@@ -54,9 +34,6 @@ exports.register = async (req, res) => {
         // Initialize loyalty program for the new user
         await initializeLoyaltyProgram(user._id);
 
-        // Set cookie
-        res.cookie('token', token, cookieOptions);
-
         // Send welcome email with loyalty program details
         await emailService.sendWelcomeEmail(user.email, {
             name: user.name,
@@ -64,32 +41,27 @@ exports.register = async (req, res) => {
             welcomePoints: 100
         });
 
-        // Redirect based on role
-        if (user.role === 'admin') {
-            res.redirect('/admin/dashboard');
-        } else {
-            res.redirect('/guest/dashboard');
-        }
+        return successResponse(res, 201, 'Registration successful', { user });
     } catch (error) {
         console.error('Registration error:', error);
-        res.render('auth/register', {
-            title: 'Create Account',
-            error: error.message || 'Failed to create account. Please try again.'
-        });
+        return errorResponse(res, 400, error.message);
     }
 };
 
+/**
+ * Login user
+ * @route POST /api/auth/login
+ * @access Public
+ */
 exports.login = async (req, res) => {
     try {
         const { token, user } = await authService.login(req.body);
-        
-        // Set JWT as HTTP-only cookie
-        res.cookie('token', token, cookieOptions);
         
         // Get loyalty program status
         const loyaltyProgram = await LoyaltyProgram.findOne({ user: user._id });
         
         return successResponse(res, 200, 'Login successful', { 
+            token,
             user,
             loyalty: loyaltyProgram ? {
                 tier: loyaltyProgram.tier,
@@ -101,6 +73,11 @@ exports.login = async (req, res) => {
     }
 };
 
+/**
+ * Logout user
+ * @route POST /api/auth/logout
+ * @access Private
+ */
 exports.logout = async (req, res) => {
     // Clear the cookie
     res.cookie('token', 'none', {
@@ -111,7 +88,11 @@ exports.logout = async (req, res) => {
     return successResponse(res, 200, 'Logged out successfully');
 };
 
-// Google OAuth callback handler
+/**
+ * Google OAuth callback handler
+ * @route GET /api/auth/google/callback
+ * @access Public
+ */
 exports.googleCallback = async (req, res) => {
     try {
         if (!req.user) {
@@ -129,16 +110,19 @@ exports.googleCallback = async (req, res) => {
         // Set JWT as HTTP-only cookie
         res.cookie('token', token, cookieOptions);
         
-        // Redirect to frontend with success
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        res.redirect(`${frontendUrl}/auth/google/success`);
+        // Return success response
+        return successResponse(res, 200, 'Google authentication successful', { token, user });
     } catch (error) {
         console.error('Google callback error:', error);
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-        res.redirect(`${frontendUrl}/auth/google/error?message=${encodeURIComponent(error.message)}`);
+        return errorResponse(res, 401, error.message);
     }
 };
 
+/**
+ * Request password reset
+ * @route POST /api/auth/forgot-password
+ * @access Public
+ */
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -146,10 +130,7 @@ exports.forgotPassword = async (req, res) => {
         // Find user by email
         const user = await User.findOne({ email });
         if (!user) {
-            return res.render('auth/forgot-password', {
-                title: 'Forgot Password',
-                error: 'No account found with that email'
-            });
+            return errorResponse(res, 404, 'No account found with that email');
         }
 
         // Generate reset token
@@ -164,63 +145,28 @@ exports.forgotPassword = async (req, res) => {
         // Send reset email
         await emailService.sendPasswordResetEmail(email, resetToken);
 
-        res.render('auth/forgot-password', {
-            title: 'Forgot Password',
-            success: 'Password reset link sent to your email'
-        });
+        return successResponse(res, 200, 'Password reset email sent');
     } catch (error) {
-        res.render('auth/forgot-password', {
-            title: 'Forgot Password',
-            error: 'Failed to send password reset email'
-        });
+        console.error('Forgot password error:', error);
+        return errorResponse(res, 500, 'Failed to send password reset email');
     }
 };
 
-exports.getResetPassword = async (req, res) => {
-    try {
-        const { token } = req.params;
-        const tokenHash = crypto.SHA256(token).toString();
-
-        // Find user with valid reset token
-        const user = await User.findOne({
-            resetPasswordToken: tokenHash,
-            resetPasswordExpires: { $gt: Date.now() }
-        });
-
-        if (!user) {
-            return res.render('auth/reset-password', {
-                title: 'Reset Password',
-                error: 'Password reset token is invalid or has expired'
-            });
-        }
-
-        res.render('auth/reset-password', {
-            title: 'Reset Password',
-            token
-        });
-    } catch (error) {
-        res.render('auth/reset-password', {
-            title: 'Reset Password',
-            error: 'An error occurred'
-        });
-    }
-};
-
+/**
+ * Reset password using token
+ * @route POST /api/auth/reset-password/:token
+ * @access Public
+ */
 exports.resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
         const { password, confirmPassword } = req.body;
+        const tokenHash = crypto.SHA256(token).toString();
 
         // Validate password match
         if (password !== confirmPassword) {
-            return res.render('auth/reset-password', {
-                title: 'Reset Password',
-                error: 'Passwords do not match',
-                token
-            });
+            return errorResponse(res, 400, 'Passwords do not match');
         }
-
-        const tokenHash = crypto.SHA256(token).toString();
 
         // Find user with valid reset token
         const user = await User.findOne({
@@ -229,10 +175,7 @@ exports.resetPassword = async (req, res) => {
         });
 
         if (!user) {
-            return res.render('auth/reset-password', {
-                title: 'Reset Password',
-                error: 'Password reset token is invalid or has expired'
-            });
+            return errorResponse(res, 400, 'Password reset token is invalid or has expired');
         }
 
         // Update password and clear reset token
@@ -241,20 +184,38 @@ exports.resetPassword = async (req, res) => {
         user.resetPasswordExpires = undefined;
         await user.save();
 
-        // Send password change confirmation email
+        // Send confirmation email
         await emailService.sendPasswordChangeEmail(user.email);
 
-        res.render('auth/login', {
-            title: 'Login',
-            success: 'Password has been reset successfully. Please login with your new password.'
-        });
+        return successResponse(res, 200, 'Password reset successful');
     } catch (error) {
-        res.render('auth/reset-password', {
-            title: 'Reset Password',
-            error: 'Failed to reset password',
-            token: req.params.token
-        });
+        console.error('Reset password error:', error);
+        return errorResponse(res, 500, 'Failed to reset password');
     }
+};
+
+/**
+ * Verify JWT token
+ * @route GET /api/auth/verify-token
+ * @access Private
+ */
+exports.verifyToken = async (req, res) => {
+    return successResponse(res, 200, 'Token is valid', { user: req.user });
+};
+
+// Helper function to initialize loyalty program
+const initializeLoyaltyProgram = async (userId) => {
+    await LoyaltyProgram.create({
+        user: userId,
+        tier: 'Bronze',
+        points: 100, // Welcome bonus
+        pointsHistory: [{
+            points: 100,
+            type: 'welcome_bonus',
+            description: 'Welcome Bonus Points',
+            date: new Date()
+        }]
+    });
 };
 
 module.exports = exports;

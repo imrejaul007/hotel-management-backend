@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
 const Guest = require('../models/Guest');
 const User = require('../models/User');
-const config = require('../config');
+const config = require('../config/env');
 
 class NotificationService {
     constructor() {

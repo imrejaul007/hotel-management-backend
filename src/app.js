@@ -15,6 +15,7 @@ const recommendationService = require('./services/recommendation.service');
 const integrationService = require('./services/integration.service');
 
 // Import routes
+const homeRouter = require('./routes/home.routes');
 const authRoutes = require('./routes/auth.routes');
 const adminRoutes = require('./routes/admin.routes');
 const bookingRoutes = require('./routes/booking.routes');
@@ -38,42 +39,36 @@ app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Middleware
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session({
-    secret: config.jwtSecret,
+    secret: config.sessionSecret,
     resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+    saveUninitialized: false
 }));
 app.use(flash());
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API Documentation
+// API documentation
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpecs));
 
 // Routes
-app.use('/auth', authRoutes);
-app.use('/admin', adminRoutes);
-app.use('/bookings', bookingRoutes);
-app.use('/guests', guestRoutes);
+app.use('/', homeRouter);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/guests', guestRoutes);
 
-// Error handling
+// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).render('error', {
-        message: 'Something broke!',
-        error: process.env.NODE_ENV === 'development' ? err : {}
+    res.status(500).json({
+        message: 'Something went wrong!',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
 });
 

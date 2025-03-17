@@ -349,6 +349,243 @@ exports.getGuestPreferences = async (req, res) => {
     }
 };
 
+// Get all guests
+exports.getAllGuests = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const query = { role: 'guest' };
+
+        // Apply filters
+        if (req.query.search) {
+            query.$or = [
+                { name: { $regex: req.query.search, $options: 'i' } },
+                { email: { $regex: req.query.search, $options: 'i' } },
+                { phone: { $regex: req.query.search, $options: 'i' } }
+            ];
+        }
+
+        if (req.query.loyaltyTier) {
+            query.loyaltyTier = req.query.loyaltyTier;
+        }
+
+        if (req.query.status) {
+            query.status = req.query.status;
+        }
+
+        // Get guests with pagination
+        const [guests, total] = await Promise.all([
+            User.find(query)
+                .select('-password')
+                .populate('loyaltyProgram')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            User.countDocuments(query)
+        ]);
+
+        // Get additional stats for each guest
+        const guestsWithStats = await Promise.all(guests.map(async (guest) => {
+            const [bookingStats, loyaltyInfo] = await Promise.all([
+                getGuestStatistics(guest._id),
+                LoyaltyProgram.findOne({ user: guest._id }).lean()
+            ]);
+
+            return {
+                ...guest,
+                bookingStats,
+                loyaltyInfo: loyaltyInfo || { points: 0, tier: 'None' }
+            };
+        }));
+
+        res.json({
+            guests: guestsWithStats,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Error getting all guests:', error);
+        res.status(500).json({ message: 'Error getting guests' });
+    }
+};
+
+// Get guest details
+exports.getGuestDetails = async (req, res) => {
+    try {
+        const guest = await User.findById(req.params.id)
+            .select('-password')
+            .populate('loyaltyProgram')
+            .lean();
+
+        if (!guest || guest.role !== 'guest') {
+            return res.status(404).json({ message: 'Guest not found' });
+        }
+
+        // Get comprehensive guest information
+        const [
+            bookingStats,
+            bookingHistory,
+            preferences,
+            averageStayDuration,
+            mostBookedRoomType
+        ] = await Promise.all([
+            getGuestStatistics(guest._id),
+            Booking.find({ guest: guest._id })
+                .populate('hotel', 'name location')
+                .populate('room', 'type number')
+                .sort('-checkIn')
+                .lean(),
+            getGuestPreferences(guest._id),
+            calculateAverageStayDuration(guest._id),
+            getMostBookedRoomType(guest._id)
+        ]);
+
+        // Analyze booking patterns
+        const bookingPreferences = analyzeBookingPreferences(bookingHistory);
+
+        res.json({
+            guest: {
+                ...guest,
+                bookingStats,
+                bookingHistory: bookingHistory.map(booking => ({
+                    ...booking,
+                    checkIn: booking.checkIn.toISOString().split('T')[0],
+                    checkOut: booking.checkOut.toISOString().split('T')[0]
+                })),
+                preferences,
+                statistics: {
+                    averageStayDuration,
+                    mostBookedRoomType,
+                    bookingPreferences
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error getting guest details:', error);
+        res.status(500).json({ message: 'Error getting guest details' });
+    }
+};
+
+// Update guest
+exports.updateGuest = async (req, res) => {
+    try {
+        const guestId = req.params.id;
+        const updates = req.body;
+
+        // Get current guest
+        const guest = await User.findById(guestId);
+        if (!guest || guest.role !== 'guest') {
+            return res.status(404).json({ message: 'Guest not found' });
+        }
+
+        // Prevent role change
+        delete updates.role;
+
+        // If updating email, check if it's already taken
+        if (updates.email && updates.email !== guest.email) {
+            const emailExists = await User.findOne({ email: updates.email });
+            if (emailExists) {
+                return res.status(400).json({ message: 'Email already in use' });
+            }
+        }
+
+        // Update guest
+        const updatedGuest = await User.findByIdAndUpdate(
+            guestId,
+            { 
+                ...updates,
+                lastModifiedBy: req.user._id,
+                lastModifiedAt: new Date()
+            },
+            { new: true }
+        )
+        .select('-password')
+        .populate('loyaltyProgram')
+        .lean();
+
+        // Get comprehensive guest information
+        const [
+            bookingStats,
+            bookingHistory,
+            preferences,
+            averageStayDuration,
+            mostBookedRoomType
+        ] = await Promise.all([
+            getGuestStatistics(updatedGuest._id),
+            Booking.find({ guest: updatedGuest._id })
+                .populate('hotel', 'name location')
+                .populate('room', 'type number')
+                .sort('-checkIn')
+                .lean(),
+            getGuestPreferences(updatedGuest._id),
+            calculateAverageStayDuration(updatedGuest._id),
+            getMostBookedRoomType(updatedGuest._id)
+        ]);
+
+        res.json({
+            message: 'Guest updated successfully',
+            guest: {
+                ...updatedGuest,
+                bookingStats,
+                bookingHistory: bookingHistory.map(booking => ({
+                    ...booking,
+                    checkIn: booking.checkIn.toISOString().split('T')[0],
+                    checkOut: booking.checkOut.toISOString().split('T')[0]
+                })),
+                preferences,
+                statistics: {
+                    averageStayDuration,
+                    mostBookedRoomType,
+                    bookingPreferences: analyzeBookingPreferences(bookingHistory)
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error updating guest:', error);
+        res.status(500).json({ message: 'Error updating guest' });
+    }
+};
+
+// Delete guest
+exports.deleteGuest = async (req, res) => {
+    try {
+        const guest = await User.findById(req.params.id);
+        if (!guest || guest.role !== 'guest') {
+            return res.status(404).json({ message: 'Guest not found' });
+        }
+
+        // Check if guest has any active bookings
+        const activeBookings = await Booking.countDocuments({
+            guest: guest._id,
+            status: { $in: ['CONFIRMED', 'CHECKED_IN'] }
+        });
+
+        if (activeBookings > 0) {
+            return res.status(400).json({
+                message: 'Cannot delete guest with active bookings'
+            });
+        }
+
+        // Delete guest's loyalty program
+        await LoyaltyProgram.deleteOne({ user: guest._id });
+
+        // Delete guest
+        await guest.remove();
+
+        res.json({ message: 'Guest deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting guest:', error);
+        res.status(500).json({ message: 'Error deleting guest' });
+    }
+};
+
 // Helper Functions
 
 // Get guest statistics

@@ -1,45 +1,42 @@
 const LoyaltyProgram = require('../models/LoyaltyProgram');
 const User = require('../models/User');
-const { sendEmail } = require('../utils/email');
+const { successResponse, errorResponse } = require('../utils/response.util');
+const emailService = require('../services/email.service');
 
-// Get loyalty program details
+/**
+ * Get loyalty program details
+ * @route GET /api/loyalty
+ * @access Private
+ */
 exports.getLoyaltyDetails = async (req, res) => {
     try {
-        const loyalty = await LoyaltyProgram.findOne({ userId: req.user._id })
+        const loyalty = await LoyaltyProgram.findOne({ user: req.user._id })
             .populate('pointsHistory.bookingId')
             .populate('rewards.bookingId');
 
         if (!loyalty) {
-            return res.status(404).json({
-                success: false,
-                message: 'Loyalty program not found'
-            });
+            return errorResponse(res, 404, 'Loyalty program not found');
         }
 
-        res.status(200).json({
-            success: true,
-            data: loyalty
-        });
+        return successResponse(res, 200, 'Loyalty program details retrieved successfully', loyalty);
     } catch (error) {
         console.error('Error fetching loyalty details:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching loyalty details'
-        });
+        return errorResponse(res, 500, 'Error fetching loyalty details');
     }
 };
 
-// Enroll in loyalty program
+/**
+ * Enroll in loyalty program
+ * @route POST /api/loyalty/enroll
+ * @access Private
+ */
 exports.enrollInProgram = async (req, res) => {
     try {
         // Check if already enrolled
-        let loyalty = await LoyaltyProgram.findOne({ userId: req.user._id });
+        let loyalty = await LoyaltyProgram.findOne({ user: req.user._id });
         
         if (loyalty) {
-            return res.status(400).json({
-                success: false,
-                message: 'Already enrolled in loyalty program'
-            });
+            return errorResponse(res, 400, 'Already enrolled in loyalty program');
         }
 
         // Generate referral code
@@ -47,10 +44,17 @@ exports.enrollInProgram = async (req, res) => {
 
         // Create loyalty program entry
         loyalty = await LoyaltyProgram.create({
-            userId: req.user._id,
+            user: req.user._id,
+            tier: 'Bronze',
+            points: 100, // Welcome bonus
             referralCode,
-            // If user was referred, add referrer
-            referredBy: req.body.referralCode ? await getReferrerId(req.body.referralCode) : null
+            referredBy: req.body.referralCode ? await getReferrerId(req.body.referralCode) : null,
+            pointsHistory: [{
+                points: 100,
+                type: 'welcome_bonus',
+                description: 'Welcome Bonus Points',
+                date: new Date()
+            }]
         });
 
         // If user was referred, reward the referrer
@@ -59,31 +63,31 @@ exports.enrollInProgram = async (req, res) => {
         }
 
         // Send welcome email
-        await sendWelcomeEmail(req.user, loyalty);
-
-        res.status(201).json({
-            success: true,
-            data: loyalty
+        await emailService.sendWelcomeEmail(req.user.email, {
+            name: req.user.name,
+            loyaltyTier: loyalty.tier,
+            welcomePoints: loyalty.points,
+            referralCode: loyalty.referralCode
         });
+
+        return successResponse(res, 201, 'Successfully enrolled in loyalty program', loyalty);
     } catch (error) {
         console.error('Error enrolling in loyalty program:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error enrolling in loyalty program'
-        });
+        return errorResponse(res, 500, 'Error enrolling in loyalty program');
     }
 };
 
-// Update preferences
+/**
+ * Update preferences
+ * @route PUT /api/loyalty/preferences
+ * @access Private
+ */
 exports.updatePreferences = async (req, res) => {
     try {
-        const loyalty = await LoyaltyProgram.findOne({ userId: req.user._id });
+        const loyalty = await LoyaltyProgram.findOne({ user: req.user._id });
         
         if (!loyalty) {
-            return res.status(404).json({
-                success: false,
-                message: 'Loyalty program not found'
-            });
+            return errorResponse(res, 404, 'Loyalty program not found');
         }
 
         loyalty.preferences = {
@@ -93,39 +97,31 @@ exports.updatePreferences = async (req, res) => {
 
         await loyalty.save();
 
-        res.status(200).json({
-            success: true,
-            data: loyalty
-        });
+        return successResponse(res, 200, 'Preferences updated successfully', loyalty);
     } catch (error) {
         console.error('Error updating preferences:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating preferences'
-        });
+        return errorResponse(res, 500, 'Error updating preferences');
     }
 };
 
-// Redeem points for reward
+/**
+ * Redeem points for reward
+ * @route POST /api/loyalty/redeem
+ * @access Private
+ */
 exports.redeemReward = async (req, res) => {
     try {
         const { rewardType, points } = req.body;
         
-        const loyalty = await LoyaltyProgram.findOne({ userId: req.user._id });
+        const loyalty = await LoyaltyProgram.findOne({ user: req.user._id });
         
         if (!loyalty) {
-            return res.status(404).json({
-                success: false,
-                message: 'Loyalty program not found'
-            });
+            return errorResponse(res, 404, 'Loyalty program not found');
         }
 
         // Validate points
         if (loyalty.points < points) {
-            return res.status(400).json({
-                success: false,
-                message: 'Insufficient points'
-            });
+            return errorResponse(res, 400, 'Insufficient points');
         }
 
         // Create reward
@@ -142,47 +138,63 @@ exports.redeemReward = async (req, res) => {
         await loyalty.redeemPoints(points, rewardType, null, `Redeemed ${reward.name}`);
 
         // Send confirmation email
-        await sendRewardEmail(req.user, reward);
-
-        res.status(200).json({
-            success: true,
-            data: loyalty
+        await emailService.sendRewardEmail(req.user.email, {
+            name: req.user.name,
+            rewardName: reward.name,
+            pointsUsed: points,
+            remainingPoints: loyalty.points,
+            expiryDate: reward.expiryDate
         });
+
+        return successResponse(res, 200, 'Reward redeemed successfully', { loyalty, reward });
     } catch (error) {
         console.error('Error redeeming reward:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error redeeming reward'
-        });
+        return errorResponse(res, 500, 'Error redeeming reward');
     }
 };
 
-// Get available rewards
+/**
+ * Get available rewards
+ * @route GET /api/loyalty/rewards
+ * @access Private
+ */
 exports.getAvailableRewards = async (req, res) => {
     try {
-        const loyalty = await LoyaltyProgram.findOne({ userId: req.user._id });
+        const loyalty = await LoyaltyProgram.findOne({ user: req.user._id });
         
         if (!loyalty) {
-            return res.status(404).json({
-                success: false,
-                message: 'Loyalty program not found'
-            });
+            return errorResponse(res, 404, 'Loyalty program not found');
         }
 
         const availableRewards = loyalty.rewards.filter(reward => 
             reward.status === 'available' && reward.expiryDate > new Date()
         );
 
-        res.status(200).json({
-            success: true,
-            data: availableRewards
-        });
+        return successResponse(res, 200, 'Available rewards retrieved successfully', availableRewards);
     } catch (error) {
         console.error('Error fetching available rewards:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching available rewards'
-        });
+        return errorResponse(res, 500, 'Error fetching available rewards');
+    }
+};
+
+/**
+ * Get points history
+ * @route GET /api/loyalty/points-history
+ * @access Private
+ */
+exports.getPointsHistory = async (req, res) => {
+    try {
+        const loyalty = await LoyaltyProgram.findOne({ user: req.user._id })
+            .populate('pointsHistory.bookingId');
+        
+        if (!loyalty) {
+            return errorResponse(res, 404, 'Loyalty program not found');
+        }
+
+        return successResponse(res, 200, 'Points history retrieved successfully', loyalty.pointsHistory);
+    } catch (error) {
+        console.error('Error fetching points history:', error);
+        return errorResponse(res, 500, 'Error fetching points history');
     }
 };
 
@@ -196,78 +208,52 @@ const getRewardName = (type) => {
         airport_transfer: 'Complimentary Airport Transfer',
         late_checkout: 'Late Checkout'
     };
-    return rewards[type];
+    return rewards[type] || type;
 };
 
 const getRewardExpiry = (type) => {
-    const expiryMonths = {
-        room_upgrade: 6,
-        free_night: 12,
-        dining_voucher: 3,
-        spa_voucher: 3,
-        airport_transfer: 6,
-        late_checkout: 6
+    const expiryDays = {
+        room_upgrade: 90,
+        free_night: 180,
+        dining_voucher: 90,
+        spa_voucher: 90,
+        airport_transfer: 90,
+        late_checkout: 30
     };
-    
-    const expiry = new Date();
-    expiry.setMonth(expiry.getMonth() + expiryMonths[type]);
-    return expiry;
+    const days = expiryDays[type] || 90;
+    return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 };
 
 const getReferrerId = async (referralCode) => {
     const referrer = await LoyaltyProgram.findOne({ referralCode });
-    return referrer ? referrer.userId : null;
+    return referrer ? referrer.user : null;
 };
 
 const handleReferralReward = async (referrerId) => {
     if (!referrerId) return;
 
-    const referrerLoyalty = await LoyaltyProgram.findOne({ userId: referrerId });
-    if (referrerLoyalty) {
-        referrerLoyalty.referralCount += 1;
-        await referrerLoyalty.addPoints(1000, 'earned', 'referral', null, 'Referral bonus');
-        
-        // Send referral reward email
-        const referrer = await User.findById(referrerId);
-        await sendReferralRewardEmail(referrer);
+    const referrerLoyalty = await LoyaltyProgram.findOne({ user: referrerId });
+    if (!referrerLoyalty) return;
+
+    // Award referral bonus points
+    const referralPoints = 500;
+    referrerLoyalty.points += referralPoints;
+    referrerLoyalty.pointsHistory.push({
+        points: referralPoints,
+        type: 'referral_bonus',
+        description: 'Referral Bonus Points',
+        date: new Date()
+    });
+
+    await referrerLoyalty.save();
+
+    // Send email to referrer
+    const referrer = await User.findById(referrerId);
+    if (referrer) {
+        await emailService.sendReferralRewardEmail(referrer.email, {
+            name: referrer.name,
+            points: referralPoints,
+            totalPoints: referrerLoyalty.points
+        });
     }
-};
-
-// Email functions
-const sendWelcomeEmail = async (user, loyalty) => {
-    await sendEmail({
-        to: user.email,
-        subject: 'Welcome to Our Loyalty Program',
-        template: 'loyalty-welcome',
-        context: {
-            name: user.name,
-            membershipTier: loyalty.membershipTier,
-            referralCode: loyalty.referralCode
-        }
-    });
-};
-
-const sendRewardEmail = async (user, reward) => {
-    await sendEmail({
-        to: user.email,
-        subject: 'Reward Redemption Confirmation',
-        template: 'loyalty-reward',
-        context: {
-            name: user.name,
-            rewardName: reward.name,
-            expiryDate: reward.expiryDate
-        }
-    });
-};
-
-const sendReferralRewardEmail = async (user) => {
-    await sendEmail({
-        to: user.email,
-        subject: 'Referral Bonus Points Added',
-        template: 'loyalty-referral',
-        context: {
-            name: user.name,
-            points: 1000
-        }
-    });
 };

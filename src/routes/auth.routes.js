@@ -3,72 +3,6 @@ const router = express.Router();
 const passport = require('passport');
 const authController = require('../controllers/auth.controller');
 
-// Web routes
-router.get('/login', (req, res) => {
-    res.render('auth/login', {
-        title: 'Login',
-        layout: false
-    });
-});
-
-router.post('/login', async (req, res) => {
-    try {
-        const { token, user } = await authController.login(req.body);
-        
-        // Set JWT as HTTP-only cookie
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 24 * 60 * 60 * 1000 // 24 hours
-        });
-        
-        // Redirect based on role
-        if (user.role === 'admin') {
-            res.redirect('/admin/dashboard');
-        } else {
-            res.redirect('/');
-        }
-    } catch (error) {
-        res.render('auth/login', {
-            title: 'Login',
-            layout: false,
-            error: error.message
-        });
-    }
-});
-
-router.get('/logout', (req, res) => {
-    res.cookie('token', 'none', {
-        expires: new Date(Date.now() + 10 * 1000), // Expire in 10 seconds
-        httpOnly: true
-    });
-    res.redirect('/auth/login');
-});
-
-router.get('/register', (req, res) => {
-    res.render('auth/register', {
-        title: 'Create Admin Account',
-        layout: false
-    });
-});
-
-router.post('/register', authController.register);
-
-// Forgot password routes
-router.get('/forgot-password', (req, res) => {
-    res.render('auth/forgot-password', {
-        title: 'Forgot Password',
-        layout: false
-    });
-});
-
-router.post('/forgot-password', authController.forgotPassword);
-
-// Reset password routes
-router.get('/reset-password/:token', authController.getResetPassword);
-router.post('/reset-password/:token', authController.resetPassword);
-
 // API routes
 /**
  * @swagger
@@ -169,6 +103,12 @@ router.post('/api/login', authController.login);
  */
 router.post('/api/logout', authController.logout);
 
+// Forgot password routes
+router.post('/api/forgot-password', authController.forgotPassword);
+
+// Reset password routes
+router.post('/api/reset-password/:token', authController.resetPassword);
+
 // Google OAuth routes
 /**
  * @swagger
@@ -189,7 +129,7 @@ router.post('/api/logout', authController.logout);
  *               type: string
  *               description: Google OAuth2 consent screen URL
  */
-router.get('/google',
+router.get('/api/google',
     passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
@@ -224,7 +164,7 @@ router.get('/google',
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/google/callback',
+router.get('/api/google/callback',
     passport.authenticate('google', { failureRedirect: '/login' }),
     authController.googleCallback
 );
