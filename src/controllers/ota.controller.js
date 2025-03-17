@@ -1,5 +1,5 @@
-const OTAChannel = require('../models/ota-channel.model');
-const OTABooking = require('../models/ota-booking.model');
+const OTAChannel = require('../models/OTAChannel');
+const OTABooking = require('../models/OTABooking');
 const OTAService = require('../services/ota.service');
 
 exports.listChannels = async (req, res) => {
@@ -194,7 +194,7 @@ exports.getChannelStats = async (req, res) => {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const bookings = await OTABooking.aggregate([
+        const bookingStats = await OTABooking.aggregate([
             {
                 $match: {
                     channel: channel._id,
@@ -209,39 +209,37 @@ exports.getChannelStats = async (req, res) => {
                             date: '$createdAt'
                         }
                     },
-                    count: { $sum: 1 },
+                    bookings: { $sum: 1 },
                     revenue: { $sum: '$bookingDetails.otaPrice' }
                 }
             },
-            { $sort: { '_id': 1 } }
+            {
+                $sort: { '_id': 1 }
+            }
         ]);
 
-        // Format data for charts
-        const dates = [];
-        const bookingCounts = [];
-        const revenues = [];
+        // Calculate success rate
+        const syncStats = channel.syncLogs.reduce((acc, log) => {
+            if (log.timestamp >= thirtyDaysAgo) {
+                acc.total++;
+                if (log.status === 'success') acc.success++;
+            }
+            return acc;
+        }, { total: 0, success: 0 });
 
-        for (let i = 0; i < 30; i++) {
-            const date = new Date(thirtyDaysAgo);
-            date.setDate(date.getDate() + i);
-            const dateStr = date.toISOString().split('T')[0];
-            
-            const dayData = bookings.find(b => b._id === dateStr) || { count: 0, revenue: 0 };
-            
-            dates.push(dateStr);
-            bookingCounts.push(dayData.count);
-            revenues.push(dayData.revenue);
-        }
+        const successRate = syncStats.total > 0 
+            ? ((syncStats.success / syncStats.total) * 100).toFixed(1)
+            : 100;
 
         res.json({
             success: true,
-            bookings: {
-                labels: dates,
-                data: bookingCounts
-            },
-            revenue: {
-                labels: dates,
-                data: revenues
+            stats: {
+                bookingStats,
+                syncStats: {
+                    total: syncStats.total,
+                    success: syncStats.success,
+                    successRate
+                }
             }
         });
     } catch (error) {

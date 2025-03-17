@@ -1,0 +1,183 @@
+{{> admin/header title="Payment Transactions"}}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Payment Transactions</h1>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form id="filterForm" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Date Range</label>
+                    <input type="text" class="form-control" id="dateRange">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Payment Status</label>
+                    <select class="form-select" id="paymentStatus">
+                        <option value="">All</option>
+                        <option value="completed">Completed</option>
+                        <option value="pending">Pending</option>
+                        <option value="failed">Failed</option>
+                        <option value="refunded">Refunded</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-select" id="paymentMethod">
+                        <option value="">All</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="debit_card">Debit Card</option>
+                        <option value="cash">Cash</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary d-block">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="paymentsTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Date</th>
+                            <th>Guest</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each payments}}
+                        <tr>
+                            <td>{{this.transactionId}}</td>
+                            <td>{{formatDate this.createdAt}}</td>
+                            <td>
+                                {{#if this.guest}}
+                                    <a href="/admin/guests/{{this.guest._id}}">{{this.guest.name}}</a>
+                                {{else}}
+                                    N/A
+                                {{/if}}
+                            </td>
+                            <td>${{formatNumber this.amount}}</td>
+                            <td>
+                                <span class="badge bg-{{paymentMethodColor this.method}}">
+                                    {{formatPaymentMethod this.method}}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{paymentStatusColor this.status}}">
+                                    {{formatPaymentStatus this.status}}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/admin/payments/{{this._id}}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {{#if (eq this.status 'completed')}}
+                                    <button type="button" class="btn btn-sm btn-warning" onclick="showRefundModal('{{this._id}}')">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                    {{/if}}
+                                    <a href="/admin/payments/{{this._id}}/invoice" class="btn btn-sm btn-secondary">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Refund Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Process Refund</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="refundForm">
+                    <input type="hidden" id="paymentId">
+                    <div class="mb-3">
+                        <label class="form-label">Refund Amount</label>
+                        <input type="number" class="form-control" id="refundAmount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason for Refund</label>
+                        <textarea class="form-control" id="refundReason" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="processRefund()">Process Refund</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize DataTable
+$(document).ready(function() {
+    $('#paymentsTable').DataTable();
+    
+    // Initialize daterangepicker
+    $('#dateRange').daterangepicker({
+        opens: 'left',
+        autoUpdateInput: false,
+        locale: {
+            cancelLabel: 'Clear'
+        }
+    });
+});
+
+// Show refund modal
+function showRefundModal(paymentId) {
+    $('#paymentId').val(paymentId);
+    $('#refundModal').modal('show');
+}
+
+// Process refund
+async function processRefund() {
+    const paymentId = $('#paymentId').val();
+    const amount = $('#refundAmount').val();
+    const reason = $('#refundReason').val();
+
+    try {
+        const response = await fetch(`/admin/payments/${paymentId}/refund`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ amount, reason })
+        });
+
+        if (!response.ok) throw new Error('Refund failed');
+
+        $('#refundModal').modal('hide');
+        location.reload();
+    } catch (error) {
+        alert('Error processing refund: ' + error.message);
+    }
+}
+</script>
+
+{{> admin/footer}}

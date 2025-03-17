@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const Maintenance = require('../models/maintenance.model');
-const Booking = require('../models/booking.model');
-const Hotel = require('../models/hotel.model'); // Added Hotel model
+const Maintenance = require('../models/Maintenance');
+const Booking = require('../models/Booking');
+const Hotel = require('../models/Hotel'); 
 const { protect } = require('../middlewares/auth.middleware');
 
 // Guest maintenance dashboard

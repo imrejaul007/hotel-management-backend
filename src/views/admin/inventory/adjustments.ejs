@@ -1,0 +1,336 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/admin-nav') %>
+
+<div class="min-h-screen bg-gray-100">
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                        Inventory Adjustments
+                    </h2>
+                </div>
+                <div class="mt-4 flex md:mt-0 md:ml-4">
+                    <button type="button" onclick="showAdjustmentModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        New Adjustment
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Adjustments</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= stats.totalAdjustments %></div>
+                                        <div class="ml-2 flex items-baseline text-sm font-semibold text-gray-600">
+                                            this month
+                                        </div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Stock Additions</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= stats.stockAdditions %></div>
+                                        <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
+                                            +<%= stats.additionValue.toLocaleString() %> units
+                                        </div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Stock Reductions</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= stats.stockReductions %></div>
+                                        <div class="ml-2 flex items-baseline text-sm font-semibold text-red-600">
+                                            -<%= stats.reductionValue.toLocaleString() %> units
+                                        </div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="mt-8 bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                        <div>
+                            <label for="type" class="block text-sm font-medium text-gray-700">Type</label>
+                            <select id="type" name="type" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="">All Types</option>
+                                <option value="addition">Addition</option>
+                                <option value="reduction">Reduction</option>
+                                <option value="correction">Correction</option>
+                                <option value="damage">Damage</option>
+                                <option value="loss">Loss</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                            <select id="category" name="category" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="">All Categories</option>
+                                <% categories.forEach(category => { %>
+                                <option value="<%= category._id %>"><%= category.name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="dateRange" class="block text-sm font-medium text-gray-700">Date Range</label>
+                            <select id="dateRange" name="dateRange" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month" selected>This Month</option>
+                                <option value="quarter">This Quarter</option>
+                                <option value="year">This Year</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="sort" class="block text-sm font-medium text-gray-700">Sort By</label>
+                            <select id="sort" name="sort" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="date_desc">Date: Newest First</option>
+                                <option value="date_asc">Date: Oldest First</option>
+                                <option value="quantity_desc">Quantity: High to Low</option>
+                                <option value="quantity_asc">Quantity: Low to High</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Adjustments Table -->
+            <div class="mt-8 flex flex-col">
+                <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+                        <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-300">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Reference</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Item</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Type</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Quantity</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Reason</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Adjusted By</th>
+                                        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                                            <span class="sr-only">Actions</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 bg-white">
+                                    <% adjustments.forEach(adjustment => { %>
+                                    <tr>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                                            <%= adjustment.reference %>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <%= moment(adjustment.date).format('MMM D, YYYY, h:mm A') %>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <%= adjustment.item.name %>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                            <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 
+                                                <%= adjustment.type === 'addition' ? 'bg-green-100 text-green-800' :
+                                                    adjustment.type === 'reduction' ? 'bg-red-100 text-red-800' :
+                                                    adjustment.type === 'correction' ? 'bg-blue-100 text-blue-800' :
+                                                    adjustment.type === 'damage' ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-gray-100 text-gray-800' %>">
+                                                <%= adjustment.type.charAt(0).toUpperCase() + adjustment.type.slice(1) %>
+                                            </span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                            <span class="<%= adjustment.quantity > 0 ? 'text-green-600' : 'text-red-600' %>">
+                                                <%= adjustment.quantity > 0 ? '+' : '' %><%= adjustment.quantity %>
+                                            </span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <%= adjustment.reason %>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <%= adjustment.adjustedBy.name %>
+                                        </td>
+                                        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                            <button onclick="viewAdjustment('<%= adjustment._id %>')" class="text-indigo-600 hover:text-indigo-900">View</button>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Adjustment Modal -->
+<div id="adjustmentModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <form id="adjustmentForm" method="POST">
+                <div>
+                    <div class="mt-3 text-center sm:mt-5">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            New Stock Adjustment
+                        </h3>
+                    </div>
+
+                    <div class="mt-6">
+                        <label for="item" class="block text-sm font-medium text-gray-700">Item</label>
+                        <select name="item" id="item" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">Select Item</option>
+                            <% items.forEach(item => { %>
+                            <option value="<%= item._id %>"><%= item.name %> (<%= item.sku %>)</option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div class="mt-6">
+                        <label for="adjustmentType" class="block text-sm font-medium text-gray-700">Adjustment Type</label>
+                        <select name="type" id="adjustmentType" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="addition">Addition</option>
+                            <option value="reduction">Reduction</option>
+                            <option value="correction">Correction</option>
+                            <option value="damage">Damage</option>
+                            <option value="loss">Loss</option>
+                        </select>
+                    </div>
+
+                    <div class="mt-6">
+                        <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+                        <input type="number" name="quantity" id="quantity" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+
+                    <div class="mt-6">
+                        <label for="reason" class="block text-sm font-medium text-gray-700">Reason</label>
+                        <textarea name="reason" id="reason" rows="3" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm">
+                        Save Adjustment
+                    </button>
+                    <button type="button" onclick="hideAdjustmentModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Filter functions
+    document.querySelectorAll('select[id^="filter"]').forEach(select => {
+        select.addEventListener('change', function() {
+            applyFilters();
+        });
+    });
+
+    function applyFilters() {
+        const type = document.getElementById('type').value;
+        const category = document.getElementById('category').value;
+        const dateRange = document.getElementById('dateRange').value;
+        const sort = document.getElementById('sort').value;
+
+        const queryParams = new URLSearchParams({
+            type,
+            category,
+            dateRange,
+            sort
+        }).toString();
+
+        window.location.href = `/admin/inventory/adjustments?${queryParams}`;
+    }
+
+    // Modal functions
+    function showAdjustmentModal() {
+        document.getElementById('adjustmentForm').reset();
+        document.getElementById('adjustmentModal').classList.remove('hidden');
+    }
+
+    function hideAdjustmentModal() {
+        document.getElementById('adjustmentModal').classList.add('hidden');
+    }
+
+    function viewAdjustment(adjustmentId) {
+        window.location.href = `/admin/inventory/adjustments/${adjustmentId}`;
+    }
+
+    // Form submission
+    document.getElementById('adjustmentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('/admin/inventory/adjustments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(Object.fromEntries(formData))
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload();
+            }
+        });
+    });
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        let modal = document.getElementById('adjustmentModal');
+        if (event.target == modal) {
+            hideAdjustmentModal();
+        }
+    }
+</script>
+
+<%- include('../../partials/footer') %>

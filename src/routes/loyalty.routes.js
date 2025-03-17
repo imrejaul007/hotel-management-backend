@@ -1,183 +1,210 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateUser } = require('../middleware/auth');
-const Loyalty = require('../models/Loyalty');
-const Reward = require('../models/Reward');
-const loyaltyController = require('../controllers/loyalty.controller');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
+const { protect, authorize } = require('../middlewares/auth.middleware');
 
-// Protect all routes
-router.use(authenticateUser);
-
-// Get user's loyalty info
-router.get('/my-points', async (req, res) => {
+// Get loyalty program status
+router.get('/status', protect, async (req, res) => {
     try {
-        let loyalty = await Loyalty.findOne({ user: req.user._id });
-        
-        if (!loyalty) {
-            loyalty = await Loyalty.create({ user: req.user._id });
+        const loyaltyProgram = await LoyaltyProgram.findOne({ user: req.user._id })
+            .populate('pointsHistory.bookingId')
+            .populate('rewards.bookingId');
+
+        if (!loyaltyProgram) {
+            return res.status(404).json({
+                success: false,
+                message: 'Loyalty program not found'
+            });
         }
 
         res.json({
             success: true,
-            data: loyalty
+            data: loyaltyProgram
         });
     } catch (error) {
+        console.error('Error fetching loyalty status:', error);
         res.status(500).json({
             success: false,
-            message: error.message
+            message: 'Error fetching loyalty status'
         });
     }
 });
 
 // Get points history
-router.get('/points-history', async (req, res) => {
+router.get('/points-history', protect, async (req, res) => {
     try {
-        const loyalty = await Loyalty.findOne({ user: req.user._id })
-            .populate('pointsHistory.reference');
-
-        if (!loyalty) {
-            return res.status(404).json({
-                success: false,
-                message: 'Loyalty record not found'
-            });
-        }
+        const loyaltyProgram = await LoyaltyProgram.findOne({ user: req.user._id })
+            .select('pointsHistory')
+            .populate('pointsHistory.bookingId');
 
         res.json({
             success: true,
-            data: loyalty.pointsHistory
+            data: loyaltyProgram ? loyaltyProgram.pointsHistory : []
         });
     } catch (error) {
+        console.error('Error fetching points history:', error);
         res.status(500).json({
             success: false,
-            message: error.message
+            message: 'Error fetching points history'
         });
     }
 });
 
 // Get available rewards
-router.get('/rewards', async (req, res) => {
+router.get('/rewards', protect, async (req, res) => {
     try {
-        const loyalty = await Loyalty.findOne({ user: req.user._id });
-        const rewards = await Reward.find({ 
-            isActive: true,
-            pointsCost: { $lte: loyalty.points }
-        });
+        const loyaltyProgram = await LoyaltyProgram.findOne({ user: req.user._id })
+            .select('rewards points membershipTier');
 
         res.json({
             success: true,
-            data: rewards
+            data: {
+                points: loyaltyProgram ? loyaltyProgram.points : 0,
+                tier: loyaltyProgram ? loyaltyProgram.membershipTier : 'Bronze',
+                rewards: loyaltyProgram ? loyaltyProgram.rewards.filter(r => r.status === 'available') : []
+            }
         });
     } catch (error) {
+        console.error('Error fetching rewards:', error);
         res.status(500).json({
             success: false,
-            message: error.message
+            message: 'Error fetching rewards'
         });
     }
 });
-
-// Redeem a reward
-router.post('/redeem/:rewardId', async (req, res) => {
-    try {
-        const reward = await Reward.findById(req.params.rewardId);
-        if (!reward || !reward.isActive) {
-            return res.status(404).json({
-                success: false,
-                message: 'Reward not found or inactive'
-            });
-        }
-
-        const loyalty = await Loyalty.findOne({ user: req.user._id });
-        if (!loyalty) {
-            return res.status(404).json({
-                success: false,
-                message: 'Loyalty record not found'
-            });
-        }
-
-        // Check if user can redeem
-        if (!reward.canBeRedeemedBy(req.user, loyalty)) {
-            return res.status(400).json({
-                success: false,
-                message: 'You are not eligible to redeem this reward'
-            });
-        }
-
-        // Check if user has enough points
-        if (loyalty.points < reward.pointsCost) {
-            return res.status(400).json({
-                success: false,
-                message: 'Insufficient points'
-            });
-        }
-
-        // Create redemption
-        const redemption = await reward.createRedemption(req.user);
-
-        // Deduct points
-        await loyalty.redeemPoints(
-            reward.pointsCost,
-            `Redeemed ${reward.name}`,
-            redemption._id
-        );
-
-        res.json({
-            success: true,
-            message: 'Reward redeemed successfully',
-            data: redemption
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// Get user's redeemed rewards
-router.get('/my-rewards', async (req, res) => {
-    try {
-        const rewards = await Reward.find({
-            'redemptions.user': req.user._id
-        });
-
-        const userRedemptions = rewards.map(reward => ({
-            reward: {
-                _id: reward._id,
-                name: reward.name,
-                description: reward.description,
-                type: reward.type,
-                pointsCost: reward.pointsCost
-            },
-            redemptions: reward.redemptions.filter(r => 
-                r.user.equals(req.user._id)
-            )
-        }));
-
-        res.json({
-            success: true,
-            data: userRedemptions
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
-});
-
-// Get loyalty program details
-router.get('/details', loyaltyController.getLoyaltyDetails);
-
-// Enroll in loyalty program
-router.post('/enroll', loyaltyController.enrollInProgram);
-
-// Update preferences
-router.put('/preferences', loyaltyController.updatePreferences);
 
 // Redeem points for reward
-router.post('/redeem', loyaltyController.redeemReward);
+router.post('/redeem', protect, async (req, res) => {
+    try {
+        const { rewardType, points } = req.body;
+        
+        const loyaltyProgram = await LoyaltyProgram.findOne({ user: req.user._id });
+        
+        if (!loyaltyProgram) {
+            return res.status(404).json({
+                success: false,
+                message: 'Loyalty program not found'
+            });
+        }
 
-// Get available rewards
-router.get('/available-rewards', loyaltyController.getAvailableRewards);
+        await loyaltyProgram.redeemPoints(points, rewardType, null, `Redeemed ${points} points for ${rewardType}`);
+
+        res.json({
+            success: true,
+            message: 'Points redeemed successfully',
+            data: {
+                points: loyaltyProgram.points,
+                reward: loyaltyProgram.rewards[loyaltyProgram.rewards.length - 1]
+            }
+        });
+    } catch (error) {
+        console.error('Error redeeming points:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Error redeeming points'
+        });
+    }
+});
+
+// Update preferences
+router.put('/preferences', protect, async (req, res) => {
+    try {
+        const loyaltyProgram = await LoyaltyProgram.findOneAndUpdate(
+            { user: req.user._id },
+            { preferences: req.body },
+            { new: true }
+        );
+
+        if (!loyaltyProgram) {
+            return res.status(404).json({
+                success: false,
+                message: 'Loyalty program not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: loyaltyProgram.preferences
+        });
+    } catch (error) {
+        console.error('Error updating preferences:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating preferences'
+        });
+    }
+});
+
+// Get referral code
+router.get('/referral-code', protect, async (req, res) => {
+    try {
+        const loyaltyProgram = await LoyaltyProgram.findOne({ user: req.user._id });
+        
+        if (!loyaltyProgram) {
+            return res.status(404).json({
+                success: false,
+                message: 'Loyalty program not found'
+            });
+        }
+
+        if (!loyaltyProgram.referralCode) {
+            loyaltyProgram.referralCode = await LoyaltyProgram.generateReferralCode(req.user._id);
+            await loyaltyProgram.save();
+        }
+
+        res.json({
+            success: true,
+            data: {
+                referralCode: loyaltyProgram.referralCode,
+                referralCount: loyaltyProgram.referralCount
+            }
+        });
+    } catch (error) {
+        console.error('Error getting referral code:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error getting referral code'
+        });
+    }
+});
+
+// Admin routes
+router.get('/admin/members', protect, authorize('admin'), async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const query = {};
+        if (req.query.tier) query.membershipTier = req.query.tier;
+        if (req.query.minPoints) query.points = { $gte: parseInt(req.query.minPoints) };
+
+        const [members, total] = await Promise.all([
+            LoyaltyProgram.find(query)
+                .populate('user', 'name email')
+                .sort('-points')
+                .skip(skip)
+                .limit(limit),
+            LoyaltyProgram.countDocuments(query)
+        ]);
+
+        res.json({
+            success: true,
+            data: members,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching loyalty members:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching loyalty members'
+        });
+    }
+});
 
 module.exports = router;

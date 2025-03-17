@@ -1,0 +1,409 @@
+{{> admin/header title="Room Status Dashboard"}}
+
+<div class="container-fluid">
+    <!-- Room Status Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-2 col-md-4 mb-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Rooms</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.total}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-door-closed fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 mb-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Occupied</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.occupied}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bed fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 mb-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Vacant</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.vacant}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-door-open fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 mb-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Dirty</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.dirty}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-broom fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 mb-3">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Maintenance</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.maintenance}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tools fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-md-4 mb-3">
+            <div class="card border-left-secondary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Out of Order</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.outOfOrder}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-ban fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Status Grid -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Room Status Overview</h6>
+            <div class="btn-group">
+                <button type="button" class="btn btn-success btn-sm" onclick="refreshStatus()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="showUpgradeModal()">
+                    <i class="fas fa-arrow-up"></i> Process Upgrade
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            {{#each roomsByFloor}}
+            <div class="floor-section mb-4">
+                <h5 class="mb-3">Floor {{@key}}</h5>
+                <div class="row">
+                    {{#each this}}
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card room-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="card-title mb-0">Room {{number}}</h5>
+                                    <span class="badge bg-{{roomStatusColor status}}">{{formatRoomStatus status}}</span>
+                                </div>
+                                <p class="card-text">
+                                    <strong>Type:</strong> {{type}}<br>
+                                    {{#if currentBooking}}
+                                    <strong>Guest:</strong> {{currentGuest.name}}<br>
+                                    <strong>Check-out:</strong> {{formatDate currentBooking.checkOut}}<br>
+                                    {{/if}}
+                                    {{#if housekeepingStatus}}
+                                    <strong>Housekeeping:</strong>
+                                    <span class="badge bg-{{housekeepingStatusColor housekeepingStatus.status}}">
+                                        {{formatHousekeepingStatus housekeepingStatus.status}}
+                                    </span><br>
+                                    {{#if housekeepingStatus.assignedTo}}
+                                    <small>Assigned to: {{housekeepingStatus.assignedTo.name}}</small>
+                                    {{/if}}
+                                    {{/if}}
+                                </p>
+                                <div class="btn-group w-100">
+                                    <button type="button" class="btn btn-sm btn-info" onclick="viewRoom('{{_id}}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="updateStatus('{{_id}}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-warning" onclick="reportIssue('{{_id}}')">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Room Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updateStatusForm">
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="roomStatus" required>
+                            <option value="vacant">Vacant</option>
+                            <option value="occupied">Occupied</option>
+                            <option value="dirty">Dirty</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="out_of_order">Out of Order</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="statusNotes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitStatusUpdate()">Update Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Room Upgrade Modal -->
+<div class="modal fade" id="roomUpgradeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Process Room Upgrade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="upgradeForm">
+                    <div class="mb-3">
+                        <label class="form-label">Booking ID</label>
+                        <input type="text" class="form-control" id="bookingId" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Room</label>
+                        <select class="form-select" id="newRoomId" required>
+                            <option value="">Select Room</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="processUpgrade()">Process Upgrade</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Issue Modal -->
+<div class="modal fade" id="reportIssueModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Report Room Issue</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="issueForm">
+                    <div class="mb-3">
+                        <label class="form-label">Issue Type</label>
+                        <select class="form-select" id="issueType" required>
+                            <option value="maintenance">Maintenance Required</option>
+                            <option value="housekeeping">Housekeeping Required</option>
+                            <option value="damage">Room Damage</option>
+                            <option value="amenity">Missing Amenities</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Priority</label>
+                        <select class="form-select" id="issuePriority" required>
+                            <option value="low">Low</option>
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="issueDescription" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitIssue()">Submit Issue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedRoomId = null;
+
+function refreshStatus() {
+    window.location.reload();
+}
+
+function viewRoom(roomId) {
+    window.location.href = `/admin/rooms/${roomId}`;
+}
+
+function updateStatus(roomId) {
+    selectedRoomId = roomId;
+    $('#updateStatusModal').modal('show');
+}
+
+function showUpgradeModal() {
+    loadAvailableRooms();
+    $('#roomUpgradeModal').modal('show');
+}
+
+function reportIssue(roomId) {
+    selectedRoomId = roomId;
+    $('#reportIssueModal').modal('show');
+}
+
+async function submitStatusUpdate() {
+    if (!selectedRoomId) return;
+
+    const status = document.getElementById('roomStatus').value;
+    const notes = document.getElementById('statusNotes').value;
+
+    try {
+        const response = await fetch(`/admin/rooms/${selectedRoomId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status, notes })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            $('#updateStatusModal').modal('hide');
+            showAlert('success', 'Room status updated successfully');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showAlert('error', data.message || 'Failed to update room status');
+        }
+    } catch (error) {
+        console.error('Error updating room status:', error);
+        showAlert('error', 'Failed to update room status');
+    }
+}
+
+async function loadAvailableRooms() {
+    try {
+        const response = await fetch('/admin/rooms/available');
+        const data = await response.json();
+        
+        if (data.success) {
+            const select = document.getElementById('newRoomId');
+            select.innerHTML = '<option value="">Select Room</option>';
+            
+            data.rooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room._id;
+                option.textContent = `${room.number} - ${room.type}`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading available rooms:', error);
+        showAlert('error', 'Failed to load available rooms');
+    }
+}
+
+async function processUpgrade() {
+    const bookingId = document.getElementById('bookingId').value;
+    const newRoomId = document.getElementById('newRoomId').value;
+
+    if (!bookingId || !newRoomId) {
+        showAlert('error', 'Please fill in all fields');
+        return;
+    }
+
+    try {
+        const response = await fetch('/admin/rooms/upgrade', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ bookingId, newRoomId })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            $('#roomUpgradeModal').modal('hide');
+            showAlert('success', 'Room upgrade processed successfully');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showAlert('error', data.message || 'Failed to process room upgrade');
+        }
+    } catch (error) {
+        console.error('Error processing room upgrade:', error);
+        showAlert('error', 'Failed to process room upgrade');
+    }
+}
+
+async function submitIssue() {
+    if (!selectedRoomId) return;
+
+    const type = document.getElementById('issueType').value;
+    const priority = document.getElementById('issuePriority').value;
+    const description = document.getElementById('issueDescription').value;
+
+    try {
+        const response = await fetch(`/admin/rooms/${selectedRoomId}/issues`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ type, priority, description })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            $('#reportIssueModal').modal('hide');
+            showAlert('success', 'Issue reported successfully');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showAlert('error', data.message || 'Failed to report issue');
+        }
+    } catch (error) {
+        console.error('Error reporting issue:', error);
+        showAlert('error', 'Failed to report issue');
+    }
+}
+</script>
+
+{{> admin/footer}}

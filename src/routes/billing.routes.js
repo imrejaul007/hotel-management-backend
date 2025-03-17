@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken, authorizeRole } = require('../middlewares/auth.middleware');
-const Invoice = require('../models/invoice.model');
-const Transaction = require('../models/transaction.model');
+const { protect, authorize } = require('../middlewares/auth.middleware');
+const Invoice = require('../models/Invoice');
+const Transaction = require('../models/Transaction');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
 const { validateObjectId } = require('../middlewares/validation.middleware');
 
 // Get all invoices (admin only)
-router.get('/invoices', authenticateToken, authorizeRole(['admin']), async (req, res) => {
+router.get('/invoices', protect, authorize(['admin']), async (req, res) => {
     try {
         const { status, startDate, endDate, search } = req.query;
         let query = {};
@@ -43,7 +44,7 @@ router.get('/invoices', authenticateToken, authorizeRole(['admin']), async (req,
 });
 
 // Get guest's invoices
-router.get('/my-invoices', authenticateToken, async (req, res) => {
+router.get('/my-invoices', protect, async (req, res) => {
     try {
         const invoices = await Invoice.find({ guest: req.user._id })
             .populate('booking', 'checkInDate checkOutDate')
@@ -56,7 +57,7 @@ router.get('/my-invoices', authenticateToken, async (req, res) => {
 });
 
 // Get single invoice
-router.get('/invoices/:id', authenticateToken, validateObjectId('id'), async (req, res) => {
+router.get('/invoices/:id', protect, validateObjectId('id'), async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id)
             .populate('guest', 'name email')
@@ -78,7 +79,7 @@ router.get('/invoices/:id', authenticateToken, validateObjectId('id'), async (re
 });
 
 // Create new invoice (admin only)
-router.post('/invoices', authenticateToken, authorizeRole(['admin']), async (req, res) => {
+router.post('/invoices', protect, authorize(['admin']), async (req, res) => {
     try {
         const invoice = new Invoice({
             ...req.body,
@@ -93,7 +94,7 @@ router.post('/invoices', authenticateToken, authorizeRole(['admin']), async (req
 });
 
 // Update invoice (admin only)
-router.put('/invoices/:id', authenticateToken, authorizeRole(['admin']), validateObjectId('id'), async (req, res) => {
+router.put('/invoices/:id', protect, authorize(['admin']), validateObjectId('id'), async (req, res) => {
     try {
         const invoice = await Invoice.findById(req.params.id);
         if (!invoice) {
@@ -114,7 +115,7 @@ router.put('/invoices/:id', authenticateToken, authorizeRole(['admin']), validat
 });
 
 // Process payment for an invoice
-router.post('/invoices/:id/pay', authenticateToken, validateObjectId('id'), async (req, res) => {
+router.post('/invoices/:id/pay', protect, validateObjectId('id'), async (req, res) => {
     try {
         const { method, amount, paymentDetails } = req.body;
         const invoice = await Invoice.findById(req.params.id);
@@ -149,7 +150,7 @@ router.post('/invoices/:id/pay', authenticateToken, validateObjectId('id'), asyn
 });
 
 // Process refund for a transaction
-router.post('/transactions/:id/refund', authenticateToken, authorizeRole(['admin']), validateObjectId('id'), async (req, res) => {
+router.post('/transactions/:id/refund', protect, authorize(['admin']), validateObjectId('id'), async (req, res) => {
     try {
         const { amount, reason } = req.body;
         const transaction = await Transaction.findById(req.params.id);
@@ -195,7 +196,7 @@ router.post('/transactions/:id/refund', authenticateToken, authorizeRole(['admin
 });
 
 // Get transactions for an invoice
-router.get('/invoices/:id/transactions', authenticateToken, validateObjectId('id'), async (req, res) => {
+router.get('/invoices/:id/transactions', protect, validateObjectId('id'), async (req, res) => {
     try {
         const transactions = await Transaction.find({ invoice: req.params.id })
             .sort({ createdAt: -1 });

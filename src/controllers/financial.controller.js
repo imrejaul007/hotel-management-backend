@@ -1,7 +1,7 @@
-const Booking = require('../models/booking.model');
-const Payment = require('../models/payment.model');
-const LoyaltyProgram = require('../models/loyalty-program.model');
-const Room = require('../models/room.model');
+const Booking = require('../models/Booking');
+const Payment = require('../models/Payment');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
+const Room = require('../models/Room');
 const { startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths } = require('date-fns');
 
 // Get revenue overview

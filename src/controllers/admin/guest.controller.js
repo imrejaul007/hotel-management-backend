@@ -1,6 +1,6 @@
-const Guest = require('../../models/guest.model');
-const Booking = require('../../models/booking.model');
-const LoyaltyProgram = require('../../models/loyalty-program.model');
+const User = require('../../models/User');
+const Booking = require('../../models/Booking');
+const LoyaltyProgram = require('../../models/LoyaltyProgram');
 const { calculateLoyaltyTier } = require('../../utils/loyalty.utils');
 
 // Get guest dashboard
@@ -12,7 +12,10 @@ exports.getDashboard = async (req, res) => {
             status = '', 
             sort = 'name',
             page = 1,
-            limit = 10
+            limit = 10,
+            spendingRange = '',
+            lastVisit = '',
+            referralStatus = ''
         } = req.query;
 
         // Build query
@@ -41,9 +44,44 @@ exports.getDashboard = async (req, res) => {
             }
         }
 
+        // Spending range filter
+        if (spendingRange) {
+            const [min, max] = spendingRange.split('-').map(Number);
+            query.totalSpent = { $gte: min || 0 };
+            if (max) query.totalSpent.$lte = max;
+        }
+
+        // Last visit filter
+        if (lastVisit) {
+            const now = new Date();
+            let dateFilter;
+            switch (lastVisit) {
+                case 'week':
+                    dateFilter = new Date(now - 7 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'month':
+                    dateFilter = new Date(now - 30 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'quarter':
+                    dateFilter = new Date(now - 90 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'year':
+                    dateFilter = new Date(now - 365 * 24 * 60 * 60 * 1000);
+                    break;
+            }
+            if (dateFilter) {
+                query.lastStayDate = { $gte: dateFilter };
+            }
+        }
+
+        // Referral status filter
+        if (referralStatus) {
+            query.hasReferrals = referralStatus === 'active';
+        }
+
         // Calculate pagination
         const skip = (page - 1) * limit;
-        const totalGuests = await Guest.countDocuments(query);
+        const totalGuests = await User.countDocuments(query);
         const totalPages = Math.ceil(totalGuests / limit);
 
         // Get guests with sorting
@@ -58,19 +96,50 @@ exports.getDashboard = async (req, res) => {
             case 'stays':
                 sortQuery = { 'totalStays': -1 };
                 break;
+            case 'spent':
+                sortQuery = { 'totalSpent': -1 };
+                break;
+            case 'lastVisit':
+                sortQuery = { 'lastStayDate': -1 };
+                break;
+            case 'referrals':
+                sortQuery = { 'referralCount': -1 };
+                break;
             default:
                 sortQuery = { 'name': 1 };
         }
 
-        const guests = await Guest.find(query)
+        const guests = await User.find(query)
             .sort(sortQuery)
             .skip(skip)
             .limit(limit)
             .populate('currentStay')
-            .populate('loyaltyProgram');
+            .populate('loyaltyProgram')
+            .populate({
+                path: 'referrals',
+                select: 'referredUser status bonusPoints date'
+            });
 
         // Get statistics
         const stats = await getGuestStatistics();
+
+        // Calculate tier distribution
+        const tierDistribution = await User.aggregate([
+            { $group: { _id: '$loyaltyTier', count: { $sum: 1 } } },
+            { $sort: { count: -1 } }
+        ]);
+
+        // Get top spenders
+        const topSpenders = await User.find()
+            .sort({ totalSpent: -1 })
+            .limit(5)
+            .select('name totalSpent loyaltyTier');
+
+        // Get most frequent guests
+        const frequentGuests = await User.find()
+            .sort({ totalStays: -1 })
+            .limit(5)
+            .select('name totalStays loyaltyTier');
 
         // Build pagination object
         const pagination = {
@@ -90,7 +159,20 @@ exports.getDashboard = async (req, res) => {
             guests,
             stats,
             pagination,
-            filters: { search, loyalty, status, sort }
+            filters: { 
+                search, 
+                loyalty, 
+                status, 
+                sort,
+                spendingRange,
+                lastVisit,
+                referralStatus
+            },
+            insights: {
+                tierDistribution,
+                topSpenders,
+                frequentGuests
+            }
         });
     } catch (error) {
         console.error('Error in getDashboard:', error);
@@ -113,13 +195,13 @@ exports.createGuest = async (req, res) => {
         } = req.body;
 
         // Check if guest already exists
-        const existingGuest = await Guest.findOne({ email });
+        const existingGuest = await User.findOne({ email });
         if (existingGuest) {
             return res.status(400).json({ message: 'Guest with this email already exists' });
         }
 
         // Create guest
-        const guest = new Guest({
+        const guest = new User({
             name,
             email,
             phone,
@@ -158,7 +240,7 @@ exports.createGuest = async (req, res) => {
 exports.getGuestProfile = async (req, res) => {
     try {
         const { id } = req.params;
-        const guest = await Guest.findById(id)
+        const guest = await User.findById(id)
             .populate('loyaltyProgram')
             .populate('currentStay');
 
@@ -196,7 +278,7 @@ exports.getGuestStays = async (req, res) => {
         const { page = 1, limit = 10 } = req.query;
 
         const skip = (page - 1) * limit;
-        const guest = await Guest.findById(id);
+        const guest = await User.findById(id);
 
         if (!guest) {
             return res.status(404).json({ message: 'Guest not found' });
@@ -245,7 +327,7 @@ exports.getGuestStays = async (req, res) => {
 exports.getGuestPreferences = async (req, res) => {
     try {
         const { id } = req.params;
-        const guest = await Guest.findById(id)
+        const guest = await User.findById(id)
             .populate('loyaltyProgram');
 
         if (!guest) {
@@ -271,9 +353,9 @@ exports.getGuestPreferences = async (req, res) => {
 
 // Get guest statistics
 async function getGuestStatistics() {
-    const totalGuests = await Guest.countDocuments();
-    const activeStays = await Guest.countDocuments({ currentStay: { $ne: null } });
-    const loyaltyMembers = await Guest.countDocuments({ loyaltyProgram: { $ne: null } });
+    const totalGuests = await User.countDocuments();
+    const activeStays = await User.countDocuments({ currentStay: { $ne: null } });
+    const loyaltyMembers = await User.countDocuments({ loyaltyProgram: { $ne: null } });
     
     // Calculate average stay duration
     const bookings = await Booking.find({ status: 'checked_out' });
@@ -288,7 +370,7 @@ async function getGuestStatistics() {
     // Calculate guest growth
     const today = new Date();
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const newGuests = await Guest.countDocuments({ createdAt: { $gte: monthStart } });
+    const newGuests = await User.countDocuments({ createdAt: { $gte: monthStart } });
     const guestGrowth = totalGuests > 0 ? ((newGuests / totalGuests) * 100).toFixed(1) : 0;
 
     return {

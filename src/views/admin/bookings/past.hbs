@@ -1,0 +1,187 @@
+{{> admin/header title="Past Bookings"}}
+
+<div class="container-fluid">
+    <!-- Past Bookings Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Past Bookings</h6>
+            <div class="btn-group">
+                <a href="/admin/bookings" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-list"></i> All Bookings
+                </a>
+                <a href="/admin/bookings/upcoming" class="btn btn-success btn-sm">
+                    <i class="fas fa-calendar-alt"></i> Upcoming
+                </a>
+                <a href="/admin/bookings/current" class="btn btn-info btn-sm">
+                    <i class="fas fa-clock"></i> Current
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Dates</th>
+                            <th>Guest</th>
+                            <th>Room</th>
+                            <th>Duration</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each bookings}}
+                        <tr>
+                            <td>
+                                <strong>{{formatDate checkIn}} - {{formatDate checkOut}}</strong><br>
+                                <small class="text-muted">{{formatTimeAgo checkOut}}</small>
+                            </td>
+                            <td>
+                                <strong>{{user.name}}</strong><br>
+                                <small>{{user.email}}</small><br>
+                                {{#if user.phone}}
+                                <small>{{formatPhone user.phone}}</small>
+                                {{/if}}
+                                {{#if user.loyaltyProgram}}
+                                <br>
+                                <span class="badge bg-{{tierColor user.loyaltyProgram.tier}}">
+                                    {{user.loyaltyProgram.tier}}
+                                </span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <strong>{{room.type}} - {{room.number}}</strong><br>
+                                {{hotel.name}}<br>
+                                <small>{{hotel.location}}</small>
+                            </td>
+                            <td>
+                                <strong>{{nights}} nights</strong><br>
+                                <small>Total stay</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{bookingSourceDisplay}}</span>
+                                {{#if corporateAccount}}
+                                <br><small>{{corporateAccount.companyName}}</small>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{statusColor status}}">{{formatBookingStatus status}}</span>
+                            </td>
+                            <td>
+                                ${{formatNumber totalAmount}}<br>
+                                {{#if payment}}
+                                <span class="badge bg-{{paymentStatusColor payment.status}}">
+                                    {{formatPaymentStatus payment.status}}
+                                </span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/admin/bookings/{{_id}}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="rebook('{{_id}}')">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    {{#if user.loyaltyProgram}}
+                                    <button type="button" class="btn btn-warning btn-sm" onclick="adjustPoints('{{_id}}')">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                    {{/if}}
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {{> admin/pagination}}
+        </div>
+    </div>
+</div>
+
+<!-- Adjust Points Modal -->
+<div class="modal fade" id="adjustPointsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adjust Loyalty Points</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adjustPointsForm">
+                    <div class="mb-3">
+                        <label class="form-label">Points</label>
+                        <input type="number" class="form-control" id="pointsAmount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <select class="form-select" id="pointsReason" required>
+                            <option value="booking_bonus">Booking Bonus</option>
+                            <option value="special_occasion">Special Occasion</option>
+                            <option value="service_recovery">Service Recovery</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="pointsNotes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitPointsAdjustment()">Adjust Points</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedBookingId = null;
+
+function rebook(id) {
+    window.location.href = `/admin/bookings/new?copy=${id}`;
+}
+
+function adjustPoints(id) {
+    selectedBookingId = id;
+    $('#adjustPointsModal').modal('show');
+}
+
+async function submitPointsAdjustment() {
+    if (!selectedBookingId) return;
+
+    const points = document.getElementById('pointsAmount').value;
+    const reason = document.getElementById('pointsReason').value;
+    const notes = document.getElementById('pointsNotes').value;
+
+    try {
+        const response = await fetch(`/admin/loyalty/members/${selectedBookingId}/points`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ points, reason, notes })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            $('#adjustPointsModal').modal('hide');
+            showAlert('success', 'Points adjusted successfully');
+        } else {
+            showAlert('error', data.message || 'Failed to adjust points');
+        }
+    } catch (error) {
+        console.error('Error adjusting points:', error);
+        showAlert('error', 'Failed to adjust points');
+    }
+}
+</script>
+
+{{> admin/footer}}

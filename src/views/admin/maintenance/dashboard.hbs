@@ -1,0 +1,745 @@
+{{> admin/header title="Maintenance Dashboard"}}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Maintenance Dashboard</h1>
+        <div>
+            <button class="btn btn-success" onclick="createWorkOrder()">
+                <i class="fas fa-plus"></i> New Work Order
+            </button>
+            <button class="btn btn-primary" onclick="refreshDashboard()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Status Overview Cards -->
+    <div class="row">
+        <!-- Open Work Orders -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Open Work Orders</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="openWorkOrders">
+                                {{stats.openWorkOrders}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tools fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- In Progress -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                In Progress</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="inProgressCount">
+                                {{stats.inProgressOrders}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed Today -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Completed Today</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="completedCount">
+                                {{stats.completedToday}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Parts -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Parts</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingParts">
+                                {{stats.pendingParts}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-box fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Equipment Status Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Equipment Status</h6>
+                </div>
+                <div class="card-body">
+                    <div class="equipment-grid">
+                        {{#each equipment}}
+                        <div class="equipment-card {{status}}" onclick="showEquipmentDetails('{{id}}')">
+                            <div class="equipment-icon">
+                                <i class="{{icon}} fa-2x"></i>
+                            </div>
+                            <div class="equipment-info">
+                                <div class="equipment-name">{{name}}</div>
+                                <div class="equipment-location">{{location}}</div>
+                                <div class="equipment-status">
+                                    <span class="badge badge-{{statusColor status}}">{{status}}</span>
+                                </div>
+                                {{#if nextMaintenance}}
+                                <div class="equipment-maintenance">
+                                    Next Maintenance: {{formatDate nextMaintenance}}
+                                </div>
+                                {{/if}}
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Orders -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Work Orders</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="workOrdersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Equipment</th>
+                                    <th>Issue</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="workOrdersList">
+                                {{#each workOrders}}
+                                <tr id="order-{{id}}">
+                                    <td>{{id}}</td>
+                                    <td>{{equipment.name}}</td>
+                                    <td>{{issue}}</td>
+                                    <td>
+                                        <span class="badge badge-{{priorityColor priority}}">
+                                            {{priority}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{statusColor status}}">
+                                            {{status}}
+                                        </span>
+                                    </td>
+                                    <td>{{assignedTo}}</td>
+                                    <td>{{formatTime createdAt}}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-info btn-sm" onclick="updateWorkOrder('{{id}}')">
+                                                Update
+                                            </button>
+                                            <button class="btn btn-warning btn-sm" onclick="reassignWorkOrder('{{id}}')">
+                                                Reassign
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Equipment Details Modal -->
+<div class="modal fade" id="equipmentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Equipment Details</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="equipmentDetailsContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Work Order Modal -->
+<div class="modal fade" id="createWorkOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Work Order</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="workOrderForm">
+                    <div class="form-group">
+                        <label>Equipment</label>
+                        <select class="form-control" id="equipmentSelect" required>
+                            {{#each equipment}}
+                            <option value="{{id}}">{{name}} ({{location}})</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Issue Description</label>
+                        <textarea class="form-control" id="issueDescription" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select class="form-control" id="prioritySelect">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Assign To</label>
+                        <select class="form-control" id="assigneeSelect">
+                            {{#each staff}}
+                            <option value="{{id}}">{{name}} ({{role}})</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Parts Required</label>
+                        <div id="partsContainer">
+                            <div class="input-group mb-2">
+                                <select class="form-control part-select">
+                                    {{#each parts}}
+                                    <option value="{{id}}">{{name}} ({{stock}} in stock)</option>
+                                    {{/each}}
+                                </select>
+                                <input type="number" class="form-control" placeholder="Quantity" min="1">
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-danger" onclick="removePart(this)">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addPart()">
+                            <i class="fas fa-plus"></i> Add Part
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitWorkOrder()">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WebSocket Integration -->
+<script src="/js/websocket.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDataTables();
+    setupWebSocket();
+});
+
+function initializeDataTables() {
+    $('#workOrdersTable').DataTable({
+        order: [[3, 'desc'], [6, 'desc']],
+        pageLength: 25
+    });
+}
+
+function setupWebSocket() {
+    // Equipment status updates
+    hotelWS.on('EQUIPMENT_STATUS_UPDATE', function(data) {
+        const equipmentCard = document.querySelector(`[data-equipment-id="${data.id}"]`);
+        if (equipmentCard) {
+            equipmentCard.className = `equipment-card ${data.status}`;
+            equipmentCard.querySelector('.equipment-status').innerHTML = 
+                `<span class="badge badge-${getStatusColor(data.status)}">${data.status}</span>`;
+            
+            if (data.nextMaintenance) {
+                equipmentCard.querySelector('.equipment-maintenance').textContent = 
+                    `Next Maintenance: ${formatDate(data.nextMaintenance)}`;
+            }
+        }
+        updateDashboardStats();
+    });
+
+    // Work order updates
+    hotelWS.on('WORK_ORDER_UPDATE', function(data) {
+        const table = $('#workOrdersTable').DataTable();
+        const existingRow = table.row(`#order-${data.id}`);
+        
+        if (existingRow.length) {
+            existingRow.remove();
+        }
+        
+        if (data.status !== 'completed') {
+            table.row.add([
+                data.id,
+                data.equipment.name,
+                data.issue,
+                `<span class="badge badge-${getPriorityColor(data.priority)}">${data.priority}</span>`,
+                `<span class="badge badge-${getStatusColor(data.status)}">${data.status}</span>`,
+                data.assignedTo,
+                formatTime(data.createdAt),
+                `<div class="btn-group">
+                    <button class="btn btn-info btn-sm" onclick="updateWorkOrder('${data.id}')">
+                        Update
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="reassignWorkOrder('${data.id}')">
+                        Reassign
+                    </button>
+                </div>`
+            ]).draw(false);
+        }
+        
+        updateDashboardStats();
+    });
+}
+
+function updateDashboardStats() {
+    fetch('/admin/maintenance/stats')
+        .then(response => response.json())
+        .then(stats => {
+            document.getElementById('openWorkOrders').textContent = stats.openWorkOrders;
+            document.getElementById('inProgressCount').textContent = stats.inProgressOrders;
+            document.getElementById('completedCount').textContent = stats.completedToday;
+            document.getElementById('pendingParts').textContent = stats.pendingParts;
+        });
+}
+
+function showEquipmentDetails(equipmentId) {
+    fetch(`/admin/maintenance/equipment/${equipmentId}`)
+        .then(response => response.json())
+        .then(data => {
+            const content = document.getElementById('equipmentDetailsContent');
+            content.innerHTML = `
+                <div class="equipment-details">
+                    <h4>${data.name}</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Location:</strong> ${data.location}</p>
+                            <p><strong>Status:</strong> ${data.status}</p>
+                            <p><strong>Model:</strong> ${data.model}</p>
+                            <p><strong>Serial Number:</strong> ${data.serialNumber}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Last Maintenance:</strong> ${formatDate(data.lastMaintenance)}</p>
+                            <p><strong>Next Maintenance:</strong> ${formatDate(data.nextMaintenance)}</p>
+                            <p><strong>Manufacturer:</strong> ${data.manufacturer}</p>
+                            <p><strong>Installation Date:</strong> ${formatDate(data.installationDate)}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <h5>Maintenance History</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Technician</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.maintenanceHistory.map(h => `
+                                        <tr>
+                                            <td>${formatDate(h.date)}</td>
+                                            <td>${h.type}</td>
+                                            <td>${h.technician}</td>
+                                            <td>${h.notes}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="createWorkOrder('${data.id}')">
+                            Create Work Order
+                        </button>
+                        <button class="btn btn-info" onclick="scheduleMaintenance('${data.id}')">
+                            Schedule Maintenance
+                        </button>
+                    </div>
+                </div>
+            `;
+            $('#equipmentDetailsModal').modal('show');
+        });
+}
+
+function createWorkOrder(equipmentId = null) {
+    $('#equipmentDetailsModal').modal('hide');
+    if (equipmentId) {
+        document.getElementById('equipmentSelect').value = equipmentId;
+    }
+    $('#createWorkOrderModal').modal('show');
+}
+
+function submitWorkOrder() {
+    const formData = {
+        equipmentId: document.getElementById('equipmentSelect').value,
+        issue: document.getElementById('issueDescription').value,
+        priority: document.getElementById('prioritySelect').value,
+        assignedTo: document.getElementById('assigneeSelect').value,
+        parts: Array.from(document.querySelectorAll('#partsContainer .input-group')).map(group => ({
+            partId: group.querySelector('.part-select').value,
+            quantity: parseInt(group.querySelector('input[type="number"]').value)
+        })).filter(part => part.quantity > 0)
+    };
+
+    fetch('/admin/maintenance/work-orders', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    }).then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            $('#createWorkOrderModal').modal('hide');
+            Swal.fire('Success', 'Work order created successfully', 'success');
+        } else {
+            throw new Error(data.error);
+        }
+    }).catch(error => {
+        Swal.fire('Error', error.message, 'error');
+    });
+}
+
+function updateWorkOrder(orderId) {
+    Swal.fire({
+        title: 'Update Work Order Status',
+        input: 'select',
+        inputOptions: {
+            'pending': 'Pending',
+            'in_progress': 'In Progress',
+            'parts_needed': 'Parts Needed',
+            'completed': 'Completed',
+            'cancelled': 'Cancelled'
+        },
+        inputPlaceholder: 'Select status',
+        showCancelButton: true,
+        inputValidator: (value) => {
+            return new Promise((resolve) => {
+                if (value) {
+                    resolve()
+                } else {
+                    resolve('You need to select a status')
+                }
+            })
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/maintenance/work-orders/${orderId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: result.value
+                })
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success', 'Work order updated successfully', 'success');
+                } else {
+                    throw new Error(data.error);
+                }
+            }).catch(error => {
+                Swal.fire('Error', error.message, 'error');
+            });
+        }
+    });
+}
+
+function reassignWorkOrder(orderId) {
+    fetch('/admin/maintenance/staff')
+        .then(response => response.json())
+        .then(staff => {
+            Swal.fire({
+                title: 'Reassign Work Order',
+                input: 'select',
+                inputOptions: Object.fromEntries(
+                    staff.map(s => [s.id, `${s.name} (${s.role})`])
+                ),
+                inputPlaceholder: 'Select staff member',
+                showCancelButton: true,
+                inputValidator: (value) => {
+                    return new Promise((resolve) => {
+                        if (value) {
+                            resolve()
+                        } else {
+                            resolve('You need to select a staff member')
+                        }
+                    })
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/admin/maintenance/work-orders/${orderId}/reassign`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            staffId: result.value
+                        })
+                    }).then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Success', 'Work order reassigned successfully', 'success');
+                        } else {
+                            throw new Error(data.error);
+                        }
+                    }).catch(error => {
+                        Swal.fire('Error', error.message, 'error');
+                    });
+                }
+            });
+        });
+}
+
+function scheduleMaintenance(equipmentId) {
+    Swal.fire({
+        title: 'Schedule Maintenance',
+        html: `
+            <div class="form-group">
+                <label>Maintenance Type</label>
+                <select class="form-control" id="maintenanceType">
+                    <option value="routine">Routine Maintenance</option>
+                    <option value="preventive">Preventive Maintenance</option>
+                    <option value="calibration">Calibration</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Scheduled Date</label>
+                <input type="date" class="form-control" id="maintenanceDate">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea class="form-control" id="maintenanceNotes"></textarea>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Schedule',
+        focusConfirm: false,
+        preConfirm: () => {
+            return {
+                type: document.getElementById('maintenanceType').value,
+                date: document.getElementById('maintenanceDate').value,
+                notes: document.getElementById('maintenanceNotes').value
+            }
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/maintenance/equipment/${equipmentId}/schedule`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(result.value)
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success', 'Maintenance scheduled successfully', 'success');
+                    $('#equipmentDetailsModal').modal('hide');
+                } else {
+                    throw new Error(data.error);
+                }
+            }).catch(error => {
+                Swal.fire('Error', error.message, 'error');
+            });
+        }
+    });
+}
+
+function addPart() {
+    const container = document.getElementById('partsContainer');
+    const newPart = document.createElement('div');
+    newPart.className = 'input-group mb-2';
+    newPart.innerHTML = `
+        <select class="form-control part-select">
+            {{#each parts}}
+            <option value="{{id}}">{{name}} ({{stock}} in stock)</option>
+            {{/each}}
+        </select>
+        <input type="number" class="form-control" placeholder="Quantity" min="1">
+        <div class="input-group-append">
+            <button type="button" class="btn btn-danger" onclick="removePart(this)">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+    `;
+    container.appendChild(newPart);
+}
+
+function removePart(button) {
+    button.closest('.input-group').remove();
+}
+
+function refreshDashboard() {
+    location.reload();
+}
+
+// Helper functions
+function getPriorityColor(priority) {
+    const colors = {
+        low: 'info',
+        medium: 'warning',
+        high: 'danger',
+        critical: 'dark'
+    };
+    return colors[priority] || 'secondary';
+}
+
+function getStatusColor(status) {
+    const colors = {
+        pending: 'warning',
+        in_progress: 'info',
+        completed: 'success',
+        parts_needed: 'danger',
+        cancelled: 'secondary'
+    };
+    return colors[status] || 'secondary';
+}
+
+function formatTime(timestamp) {
+    return new Date(timestamp).toLocaleString();
+}
+
+function formatDate(date) {
+    return new Date(date).toLocaleDateString();
+}
+</script>
+
+<style>
+.equipment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.equipment-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 0.35rem;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.equipment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.equipment-card.operational {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.equipment-card.maintenance_needed {
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+.equipment-card.under_maintenance {
+    background-color: #cce5ff;
+    border-color: #b8daff;
+}
+
+.equipment-card.out_of_order {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.equipment-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4e73df;
+}
+
+.equipment-info {
+    flex: 1;
+}
+
+.equipment-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.equipment-location {
+    font-size: 0.875rem;
+    color: #858796;
+    margin-bottom: 0.25rem;
+}
+
+.equipment-status {
+    margin-bottom: 0.25rem;
+}
+
+.equipment-maintenance {
+    font-size: 0.875rem;
+    color: #858796;
+}
+
+.modal-body .table-sm td {
+    padding: 0.3rem;
+    font-size: 0.875rem;
+}
+</style>
+
+{{> admin/footer}}

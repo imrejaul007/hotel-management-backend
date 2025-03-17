@@ -1,0 +1,315 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/admin-nav') %>
+
+<div class="min-h-screen bg-gray-100">
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                        Order #<%= order.orderNumber %>
+                    </h2>
+                </div>
+                <div class="mt-4 flex md:mt-0 md:ml-4 space-x-2">
+                    <% if (order.status === 'pending') { %>
+                        <button type="button" onclick="approveOrder('<%= order._id %>')" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Approve Order
+                        </button>
+                        <button type="button" onclick="editOrder('<%= order._id %>')" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Edit Order
+                        </button>
+                        <button type="button" onclick="cancelOrder('<%= order._id %>')" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Cancel Order
+                        </button>
+                    <% } else if (order.status === 'approved') { %>
+                        <button type="button" onclick="markAsShipped('<%= order._id %>')" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Mark as Shipped
+                        </button>
+                    <% } else if (order.status === 'shipped') { %>
+                        <button type="button" onclick="markAsDelivered('<%= order._id %>')" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Mark as Delivered
+                        </button>
+                    <% } else if (order.status === 'delivered') { %>
+                        <button type="button" onclick="completeOrder('<%= order._id %>')" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            Complete Order
+                        </button>
+                    <% } %>
+                    <button type="button" onclick="printOrder('<%= order._id %>')" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Print Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Order Details -->
+            <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Order Information
+                    </h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                        Details and status of the purchase order.
+                    </p>
+                </div>
+                <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+                    <dl class="sm:divide-y sm:divide-gray-200">
+                        <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt class="text-sm font-medium text-gray-500">Status</dt>
+                            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 
+                                    <%= order.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                        order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                        order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                        order.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                                        order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
+                                        'bg-gray-100 text-gray-800' %>">
+                                    <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                                </span>
+                            </dd>
+                        </div>
+                        <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt class="text-sm font-medium text-gray-500">Created By</dt>
+                            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                <%= order.createdBy.name %>
+                            </dd>
+                        </div>
+                        <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt class="text-sm font-medium text-gray-500">Supplier</dt>
+                            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                <div>
+                                    <strong><%= order.supplier.name %></strong>
+                                </div>
+                                <div class="text-gray-500">
+                                    <%= order.supplier.contact %><br>
+                                    <%= order.supplier.email %><br>
+                                    <%= order.supplier.address %>
+                                </div>
+                            </dd>
+                        </div>
+                        <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt class="text-sm font-medium text-gray-500">Order Dates</dt>
+                            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                <div>Created: <%= moment(order.createdAt).format('MMM D, YYYY, h:mm A') %></div>
+                                <% if (order.approvedAt) { %>
+                                <div>Approved: <%= moment(order.approvedAt).format('MMM D, YYYY, h:mm A') %></div>
+                                <% } %>
+                                <% if (order.shippedAt) { %>
+                                <div>Shipped: <%= moment(order.shippedAt).format('MMM D, YYYY, h:mm A') %></div>
+                                <% } %>
+                                <% if (order.deliveredAt) { %>
+                                <div>Delivered: <%= moment(order.deliveredAt).format('MMM D, YYYY, h:mm A') %></div>
+                                <% } %>
+                                <% if (order.completedAt) { %>
+                                <div>Completed: <%= moment(order.completedAt).format('MMM D, YYYY, h:mm A') %></div>
+                                <% } %>
+                            </dd>
+                        </div>
+                        <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt class="text-sm font-medium text-gray-500">Notes</dt>
+                            <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                <%= order.notes || 'No notes provided' %>
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="mt-8 bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Order Items
+                    </h3>
+                </div>
+                <div class="border-t border-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <% order.items.forEach(item => { %>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    <%= item.name %>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <%= item.sku %>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <%= item.quantity %> <%= item.unit %>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    $<%= item.unitPrice.toFixed(2) %>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    $<%= (item.quantity * item.unitPrice).toFixed(2) %>
+                                </td>
+                            </tr>
+                            <% }); %>
+                            <!-- Total Row -->
+                            <tr class="bg-gray-50">
+                                <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                                    Total
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    $<%= order.totalValue.toFixed(2) %>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Order History -->
+            <div class="mt-8 bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Order History
+                    </h3>
+                </div>
+                <div class="border-t border-gray-200">
+                    <ul class="divide-y divide-gray-200">
+                        <% order.history.forEach(event => { %>
+                        <li class="px-4 py-4 sm:px-6">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <% if (event.type === 'created') { %>
+                                            <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+                                            </svg>
+                                        <% } else if (event.type === 'approved') { %>
+                                            <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        <% } else if (event.type === 'shipped') { %>
+                                            <svg class="h-5 w-5 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                                                <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                                            </svg>
+                                        <% } else if (event.type === 'delivered') { %>
+                                            <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M11 17a1 1 0 001.447.894l4-2A1 1 0 0017 15V9.236a1 1 0 00-1.447-.894l-4 2a1 1 0 00-.553.894V17zM15.211 6.276a1 1 0 000-1.788l-4.764-2.382a1 1 0 00-.894 0L4.789 4.488a1 1 0 000 1.788l4.764 2.382a1 1 0 00.894 0l4.764-2.382zM4.447 8.342A1 1 0 003 9.236V15a1 1 0 00.553.894l4 2A1 1 0 009 17v-5.764a1 1 0 00-.553-.894l-4-2z" />
+                                            </svg>
+                                        <% } else if (event.type === 'completed') { %>
+                                            <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                            </svg>
+                                        <% } else if (event.type === 'cancelled') { %>
+                                            <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                            </svg>
+                                        <% } %>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-gray-900">
+                                            <%= event.description %>
+                                        </p>
+                                        <p class="text-sm text-gray-500">
+                                            By <%= event.user.name %> • <%= moment(event.timestamp).format('MMM D, YYYY, h:mm A') %>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <% }); %>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function approveOrder(orderId) {
+        if (confirm('Are you sure you want to approve this order?')) {
+            fetch(`/admin/inventory/orders/${orderId}/approve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                }
+            });
+        }
+    }
+
+    function markAsShipped(orderId) {
+        if (confirm('Are you sure you want to mark this order as shipped?')) {
+            fetch(`/admin/inventory/orders/${orderId}/ship`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                }
+            });
+        }
+    }
+
+    function markAsDelivered(orderId) {
+        if (confirm('Are you sure you want to mark this order as delivered?')) {
+            fetch(`/admin/inventory/orders/${orderId}/deliver`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                }
+            });
+        }
+    }
+
+    function completeOrder(orderId) {
+        if (confirm('Are you sure you want to complete this order? This will update the inventory.')) {
+            fetch(`/admin/inventory/orders/${orderId}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                }
+            });
+        }
+    }
+
+    function cancelOrder(orderId) {
+        if (confirm('Are you sure you want to cancel this order?')) {
+            fetch(`/admin/inventory/orders/${orderId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                }
+            });
+        }
+    }
+
+    function printOrder(orderId) {
+        window.open(`/admin/inventory/orders/${orderId}/print`, '_blank');
+    }
+</script>
+
+<%- include('../../partials/footer') %>

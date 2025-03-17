@@ -1,8 +1,174 @@
-const Booking = require('../models/booking.model');
-const Room = require('../models/room.model');
+const Booking = require('../models/Booking');
+const Room = require('../models/Room');
 const LoyaltyProgram = require('../models/LoyaltyProgram');
 const { NotFoundError, ValidationError } = require('../utils/errors');
 const { sendEmail } = require('../utils/email');
+
+// Get check-ins page
+exports.getCheckIns = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const skip = (page - 1) * limit;
+
+        // Build query
+        let query = {
+            status: 'confirmed',
+            checkIn: { $lte: new Date() }
+        };
+
+        if (search) {
+            query.$or = [
+                { 'user.name': { $regex: search, $options: 'i' } },
+                { 'user.email': { $regex: search, $options: 'i' } },
+                { 'room.number': { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // Get bookings
+        const [bookings, total] = await Promise.all([
+            Booking.find(query)
+                .populate('user', 'name email phone')
+                .populate('room', 'number type')
+                .populate('hotel', 'name')
+                .sort('checkIn')
+                .skip(skip)
+                .limit(limit),
+            Booking.countDocuments(query)
+        ]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        res.render('admin/check-in', {
+            bookings,
+            pagination: {
+                page,
+                totalPages,
+                hasNext: page < totalPages,
+                hasPrev: page > 1
+            },
+            search
+        });
+    } catch (error) {
+        console.error('Error in getCheckIns:', error);
+        res.status(500).render('error', {
+            message: 'Error loading check-ins'
+        });
+    }
+};
+
+// Get check-outs page
+exports.getCheckOuts = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const skip = (page - 1) * limit;
+
+        // Build query
+        let query = {
+            status: 'checked_in',
+            checkOut: { $lte: new Date() }
+        };
+
+        if (search) {
+            query.$or = [
+                { 'user.name': { $regex: search, $options: 'i' } },
+                { 'user.email': { $regex: search, $options: 'i' } },
+                { 'room.number': { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // Get bookings
+        const [bookings, total] = await Promise.all([
+            Booking.find(query)
+                .populate('user', 'name email phone')
+                .populate('room', 'number type')
+                .populate('hotel', 'name')
+                .sort('checkOut')
+                .skip(skip)
+                .limit(limit),
+            Booking.countDocuments(query)
+        ]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        res.render('admin/check-out', {
+            bookings,
+            pagination: {
+                page,
+                totalPages,
+                hasNext: page < totalPages,
+                hasPrev: page > 1
+            },
+            search
+        });
+    } catch (error) {
+        console.error('Error in getCheckOuts:', error);
+        res.status(500).render('error', {
+            message: 'Error loading check-outs'
+        });
+    }
+};
+
+// Process check-in for a booking
+exports.checkIn = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const checkInData = req.body;
+
+        const booking = await exports.processCheckIn(bookingId, checkInData);
+
+        res.json({
+            success: true,
+            message: 'Check-in processed successfully',
+            booking
+        });
+    } catch (error) {
+        console.error('Error in checkIn:', error);
+        if (error instanceof NotFoundError || error instanceof ValidationError) {
+            res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                message: 'Error processing check-in'
+            });
+        }
+    }
+};
+
+// Process check-out for a booking
+exports.checkOut = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const checkOutData = req.body;
+
+        const booking = await exports.processCheckOut(bookingId, checkOutData);
+
+        res.json({
+            success: true,
+            message: 'Check-out processed successfully',
+            booking
+        });
+    } catch (error) {
+        console.error('Error in checkOut:', error);
+        if (error instanceof NotFoundError || error instanceof ValidationError) {
+            res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                message: 'Error processing check-out'
+            });
+        }
+    }
+};
 
 // Process check-in
 exports.processCheckIn = async (bookingId, checkInData) => {
@@ -91,7 +257,7 @@ exports.processCheckOut = async (bookingId, checkOutData) => {
     await booking.save();
 
     // Create housekeeping task
-    const HousekeepingTask = require('../models/housekeeping-task.model');
+    const HousekeepingTask = require('../models/HousekeepingTask');
     await HousekeepingTask.create({
         room: booking.room._id,
         description: `Post-checkout cleaning for room ${booking.room.number}`,
@@ -111,7 +277,7 @@ exports.processCheckOut = async (bookingId, checkOutData) => {
     if (loyaltyProgram) {
         // Award points based on stay duration and booking amount
         const stayDuration = Math.ceil((new Date() - new Date(booking.checkIn)) / (1000 * 60 * 60 * 24));
-        const pointsEarned = Math.floor(booking.totalPrice * 10) + (stayDuration * 100);
+        const pointsEarned = Math.floor(booking.totalPrice * process.env.POINTS_PER_DOLLAR) + (stayDuration * 100);
         
         await loyaltyProgram.addPoints(pointsEarned, 'Stay completed', {
             bookingId: booking._id,
@@ -119,6 +285,9 @@ exports.processCheckOut = async (bookingId, checkOutData) => {
             duration: stayDuration,
             amount: booking.totalPrice
         });
+
+        // Check for tier upgrade
+        await loyaltyProgram.checkAndUpdateTier();
     }
 
     // Send thank you notification
@@ -151,7 +320,9 @@ exports.getCheckInDetails = async (bookingId) => {
         booking,
         loyaltyStatus: loyaltyProgram ? {
             tier: loyaltyProgram.tier,
-            points: loyaltyProgram.points
+            points: loyaltyProgram.points,
+            nextTier: loyaltyProgram.getNextTier(),
+            pointsToNextTier: loyaltyProgram.getPointsToNextTier()
         } : null
     };
 };
@@ -176,7 +347,7 @@ exports.getCheckOutDetails = async (bookingId) => {
     const loyaltyProgram = await LoyaltyProgram.findOne({ user: booking.user._id });
     
     // Calculate potential points
-    const potentialPoints = Math.floor(booking.totalPrice * 10) + (stayDuration * 100);
+    const potentialPoints = Math.floor(booking.totalPrice * process.env.POINTS_PER_DOLLAR) + (stayDuration * 100);
 
     return {
         booking,
@@ -184,7 +355,9 @@ exports.getCheckOutDetails = async (bookingId) => {
         loyaltyStatus: loyaltyProgram ? {
             tier: loyaltyProgram.tier,
             points: loyaltyProgram.points,
-            potentialPoints
+            potentialPoints,
+            nextTier: loyaltyProgram.getNextTier(),
+            pointsToNextTier: loyaltyProgram.getPointsToNextTier()
         } : null
     };
 };

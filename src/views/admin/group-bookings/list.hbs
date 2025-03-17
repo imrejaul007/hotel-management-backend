@@ -1,0 +1,572 @@
+{{> admin/header title="Group Bookings"}}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Group Bookings</h5>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createGroupBookingModal">
+                        <i class="fas fa-plus"></i> Create Group Booking
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Event Type</label>
+                            <select class="form-select" id="eventTypeFilter">
+                                <option value="">All Types</option>
+                                <option value="conference">Conference</option>
+                                <option value="wedding">Wedding</option>
+                                <option value="tour_group">Tour Group</option>
+                                <option value="corporate_event">Corporate Event</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="draft">Draft</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDateFilter">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDateFilter">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Event Name</th>
+                                    <th>Type</th>
+                                    <th>Company</th>
+                                    <th>Dates</th>
+                                    <th>Rooms</th>
+                                    <th>Payment Status</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="groupBookingsTableBody">
+                                {{#each bookings}}
+                                <tr>
+                                    <td>{{name}}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{formatEventType eventDetails.type}}</span>
+                                    </td>
+                                    <td>
+                                        {{#if corporateAccount}}
+                                            {{corporateAccount.companyName}}
+                                        {{else}}
+                                            -
+                                        {{/if}}
+                                    </td>
+                                    <td>
+                                        {{formatDate eventDetails.startDate}}<br>
+                                        <small class="text-muted">to</small><br>
+                                        {{formatDate eventDetails.endDate}}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{totalRooms}} rooms</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{paymentStatusColor payment.status}}">
+                                            {{payment.status}}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{statusColor status}}">{{status}}</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-info" onclick="viewBooking('{{_id}}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-primary" onclick="editBooking('{{_id}}')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-success" onclick="manageGuests('{{_id}}')">
+                                                <i class="fas fa-users"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-warning" onclick="managePayments('{{_id}}')">
+                                                <i class="fas fa-money-bill"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{> admin/pagination}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Group Booking Modal -->
+<div class="modal fade" id="createGroupBookingModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Group Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createGroupBookingForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Event Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Event Type</label>
+                            <select class="form-select" name="eventDetails.type" required>
+                                <option value="conference">Conference</option>
+                                <option value="wedding">Wedding</option>
+                                <option value="tour_group">Tour Group</option>
+                                <option value="corporate_event">Corporate Event</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Corporate Account</label>
+                            <select class="form-select" name="corporateAccount" id="corporateAccountSelect">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="eventDetails.description" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" name="eventDetails.startDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" name="eventDetails.endDate" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6>Rooms</h6>
+                            <div id="roomsContainer">
+                                <div class="row room-entry mb-2">
+                                    <div class="col-md-4">
+                                        <select class="form-select" name="rooms[0].roomType" required>
+                                            <option value="">Select Room Type</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="number" class="form-control" name="rooms[0].quantity" placeholder="Quantity" required min="1">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="number" class="form-control" name="rooms[0].rate" placeholder="Rate per night" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-danger" onclick="removeRoom(this)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary mt-2" onclick="addRoom()">
+                                <i class="fas fa-plus"></i> Add Room
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select" name="payment.method" required>
+                                <option value="credit_card">Credit Card</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="corporate_billing">Corporate Billing</option>
+                                <option value="cash">Cash</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Deposit Amount</label>
+                            <input type="number" class="form-control" name="payment.depositAmount">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createGroupBooking()">Create Booking</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Guests Modal -->
+<div class="modal fade" id="manageGuestsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Guests</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" onclick="showAddGuestForm()">
+                        <i class="fas fa-plus"></i> Add Guest
+                    </button>
+                </div>
+                <div id="guestsList">
+                    <!-- Guests will be loaded here -->
+                </div>
+                <div id="addGuestForm" style="display: none;">
+                    <form id="guestForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control" name="name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Phone</label>
+                                <input type="tel" class="form-control" name="phone">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Room Assignment</label>
+                                <select class="form-select" name="roomAssignment" id="roomAssignmentSelect">
+                                    <!-- Rooms will be loaded here -->
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="addGuest()">Add Guest</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideAddGuestForm()">Cancel</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Payments Modal -->
+<div class="modal fade" id="managePaymentsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Payments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-summary mb-4">
+                    <h6>Payment Summary</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p>Total Amount: <span id="totalAmount">$0</span></p>
+                        </div>
+                        <div class="col-md-4">
+                            <p>Paid Amount: <span id="paidAmount">$0</span></p>
+                        </div>
+                        <div class="col-md-4">
+                            <p>Remaining: <span id="remainingAmount">$0</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" onclick="showAddPaymentForm()">
+                        <i class="fas fa-plus"></i> Add Payment
+                    </button>
+                </div>
+                <div id="paymentsList">
+                    <!-- Payments will be loaded here -->
+                </div>
+                <div id="addPaymentForm" style="display: none;">
+                    <form id="paymentForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Amount</label>
+                                <input type="number" class="form-control" name="amount" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Type</label>
+                                <select class="form-select" name="type" required>
+                                    <option value="deposit">Deposit</option>
+                                    <option value="payment">Payment</option>
+                                    <option value="refund">Refund</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reference</label>
+                            <input type="text" class="form-control" name="reference">
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="addPayment()">Add Payment</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideAddPaymentForm()">Cancel</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+const itemsPerPage = 10;
+let currentBookingId = null;
+
+// Load group bookings
+async function loadGroupBookings(page = 1) {
+    const eventType = document.getElementById('eventTypeFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const startDate = document.getElementById('startDateFilter').value;
+    const endDate = document.getElementById('endDateFilter').value;
+
+    try {
+        const response = await fetch(`/api/group-bookings?page=${page}&eventType=${eventType}&status=${status}&startDate=${startDate}&endDate=${endDate}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderBookings(data.data);
+            renderPagination(data.pagination);
+        }
+    } catch (error) {
+        console.error('Error loading group bookings:', error);
+        showAlert('error', 'Failed to load group bookings');
+    }
+}
+
+// Load corporate accounts for dropdown
+async function loadCorporateAccounts() {
+    try {
+        const response = await fetch('/api/corporate');
+        const data = await response.json();
+        
+        if (data.success) {
+            const select = document.getElementById('corporateAccountSelect');
+            select.innerHTML = '<option value="">None</option>';
+            
+            data.data.forEach(account => {
+                const option = document.createElement('option');
+                option.value = account._id;
+                option.textContent = account.companyName;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading corporate accounts:', error);
+    }
+}
+
+// Load room types
+async function loadRoomTypes() {
+    try {
+        const response = await fetch('/api/rooms/types');
+        const data = await response.json();
+        
+        if (data.success) {
+            const selects = document.querySelectorAll('select[name$=".roomType"]');
+            selects.forEach(select => {
+                select.innerHTML = '<option value="">Select Room Type</option>';
+                data.data.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    select.appendChild(option);
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error loading room types:', error);
+    }
+}
+
+// Add room entry
+function addRoom() {
+    const container = document.getElementById('roomsContainer');
+    const roomCount = container.children.length;
+    
+    const roomEntry = document.createElement('div');
+    roomEntry.className = 'row room-entry mb-2';
+    roomEntry.innerHTML = `
+        <div class="col-md-4">
+            <select class="form-select" name="rooms[${roomCount}].roomType" required>
+                <option value="">Select Room Type</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="number" class="form-control" name="rooms[${roomCount}].quantity" placeholder="Quantity" required min="1">
+        </div>
+        <div class="col-md-3">
+            <input type="number" class="form-control" name="rooms[${roomCount}].rate" placeholder="Rate per night" required>
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-danger" onclick="removeRoom(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(roomEntry);
+    loadRoomTypes();
+}
+
+// Remove room entry
+function removeRoom(button) {
+    const roomEntry = button.closest('.room-entry');
+    roomEntry.remove();
+}
+
+// Create group booking
+async function createGroupBooking() {
+    const form = document.getElementById('createGroupBookingForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/group-bookings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            $('#createGroupBookingModal').modal('hide');
+            showAlert('success', 'Group booking created successfully');
+            loadGroupBookings(currentPage);
+        }
+    } catch (error) {
+        console.error('Error creating group booking:', error);
+        showAlert('error', 'Failed to create group booking');
+    }
+}
+
+// Manage guests
+async function manageGuests(bookingId) {
+    currentBookingId = bookingId;
+    try {
+        const response = await fetch(`/api/group-bookings/${bookingId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderGuests(data.data.guests);
+            $('#manageGuestsModal').modal('show');
+        }
+    } catch (error) {
+        console.error('Error loading guests:', error);
+        showAlert('error', 'Failed to load guests');
+    }
+}
+
+// Add guest
+async function addGuest() {
+    const form = document.getElementById('guestForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch(`/api/group-bookings/${currentBookingId}/guests`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            hideAddGuestForm();
+            renderGuests(result.data.guests);
+            showAlert('success', 'Guest added successfully');
+        }
+    } catch (error) {
+        console.error('Error adding guest:', error);
+        showAlert('error', 'Failed to add guest');
+    }
+}
+
+// Manage payments
+async function managePayments(bookingId) {
+    currentBookingId = bookingId;
+    try {
+        const response = await fetch(`/api/group-bookings/${bookingId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderPayments(data.data.payment);
+            updatePaymentSummary(data.data.payment);
+            $('#managePaymentsModal').modal('show');
+        }
+    } catch (error) {
+        console.error('Error loading payments:', error);
+        showAlert('error', 'Failed to load payments');
+    }
+}
+
+// Add payment
+async function addPayment() {
+    const form = document.getElementById('paymentForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch(`/api/group-bookings/${currentBookingId}/payments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            hideAddPaymentForm();
+            renderPayments(result.data.payment);
+            updatePaymentSummary(result.data.payment);
+            showAlert('success', 'Payment added successfully');
+        }
+    } catch (error) {
+        console.error('Error adding payment:', error);
+        showAlert('error', 'Failed to add payment');
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    loadGroupBookings(1);
+    loadCorporateAccounts();
+    loadRoomTypes();
+
+    // Filter handlers
+    document.getElementById('eventTypeFilter').addEventListener('change', () => loadGroupBookings(1));
+    document.getElementById('statusFilter').addEventListener('change', () => loadGroupBookings(1));
+    document.getElementById('startDateFilter').addEventListener('change', () => loadGroupBookings(1));
+    document.getElementById('endDateFilter').addEventListener('change', () => loadGroupBookings(1));
+});
+</script>
+
+{{> admin/footer}}

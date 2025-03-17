@@ -1,0 +1,259 @@
+{{> admin/header title="System Settings"}}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">System Settings</h1>
+    </div>
+
+    <!-- System Settings Form -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form id="systemSettingsForm">
+                <!-- Email Settings -->
+                <div class="mb-4">
+                    <h5>Email Settings</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">SMTP Host</label>
+                            <input type="text" class="form-control" id="smtpHost" value="{{settings.smtp.host}}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">SMTP Port</label>
+                            <input type="number" class="form-control" id="smtpPort" value="{{settings.smtp.port}}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">SMTP Username</label>
+                            <input type="text" class="form-control" id="smtpUsername" value="{{settings.smtp.username}}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">SMTP Password</label>
+                            <input type="password" class="form-control" id="smtpPassword" value="{{settings.smtp.password}}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">From Email</label>
+                            <input type="email" class="form-control" id="fromEmail" value="{{settings.smtp.fromEmail}}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">From Name</label>
+                            <input type="text" class="form-control" id="fromName" value="{{settings.smtp.fromName}}" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-info" onclick="testEmailSettings()">
+                                <i class="fas fa-paper-plane"></i> Test Email Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Backup Settings -->
+                <div class="mb-4">
+                    <h5>Backup Settings</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Backup Frequency</label>
+                            <select class="form-select" id="backupFrequency">
+                                <option value="daily" {{#if (eq settings.backup.frequency "daily")}}selected{{/if}}>Daily</option>
+                                <option value="weekly" {{#if (eq settings.backup.frequency "weekly")}}selected{{/if}}>Weekly</option>
+                                <option value="monthly" {{#if (eq settings.backup.frequency "monthly")}}selected{{/if}}>Monthly</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Retention Period (days)</label>
+                            <input type="number" class="form-control" id="backupRetention" value="{{settings.backup.retention}}" min="1" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-info" onclick="createBackup()">
+                                <i class="fas fa-download"></i> Create Backup Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Settings -->
+                <div class="mb-4">
+                    <h5>Security Settings</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Session Timeout (minutes)</label>
+                            <input type="number" class="form-control" id="sessionTimeout" value="{{settings.security.sessionTimeout}}" min="5" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Password Expiry (days)</label>
+                            <input type="number" class="form-control" id="passwordExpiry" value="{{settings.security.passwordExpiry}}" min="0">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="twoFactorAuth" {{#if settings.security.twoFactorAuth}}checked{{/if}}>
+                                <label class="form-check-label">Enable Two-Factor Authentication</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="ipRestriction" {{#if settings.security.ipRestriction}}checked{{/if}}>
+                                <label class="form-check-label">Enable IP Restriction</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Settings -->
+                <div class="mb-4">
+                    <h5>Notification Settings</h5>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="notifyBooking" {{#if settings.notifications.booking}}checked{{/if}}>
+                                <label class="form-check-label">New Booking Notifications</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="notifyCancellation" {{#if settings.notifications.cancellation}}checked{{/if}}>
+                                <label class="form-check-label">Booking Cancellation Notifications</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="notifyPayment" {{#if settings.notifications.payment}}checked{{/if}}>
+                                <label class="form-check-label">Payment Notifications</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="notifyLowInventory" {{#if settings.notifications.lowInventory}}checked{{/if}}>
+                                <label class="form-check-label">Low Inventory Notifications</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle form submission
+$('#systemSettingsForm').on('submit', async function(e) {
+    e.preventDefault();
+
+    const settingsData = {
+        smtp: {
+            host: $('#smtpHost').val(),
+            port: parseInt($('#smtpPort').val()),
+            username: $('#smtpUsername').val(),
+            password: $('#smtpPassword').val(),
+            fromEmail: $('#fromEmail').val(),
+            fromName: $('#fromName').val()
+        },
+        backup: {
+            frequency: $('#backupFrequency').val(),
+            retention: parseInt($('#backupRetention').val())
+        },
+        security: {
+            sessionTimeout: parseInt($('#sessionTimeout').val()),
+            passwordExpiry: parseInt($('#passwordExpiry').val()),
+            twoFactorAuth: $('#twoFactorAuth').is(':checked'),
+            ipRestriction: $('#ipRestriction').is(':checked')
+        },
+        notifications: {
+            booking: $('#notifyBooking').is(':checked'),
+            cancellation: $('#notifyCancellation').is(':checked'),
+            payment: $('#notifyPayment').is(':checked'),
+            lowInventory: $('#notifyLowInventory').is(':checked')
+        }
+    };
+
+    try {
+        const response = await fetch('/admin/settings/system', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settingsData)
+        });
+
+        if (!response.ok) throw new Error('Failed to update system settings');
+
+        // Show success message
+        Swal.fire({
+            icon: 'success',
+            title: 'Settings Updated',
+            text: 'System settings have been updated successfully.'
+        });
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to update system settings: ' + error.message
+        });
+    }
+});
+
+// Test email settings
+async function testEmailSettings() {
+    const emailSettings = {
+        host: $('#smtpHost').val(),
+        port: parseInt($('#smtpPort').val()),
+        username: $('#smtpUsername').val(),
+        password: $('#smtpPassword').val(),
+        fromEmail: $('#fromEmail').val(),
+        fromName: $('#fromName').val()
+    };
+
+    try {
+        const response = await fetch('/admin/settings/system/test-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(emailSettings)
+        });
+
+        if (!response.ok) throw new Error('Failed to test email settings');
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Test Email Sent',
+            text: 'Please check your inbox for the test email.'
+        });
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to test email settings: ' + error.message
+        });
+    }
+}
+
+// Create backup
+async function createBackup() {
+    try {
+        const response = await fetch('/admin/settings/system/backup', {
+            method: 'POST'
+        });
+
+        if (!response.ok) throw new Error('Failed to create backup');
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Backup Created',
+            text: 'System backup has been created successfully.'
+        });
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to create backup: ' + error.message
+        });
+    }
+}
+</script>
+
+{{> admin/footer}}

@@ -228,18 +228,67 @@ module.exports = {
     },
     formatPhone: function(phone) {
         if (!phone) return '';
-        const cleaned = phone.replace(/\D/g, '');
+        const cleaned = ('' + phone).replace(/\D/g, '');
         const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
         if (match) {
             return '(' + match[1] + ') ' + match[2] + '-' + match[3];
         }
         return phone;
+    },
+    contractStatusColor: function(status) {
+        const colors = {
+            'active': 'success',
+            'pending': 'warning',
+            'expired': 'danger',
+            'terminated': 'dark'
+        };
+        return colors[status] || 'secondary';
+    },
+    formatEventType: function(type) {
+        return type.split('_').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    },
+    paymentStatusColor: function(status) {
+        const colors = {
+            'pending': 'warning',
+            'partial': 'info',
+            'paid': 'success',
+            'refunded': 'dark'
+        };
+        return colors[status] || 'secondary';
+    },
+    formatPaymentTerms: function(terms) {
+        switch(terms) {
+            case 'immediate':
+                return 'Immediate';
+            case 'net15':
+                return 'Net 15 Days';
+            case 'net30':
+                return 'Net 30 Days';
+            case 'net45':
+                return 'Net 45 Days';
+            case 'net60':
+                return 'Net 60 Days';
+            default:
+                return terms;
+        }
+    },
+    roomTypeColor: function(type) {
+        const colors = {
+            'standard': 'secondary',
+            'deluxe': 'info',
+            'suite': 'primary',
+            'executive': 'success',
+            'presidential': 'warning'
+        };
+        return colors[type.toLowerCase()] || 'dark';
     }
 };
 
 // Format category name
 Handlebars.registerHelper('formatCategory', function(category) {
-    return category.split('_').map(word => 
+    return category.split('_').map(word =>
         word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
 });
@@ -312,4 +361,58 @@ Handlebars.registerHelper('json', function(context) {
 // Equality comparison
 Handlebars.registerHelper('eq', function(a, b) {
     return a === b;
+});
+
+Handlebars.registerHelper('contractStatusColor', function(status) {
+    const colors = {
+        'active': 'success',
+        'pending': 'warning',
+        'expired': 'danger',
+        'terminated': 'dark'
+    };
+    return colors[status] || 'secondary';
+});
+
+Handlebars.registerHelper('formatEventType', function(type) {
+    return type.split('_').map(word =>
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+});
+
+Handlebars.registerHelper('paymentStatusColor', function(status) {
+    const colors = {
+        'pending': 'warning',
+        'partial': 'info',
+        'paid': 'success',
+        'refunded': 'dark'
+    };
+    return colors[status] || 'secondary';
+});
+
+Handlebars.registerHelper('formatPaymentTerms', function(terms) {
+    switch(terms) {
+        case 'immediate':
+            return 'Immediate';
+        case 'net15':
+            return 'Net 15 Days';
+        case 'net30':
+            return 'Net 30 Days';
+        case 'net45':
+            return 'Net 45 Days';
+        case 'net60':
+            return 'Net 60 Days';
+        default:
+            return terms;
+    }
+});
+
+Handlebars.registerHelper('roomTypeColor', function(type) {
+    const colors = {
+        'standard': 'secondary',
+        'deluxe': 'info',
+        'suite': 'primary',
+        'executive': 'success',
+        'presidential': 'warning'
+    };
+    return colors[type.toLowerCase()] || 'dark';
 });

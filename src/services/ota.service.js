@@ -2,11 +2,11 @@ const axios = require('axios');
 const BookingComService = require('./ota/booking.com.service');
 const AirbnbService = require('./ota/airbnb.service');
 const ExpediaService = require('./ota/expedia.service');
-const OTAChannel = require('../models/ota-channel.model');
-const OTABooking = require('../models/ota-booking.model');
-const Room = require('../models/room.model');
-const Booking = require('../models/booking.model');
-const User = require('../models/user.model');
+const OTAChannel = require('../models/OTAChannel');
+const OTABooking = require('../models/OTABooking');
+const Room = require('../models/Room');
+const Booking = require('../models/Booking');
+const User = require('../models/User');
 
 class OTAService {
     constructor(channel) {

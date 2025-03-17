@@ -1,0 +1,211 @@
+{{> admin/header title="User Management"}}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">User Management</h1>
+        <button class="btn btn-primary" onclick="showCreateUserModal()">
+            <i class="fas fa-plus"></i> Add New User
+        </button>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="usersTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each users}}
+                        <tr>
+                            <td>{{this.name}}</td>
+                            <td>{{this.email}}</td>
+                            <td>
+                                <span class="badge bg-info">{{this.role.name}}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{#if this.isActive}}success{{else}}danger{{/if}}">
+                                    {{#if this.isActive}}Active{{else}}Inactive{{/if}}
+                                </span>
+                            </td>
+                            <td>{{formatDate this.lastLogin}}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-info" onclick="showEditUserModal('{{this._id}}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-warning" onclick="resetPassword('{{this._id}}')">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-{{#if this.isActive}}danger{{else}}success{{/if}}"
+                                            onclick="toggleUserStatus('{{this._id}}')">
+                                        <i class="fas fa-{{#if this.isActive}}ban{{else}}check{{/if}}"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit User Modal -->
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalTitle">Add New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <input type="hidden" id="userId">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="userName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="userEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="userPassword">
+                        <small class="text-muted">Leave blank to keep current password when editing</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select class="form-select" id="userRole" required>
+                            {{#each roles}}
+                            <option value="{{this._id}}">{{this.name}}</option>
+                            {{/each}}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="userStatus" checked>
+                            <label class="form-check-label">Active</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveUser()">Save User</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize DataTable
+$(document).ready(function() {
+    $('#usersTable').DataTable();
+});
+
+// Show create user modal
+function showCreateUserModal() {
+    $('#userModalTitle').text('Add New User');
+    $('#userForm')[0].reset();
+    $('#userId').val('');
+    $('#userModal').modal('show');
+}
+
+// Show edit user modal
+async function showEditUserModal(userId) {
+    try {
+        const response = await fetch(`/admin/settings/users/${userId}`);
+        const user = await response.json();
+
+        $('#userModalTitle').text('Edit User');
+        $('#userId').val(user._id);
+        $('#userName').val(user.name);
+        $('#userEmail').val(user.email);
+        $('#userRole').val(user.role._id);
+        $('#userStatus').prop('checked', user.isActive);
+        $('#userPassword').val('');
+
+        $('#userModal').modal('show');
+    } catch (error) {
+        alert('Error fetching user details: ' + error.message);
+    }
+}
+
+// Save user
+async function saveUser() {
+    const userId = $('#userId').val();
+    const userData = {
+        name: $('#userName').val(),
+        email: $('#userEmail').val(),
+        password: $('#userPassword').val(),
+        roleId: $('#userRole').val(),
+        isActive: $('#userStatus').is(':checked')
+    };
+
+    try {
+        const url = userId ? `/admin/settings/users/${userId}` : '/admin/settings/users';
+        const method = userId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        });
+
+        if (!response.ok) throw new Error('Failed to save user');
+
+        $('#userModal').modal('hide');
+        location.reload();
+    } catch (error) {
+        alert('Error saving user: ' + error.message);
+    }
+}
+
+// Reset password
+async function resetPassword(userId) {
+    if (!confirm('Are you sure you want to reset this user\'s password?')) return;
+
+    try {
+        const response = await fetch(`/admin/settings/users/${userId}/reset-password`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) throw new Error('Failed to reset password');
+
+        alert('Password reset email has been sent to the user');
+    } catch (error) {
+        alert('Error resetting password: ' + error.message);
+    }
+}
+
+// Toggle user status
+async function toggleUserStatus(userId) {
+    try {
+        const response = await fetch(`/admin/settings/users/${userId}/toggle-status`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) throw new Error('Failed to toggle user status');
+
+        location.reload();
+    } catch (error) {
+        alert('Error toggling user status: ' + error.message);
+    }
+}
+</script>
+
+{{> admin/footer}}

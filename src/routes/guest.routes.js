@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Guest = require('../models/guest.model');
+const Guest = require('../models/Guest');
 const { protect, authorize } = require('../middlewares/auth.middleware');
 
 // Get all guests with pagination and filters

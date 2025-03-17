@@ -1,205 +1,151 @@
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middlewares/auth.middleware');
+const { protect, authorize } = require('../middleware/auth.middleware');
+
+// Import controllers
 const adminController = require('../controllers/admin.controller');
-const emailService = require('../services/email.service');
-const User = require('../models/User');
-const Booking = require('../models/Booking');
-const Hotel = require('../models/Hotel');
-const Room = require('../models/Room');
-const Maintenance = require('../models/Maintenance');
-const Inventory = require('../models/Inventory');
-const Invoice = require('../models/Invoice');
-const Transaction = require('../models/Transaction');
-const adminLoyaltyController = require('../controllers/admin.loyalty.controller');
-const adminRewardsController = require('../controllers/admin.rewards.controller');
-const checkInOutController = require('../controllers/check-in-out.controller');
-const guestController = require('../controllers/guest.controller');
-const guestAnalyticsController = require('../controllers/admin/guest-analytics.controller');
+const bookingController = require('../controllers/admin/booking.controller');
+const guestController = require('../controllers/admin/guest.controller');
+const housekeepingController = require('../controllers/admin/housekeeping.controller');
+const channelManagerController = require('../controllers/admin/channel-manager.controller');
+const analyticsController = require('../controllers/admin/analytics.controller');
+const paymentController = require('../controllers/admin/payment.controller');
+const settingsController = require('../controllers/admin/settings.controller');
+const loyaltyController = require('../controllers/admin/loyalty.controller');
+const inventoryController = require('../controllers/admin/inventory.controller');
 
 // Admin Dashboard
-router.get('/dashboard', protect, authorize('admin', 'manager'), adminController.getDashboard);
+router.get('/dashboard', protect, authorize('admin'), adminController.getDashboard);
+
+// Booking Management Routes
+router.get('/bookings', protect, authorize('admin'), bookingController.getAllBookings);
+router.get('/bookings/upcoming', protect, authorize('admin'), bookingController.getUpcomingBookings);
+router.get('/bookings/current', protect, authorize('admin'), bookingController.getCurrentBookings);
+router.get('/bookings/past', protect, authorize('admin'), bookingController.getPastBookings);
+router.get('/bookings/:id', protect, authorize('admin'), bookingController.getBookingDetails);
+router.post('/bookings', protect, authorize('admin'), bookingController.createBooking);
+router.put('/bookings/:id', protect, authorize('admin'), bookingController.updateBooking);
+router.delete('/bookings/:id', protect, authorize('admin'), bookingController.deleteBooking);
+
+// Guest Management Routes
+router.get('/guests', protect, authorize('admin'), guestController.getAllGuests);
+router.get('/guests/:id', protect, authorize('admin'), guestController.getGuestDetails);
+router.post('/guests', protect, authorize('admin'), guestController.createGuest);
+router.put('/guests/:id', protect, authorize('admin'), guestController.updateGuest);
+router.delete('/guests/:id', protect, authorize('admin'), guestController.deleteGuest);
+
+// Loyalty Program Routes
+router.get('/loyalty/dashboard', protect, authorize('admin'), loyaltyController.getDashboard);
+router.get('/loyalty/members', protect, authorize('admin'), loyaltyController.getAllMembers);
+router.get('/loyalty/members/:id', protect, authorize('admin'), loyaltyController.getMemberDetails);
+router.post('/loyalty/points/award', protect, authorize('admin'), loyaltyController.awardPoints);
+router.post('/loyalty/points/redeem', protect, authorize('admin'), loyaltyController.redeemPoints);
+router.get('/loyalty/rewards', protect, authorize('admin'), loyaltyController.getRewards);
+router.post('/loyalty/rewards', protect, authorize('admin'), loyaltyController.createReward);
+router.put('/loyalty/rewards/:id', protect, authorize('admin'), loyaltyController.updateReward);
+router.get('/loyalty/referrals', protect, authorize('admin'), loyaltyController.getReferrals);
+router.post('/loyalty/referrals/process', protect, authorize('admin'), loyaltyController.processReferral);
+
+// Housekeeping Routes
+router.get('/housekeeping', protect, authorize('admin'), housekeepingController.getDashboard);
+router.get('/housekeeping/tasks', protect, authorize('admin'), housekeepingController.getAllTasks);
+router.post('/housekeeping/tasks', protect, authorize('admin'), housekeepingController.createTask);
+router.put('/housekeeping/tasks/:id', protect, authorize('admin'), housekeepingController.updateTask);
+router.delete('/housekeeping/tasks/:id', protect, authorize('admin'), housekeepingController.deleteTask);
+
+// Channel Manager Routes
+router.get('/channel-manager', protect, authorize('admin'), channelManagerController.getDashboard);
+router.get('/channel-manager/rates', protect, authorize('admin'), channelManagerController.getRates);
+router.put('/channel-manager/rates', protect, authorize('admin'), channelManagerController.updateRates);
+router.get('/channel-manager/bookings', protect, authorize('admin'), channelManagerController.getBookings);
+router.get('/channel-manager/analytics', protect, authorize('admin'), channelManagerController.getAnalytics);
+
+// Analytics Routes
+router.get('/reports/financial', protect, authorize('admin'), analyticsController.getFinancialReports);
+router.get('/reports/occupancy', protect, authorize('admin'), analyticsController.getOccupancyReports);
+router.get('/reports/guest', protect, authorize('admin'), analyticsController.getGuestAnalytics);
+router.get('/reports/staff', protect, authorize('admin'), analyticsController.getStaffPerformance);
+
+// Payment Routes
+router.get('/payments', protect, authorize('admin'), paymentController.getAllPayments);
+router.get('/payments/:id', protect, authorize('admin'), paymentController.getPaymentDetails);
+router.post('/payments/:id/refund', protect, authorize('admin'), paymentController.processRefund);
+router.get('/refunds', protect, authorize('admin'), paymentController.getAllRefunds);
+router.get('/invoices', protect, authorize('admin'), paymentController.getAllInvoices);
+router.get('/payment-settings', protect, authorize('admin'), paymentController.getPaymentSettings);
+router.put('/payment-settings', protect, authorize('admin'), paymentController.updatePaymentSettings);
+
+// Inventory Management Routes
+router.get('/inventory', protect, authorize('admin'), inventoryController.getInventory);
+router.get('/inventory/orders', protect, authorize('admin'), inventoryController.getOrders);
+router.post('/inventory/orders', protect, authorize('admin'), inventoryController.createOrder);
+router.get('/inventory/suppliers', protect, authorize('admin'), inventoryController.getSuppliers);
+router.post('/inventory/suppliers', protect, authorize('admin'), inventoryController.createSupplier);
+router.get('/inventory/alerts', protect, authorize('admin'), inventoryController.getLowStockAlerts);
+
+// Settings Routes
+// User Management
+router.get('/settings/users', protect, authorize('admin'), settingsController.getAllUsers);
+router.post('/settings/users', protect, authorize('admin'), settingsController.createUser);
+router.put('/settings/users/:id', protect, authorize('admin'), settingsController.updateUser);
+router.post('/settings/users/:id/reset-password', protect, authorize('admin'), settingsController.resetPassword);
+router.post('/settings/users/:id/toggle-status', protect, authorize('admin'), settingsController.toggleUserStatus);
+
+// Role Management
+router.get('/settings/roles', protect, authorize('admin'), settingsController.getAllRoles);
+router.post('/settings/roles', protect, authorize('admin'), settingsController.createRole);
+router.put('/settings/roles/:id', protect, authorize('admin'), settingsController.updateRole);
+
+// Hotel Settings
+router.get('/settings/hotel', protect, authorize('admin'), settingsController.getHotelSettings);
+router.put('/settings/hotel', protect, authorize('admin'), settingsController.updateHotelSettings);
+
+// System Settings
+router.get('/settings/system', protect, authorize('admin'), settingsController.getSystemSettings);
+router.put('/settings/system', protect, authorize('admin'), settingsController.updateSystemSettings);
+
+// Hotels Management
+router.get('/hotels', protect, authorize('admin'), adminController.getHotels);
+router.get('/hotels/:hotelId/rooms', protect, authorize('admin'), adminController.getRooms);
+
+// User Management
+router.get('/users', protect, authorize('admin'), adminController.getUsers);
+
+// Financial Management
+router.get('/invoices', protect, authorize('admin'), adminController.getInvoices);
+router.get('/transactions', protect, authorize('admin'), adminController.getTransactions);
 
 // Include OTA routes
 router.use('/ota', require('./ota.routes'));
 
-// Import route modules
-const guestRoutes = require('./guest.routes');
+// Guest Management
+router.get('/guests', protect, authorize('admin'), guestController.getDashboard);
+router.post('/guests/create', protect, authorize('admin'), guestController.createGuest);
+router.get('/guests/:id', protect, authorize('admin'), guestController.getGuestProfile);
+router.get('/guests/:id/stays', protect, authorize('admin'), guestController.getGuestStays);
+router.get('/guest-analytics', protect, authorize('admin'), guestAnalyticsController.getAnalytics);
+router.get('/guest-profiles/:id', protect, authorize('admin'), guestProfileController.getProfile);
 
-// Billing routes
-router.get('/billing/invoices', protect, authorize('admin'), async (req, res) => {
-    try {
-        const invoices = await Invoice.find()
-            .populate('guest', 'name email')
-            .populate('booking', 'checkInDate checkOutDate')
-            .sort({ createdAt: -1 });
+// Loyalty Program Management
+router.get('/loyalty', protect, authorize('admin'), adminLoyaltyController.getDashboard);
+router.get('/loyalty/members', protect, authorize('admin'), adminLoyaltyController.getMembers);
+router.get('/loyalty/tiers', protect, authorize('admin'), adminLoyaltyController.getTiers);
+router.get('/loyalty/referrals', protect, authorize('admin'), adminLoyaltyController.getReferrals);
+router.post('/loyalty/members/:id/points', protect, authorize('admin'), adminLoyaltyController.adjustPoints);
+router.get('/loyalty/members/:id/export', protect, authorize('admin'), adminLoyaltyController.exportMemberHistory);
+router.get('/loyalty/members/export', protect, authorize('admin'), adminLoyaltyController.exportMemberData);
 
-        const guests = await User.find({ role: 'user' }).select('name email');
+// Rewards Management
+router.get('/rewards', protect, authorize('admin'), adminRewardsController.getRewards);
+router.post('/rewards/create', protect, authorize('admin'), adminRewardsController.createReward);
+router.put('/rewards/:id', protect, authorize('admin'), adminRewardsController.updateReward);
+router.delete('/rewards/:id', protect, authorize('admin'), adminRewardsController.deleteReward);
 
-        res.render('admin/billing/invoices', {
-            title: 'Invoices',
-            invoices,
-            guests
-        });
-    } catch (error) {
-        req.flash('error', error.message);
-        res.redirect('/admin/dashboard');
-    }
-});
-
-router.get('/billing/invoices/:id', protect, authorize('admin'), async (req, res) => {
-    try {
-        const invoice = await Invoice.findById(req.params.id)
-            .populate('guest', 'name email phone')
-            .populate('booking', 'checkInDate checkOutDate roomType');
-
-        if (!invoice) {
-            req.flash('error', 'Invoice not found');
-            return res.redirect('/admin/billing/invoices');
-        }
-
-        const transactions = await Transaction.find({ invoice: invoice._id })
-            .sort({ createdAt: -1 });
-
-        res.render('admin/billing/invoice-details', {
-            title: `Invoice #${invoice.invoiceNumber}`,
-            invoice,
-            transactions
-        });
-    } catch (error) {
-        // req.flash('error', error.message);
-        res.redirect('/admin/billing/invoices');
-    }
-});
-
-// Admin Booking Dashboard
-router.get('/bookings', protect, authorize('admin'), async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = 10;
-        const tab = req.query.tab || 'current';
-        const hotelId = req.query.hotel;
-        const status = req.query.status;
-        const searchQuery = req.query.search;
-
-        // Base query
-        const query = {};
-        
-        // Add hotel filter
-        if (hotelId) {
-            query.hotel = hotelId;
-        }
-
-        // Add status filter
-        if (status) {
-            query.status = status;
-        }
-
-        // Add search filter
-        if (searchQuery) {
-            query.$or = [
-                { 'user.name': { $regex: searchQuery, $options: 'i' } },
-                { _id: searchQuery }
-            ];
-        }
-
-        // Add date filters based on tab
-        const now = new Date();
-        switch (tab) {
-            case 'current':
-                query.checkIn = { $lte: now };
-                query.checkOut = { $gte: now };
-                break;
-            case 'upcoming':
-                query.checkIn = { $gt: now };
-                break;
-            case 'past':
-                query.checkOut = { $lt: now };
-                break;
-        }
-
-        // Get bookings with pagination
-        const bookings = await Booking.find(query)
-            .populate('user', 'name email')
-            .populate('hotel', 'name')
-            .populate('room', 'type number')
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit);
-
-        const total = await Booking.countDocuments(query);
-        const pages = Math.ceil(total / limit);
-
-        // Get booking stats
-        const stats = {
-            current: await Booking.countDocuments({
-                checkIn: { $lte: now },
-                checkOut: { $gte: now }
-            }),
-            upcoming: await Booking.countDocuments({
-                checkIn: { $gt: now }
-            }),
-            past: await Booking.countDocuments({
-                checkOut: { $lt: now }
-            }),
-            revenue: await Booking.aggregate([
-                {
-                    $match: {
-                        status: { $in: ['confirmed', 'completed'] }
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        total: { $sum: "$totalPrice" }
-                    }
-                }
-            ]).then(result => result[0]?.total || 0)
-        };
-
-        // Get all hotels for filter
-        const hotels = await Hotel.find({}, 'name');
-
-        // Prepare pagination data
-        const pagination = {
-            pages: Array.from({ length: pages }, (_, i) => ({
-                page: i + 1,
-                isCurrent: i + 1 === page
-            })),
-            prevPage: page > 1 ? page - 1 : null,
-            nextPage: page < pages ? page + 1 : null,
-            hasPrevPage: page > 1,
-            hasNextPage: page < pages
-        };
-
-        res.render('admin/bookings', {
-            bookings,
-            pagination,
-            stats,
-            hotels,
-            activeTab: tab,
-            selectedHotel: hotelId,
-            selectedStatus: status,
-            searchQuery,
-            helpers: {
-                getPaginationUrl: (page) => {
-                    const url = new URL(req.protocol + '://' + req.get('host') + req.originalUrl);
-                    if (page) {
-                        url.searchParams.set('page', page);
-                    } else {
-                        url.searchParams.delete('page');
-                    }
-                    return url.toString();
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Admin bookings error:', error);
-        res.status(500).render('error', {
-            message: 'Error loading admin bookings dashboard'
-        });
-    }
-});
+// Check-in/Check-out Management
+router.get('/check-in', protect, authorize('admin', 'staff'), checkInOutController.getCheckIns);
+router.get('/check-out', protect, authorize('admin', 'staff'), checkInOutController.getCheckOuts);
+router.post('/check-in/:bookingId', protect, authorize('admin', 'staff'), checkInOutController.checkIn);
+router.post('/check-out/:bookingId', protect, authorize('admin', 'staff'), checkInOutController.checkOut);
 
 // Current Bookings
 router.get('/current-bookings', protect, authorize('admin'), async (req, res) => {
@@ -670,7 +616,9 @@ router.get('/rooms', protect, authorize('admin'), async (req, res) => {
         const currentBookings = await Booking.find({
             checkOut: { $gte: new Date() },
             status: { $in: ['confirmed', 'pending'] }
-        }).select('room checkIn checkOut');
+        })
+        .sort('checkIn')
+        .populate('user', 'name email');
 
         // Add availability status to rooms
         const roomsWithAvailability = rooms.map(room => {
@@ -973,7 +921,7 @@ router.post('/guests', protect, authorize('admin'), async (req, res) => {
 });
 
 // Guest routes
-router.use('/guests', guestRoutes);
+router.use('/guests', guestController.getDashboard);
 
 // Maintenance routes
 router.get('/maintenance/reports', protect, authorize('admin'), async (req, res) => {
@@ -1600,7 +1548,7 @@ router.get('/loyalty/referrals', protect, authorize('admin'), async (req, res) =
 });
 
 // Reward Management Routes
-router.get('/loyalty/rewards', protect, authorize('admin'), adminRewardsController.getRewardsStats);
+router.get('/loyalty/rewards', protect, authorize('admin'), adminRewardsController.getRewards);
 router.get('/loyalty/rewards/:id', protect, authorize('admin'), adminRewardsController.getReward);
 router.post('/loyalty/rewards', protect, authorize('admin'), adminRewardsController.createReward);
 router.put('/loyalty/rewards/:id', protect, authorize('admin'), adminRewardsController.updateReward);
@@ -1625,7 +1573,7 @@ router.get('/hotels', protect, authorize('admin'), async (req, res) => {
 });
 
 // Check-in/out Routes
-router.get('/check-in-out', protect, authorize('admin'), checkInOutController.getDashboard);
+router.get('/check-in-out', protect, authorize('admin'), checkInOutController.getCheckInDetails);
 router.post('/check-in-out/check-in/:bookingId', protect, authorize('admin'), checkInOutController.processCheckIn);
 router.post('/check-in-out/check-out/:bookingId', protect, authorize('admin'), checkInOutController.processCheckOut);
 router.get('/check-in-out/check-in/:bookingId', protect, authorize('admin'), checkInOutController.getCheckInDetails);
@@ -1636,18 +1584,19 @@ router.get('/guests', protect, authorize('admin'), guestController.getDashboard)
 router.post('/guests', protect, authorize('admin'), guestController.createGuest);
 router.get('/guests/:id', protect, authorize('admin'), guestController.getGuestProfile);
 router.get('/guests/:id/stays', protect, authorize('admin'), guestController.getGuestStays);
-router.get('/guests/:id/preferences', protect, authorize('admin'), guestController.getGuestPreferences);
+router.get('/guest-analytics', protect, authorize('admin'), guestAnalyticsController.getAnalytics);
+router.get('/guest-profiles/:id', protect, authorize('admin'), guestProfileController.getProfile);
 
 // Guest Analytics Routes
-router.get('/guests/analytics', protect, authorize('admin'), guestAnalyticsController.getAnalytics);
-router.get('/guests/analytics/export', protect, authorize('admin'), guestAnalyticsController.exportAnalytics);
-router.get('/guests/analytics/segments/:segmentId', protect, authorize('admin'), guestAnalyticsController.getSegmentDetails);
+router.get('/guest-analytics', protect, authorize('admin'), guestAnalyticsController.getAnalytics);
+router.get('/guest-analytics/export', protect, authorize('admin'), guestAnalyticsController.exportAnalytics);
+router.get('/guest-analytics/segments/:segmentId', protect, authorize('admin'), guestAnalyticsController.getSegmentDetails);
 
 // Guest Profile Routes
-router.get('/guests/:id', protect, authorize('admin'), guestController.getGuestProfile);
-router.put('/guests/:id/preferences', protect, authorize('admin'), guestController.updateGuestPreferences);
-router.get('/guests/:id/loyalty', protect, authorize('admin'), guestController.getLoyaltyDetails);
-router.get('/guests/:id/stays', protect, authorize('admin'), guestController.getStayHistory);
+router.get('/guest-profile/:id', protect, authorize('admin'), guestProfileController.getGuestProfile);
+router.put('/guest-profile/:id/preferences', protect, authorize('admin'), guestProfileController.updateGuestPreferences);
+router.get('/guest-profile/:id/loyalty', protect, authorize('admin'), guestProfileController.getGuestProfile);
+// router.get('/guest-profile/:id/stays', protect, authorize('admin'), guestProfileController.getGuestStays);
 
 // Helper functions for UI
 function getPriorityColor(priority) {
@@ -1669,5 +1618,20 @@ function getStatusColor(status) {
         default: return 'secondary';
     }
 }
+
+// Inventory Management
+router.get('/inventory', protect, authorize('admin'), inventoryController.getInventory);
+router.post('/inventory', protect, authorize('admin'), inventoryController.createItem);
+router.get('/inventory/:id', protect, authorize('admin'), inventoryController.getItem);
+router.put('/inventory/:id', protect, authorize('admin'), inventoryController.updateItem);
+router.delete('/inventory/:id', protect, authorize('admin'), inventoryController.deleteItem);
+
+// Inventory Reports Routes
+router.get('/inventory/reports', protect, authorize('admin'), inventoryController.getInventoryReports);
+router.get('/inventory/reports/export', protect, authorize('admin'), inventoryController.exportReport);
+
+// Inventory Adjustments Routes
+router.get('/inventory/adjustments', protect, authorize('admin'), inventoryController.getInventoryAdjustments);
+router.post('/inventory/adjustments', protect, authorize('admin'), inventoryController.createAdjustment);
 
 module.exports = router;

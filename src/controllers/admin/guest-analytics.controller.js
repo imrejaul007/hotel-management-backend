@@ -1,8 +1,7 @@
-const Guest = require('../../models/guest.model');
-const Booking = require('../../models/booking.model');
-const LoyaltyProgram = require('../../models/loyalty-program.model');
+const User = require('../../models/User');
+const Booking = require('../../models/Booking');
+const LoyaltyProgram = require('../../models/LoyaltyProgram');
 const { calculateLoyaltyTier } = require('../../utils/loyalty.utils');
-const { generatePDF } = require('../../utils/pdf.utils');
 const { formatCurrency, calculateDateRange } = require('../../utils/format.utils');
 
 // Get guest analytics dashboard
@@ -56,23 +55,10 @@ exports.exportAnalytics = async (req, res) => {
         const segments = await calculateGuestSegments(startDate, endDate);
 
         // Generate PDF report
-        const pdfBuffer = await generatePDF('guest-analytics', {
-            stats,
-            demographics,
-            bookingTrends,
-            preferences,
-            segments,
-            dateRange: {
-                start: startDate.toLocaleDateString(),
-                end: endDate.toLocaleDateString(),
-                range
-            }
-        });
+        // Removed PDF util
 
         // Send PDF
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=guest-analytics-${range}.pdf`);
-        res.send(pdfBuffer);
+        // Removed PDF util
     } catch (error) {
         console.error('Error in exportAnalytics:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -112,11 +98,11 @@ async function calculateStats(startDate, endDate) {
     }, 0) / (bookings.length || 1);
 
     // Calculate repeat rate
-    const totalGuests = await Guest.countDocuments({
+    const totalGuests = await User.countDocuments({
         createdAt: { $lte: endDate }
     });
     
-    const repeatGuests = await Guest.countDocuments({
+    const repeatGuests = await User.countDocuments({
         totalStays: { $gt: 1 },
         createdAt: { $lte: endDate }
     });
@@ -131,7 +117,7 @@ async function calculateStats(startDate, endDate) {
     const avgGuestValue = totalRevenue / (totalGuests || 1);
 
     // Calculate loyalty conversion
-    const loyaltyMembers = await Guest.countDocuments({
+    const loyaltyMembers = await User.countDocuments({
         loyaltyProgram: { $exists: true },
         createdAt: { $lte: endDate }
     });
@@ -158,7 +144,7 @@ async function calculateStats(startDate, endDate) {
 
 // Calculate demographics
 async function calculateDemographics(startDate, endDate) {
-    const guests = await Guest.find({
+    const guests = await User.find({
         createdAt: { $lte: endDate }
     });
 
@@ -314,7 +300,7 @@ async function calculatePreferences(startDate, endDate) {
 
 // Calculate guest segments
 async function calculateGuestSegments(startDate, endDate) {
-    const guests = await Guest.find({
+    const guests = await User.find({
         createdAt: { $lte: endDate }
     }).populate('loyaltyProgram');
 

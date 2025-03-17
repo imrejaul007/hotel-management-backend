@@ -1,0 +1,433 @@
+{{> admin/header title="Guest Analytics"}}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Guest Analytics</h1>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="exportReport('pdf')">
+                <i class="fas fa-file-pdf"></i> Export PDF
+            </button>
+            <button class="btn btn-success" onclick="exportReport('excel')">
+                <i class="fas fa-file-excel"></i> Export Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form id="filterForm" class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Date Range</label>
+                    <select class="form-select" id="dateRange" onchange="updateDateInputs()">
+                        <option value="last30days">Last 30 Days</option>
+                        <option value="last90days">Last 90 Days</option>
+                        <option value="last6months">Last 6 Months</option>
+                        <option value="lastYear">Last Year</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3 date-inputs" style="display: none;">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="startDate">
+                </div>
+                <div class="col-md-3 mb-3 date-inputs" style="display: none;">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Guest Type</label>
+                    <select class="form-select" id="guestType">
+                        <option value="">All Types</option>
+                        <option value="leisure">Leisure</option>
+                        <option value="business">Business</option>
+                        <option value="group">Group</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row">
+        <!-- Total Guests -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Guests</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.totalGuests}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Length of Stay -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Average Stay (Nights)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.averageStay}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bed fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Return Rate -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Return Rate</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.returnRate}}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-redo fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Spending -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Average Spending</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{stats.averageSpending}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guest Demographics -->
+    <div class="row">
+        <!-- Age Distribution -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Age Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie">
+                        <canvas id="ageDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guest Type Distribution -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Guest Type Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie">
+                        <canvas id="guestTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Trends -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Booking Trends</h6>
+        </div>
+        <div class="card-body">
+            <div class="chart-area">
+                <canvas id="bookingTrendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guest Origin Map -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Guest Origin</h6>
+        </div>
+        <div class="card-body">
+            <div id="guestOriginMap" style="height: 400px;"></div>
+        </div>
+    </div>
+
+    <!-- Top Guests Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Top Guests</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="topGuestsTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Guest Name</th>
+                            <th>Total Stays</th>
+                            <th>Total Nights</th>
+                            <th>Total Spending</th>
+                            <th>Last Stay</th>
+                            <th>Loyalty Tier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each topGuests}}
+                        <tr>
+                            <td>{{this.name}}</td>
+                            <td>{{this.totalStays}}</td>
+                            <td>{{this.totalNights}}</td>
+                            <td>${{this.totalSpending}}</td>
+                            <td>{{this.lastStay}}</td>
+                            <td>
+                                <span class="badge bg-{{this.loyaltyColor}}">{{this.loyaltyTier}}</span>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize DataTable
+$(document).ready(function() {
+    $('#topGuestsTable').DataTable();
+    initializeCharts();
+    initializeMap();
+});
+
+// Handle date range selection
+function updateDateInputs() {
+    const range = $('#dateRange').val();
+    const dateInputs = $('.date-inputs');
+    
+    if (range === 'custom') {
+        dateInputs.show();
+    } else {
+        dateInputs.hide();
+    }
+}
+
+// Handle form submission
+$('#filterForm').on('submit', async function(e) {
+    e.preventDefault();
+    
+    const filters = {
+        dateRange: $('#dateRange').val(),
+        startDate: $('#startDate').val(),
+        endDate: $('#endDate').val(),
+        guestType: $('#guestType').val()
+    };
+
+    try {
+        const response = await fetch('/admin/reports/guest/filter', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch filtered data');
+
+        const data = await response.json();
+        updateCharts(data);
+        updateStats(data);
+        updateMap(data);
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to fetch filtered data: ' + error.message
+        });
+    }
+});
+
+// Initialize charts
+function initializeCharts() {
+    // Age Distribution Chart
+    const ageCtx = document.getElementById('ageDistributionChart');
+    new Chart(ageCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{{json ageDistribution.labels}}},
+            datasets: [{
+                data: {{{json ageDistribution.data}}},
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)"
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Guest Type Chart
+    const typeCtx = document.getElementById('guestTypeChart');
+    new Chart(typeCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{{json guestType.labels}}},
+            datasets: [{
+                data: {{{json guestType.data}}},
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)"
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Booking Trends Chart
+    const trendsCtx = document.getElementById('bookingTrendsChart');
+    new Chart(trendsCtx, {
+        type: 'line',
+        data: {
+            labels: {{{json bookingTrends.labels}}},
+            datasets: [{
+                label: 'Number of Bookings',
+                data: {{{json bookingTrends.data}}},
+                lineTension: 0.3,
+                backgroundColor: "rgba(78, 115, 223, 0.05)",
+                borderColor: "rgba(78, 115, 223, 1)",
+                pointRadius: 3,
+                pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                pointBorderColor: "rgba(78, 115, 223, 1)",
+                pointHoverRadius: 3,
+                pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                pointHitRadius: 10,
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Initialize map
+function initializeMap() {
+    const map = L.map('guestOriginMap').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add markers for guest origins
+    const guestOrigins = {{{json guestOrigins}}};
+    guestOrigins.forEach(origin => {
+        L.marker([origin.lat, origin.lng])
+            .bindPopup(`<b>${origin.country}</b><br>Guests: ${origin.count}`)
+            .addTo(map);
+    });
+}
+
+// Update charts with new data
+function updateCharts(data) {
+    // Implementation depends on the structure of your filtered data
+    // You'll need to update each chart with the new data
+}
+
+// Update statistics cards
+function updateStats(data) {
+    // Implementation depends on the structure of your filtered data
+    // You'll need to update the statistics cards with the new data
+}
+
+// Update map
+function updateMap(data) {
+    // Implementation depends on the structure of your filtered data
+    // You'll need to update the map markers with the new data
+}
+
+// Export report
+async function exportReport(format) {
+    const filters = {
+        dateRange: $('#dateRange').val(),
+        startDate: $('#startDate').val(),
+        endDate: $('#endDate').val(),
+        guestType: $('#guestType').val(),
+        format
+    };
+
+    try {
+        const response = await fetch('/admin/reports/guest/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) throw new Error('Failed to export report');
+
+        // Handle file download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `guest-analytics.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to export report: ' + error.message
+        });
+    }
+}
+</script>
+
+{{> admin/footer}}

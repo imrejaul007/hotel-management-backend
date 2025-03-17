@@ -1,0 +1,410 @@
+{{> admin/header title="Occupancy Reports"}}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Occupancy Reports</h1>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="exportReport('pdf')">
+                <i class="fas fa-file-pdf"></i> Export PDF
+            </button>
+            <button class="btn btn-success" onclick="exportReport('excel')">
+                <i class="fas fa-file-excel"></i> Export Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form id="filterForm" class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Date Range</label>
+                    <select class="form-select" id="dateRange" onchange="updateDateInputs()">
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="last7days">Last 7 Days</option>
+                        <option value="last30days">Last 30 Days</option>
+                        <option value="thisMonth">This Month</option>
+                        <option value="lastMonth">Last Month</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3 date-inputs" style="display: none;">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="startDate">
+                </div>
+                <div class="col-md-3 mb-3 date-inputs" style="display: none;">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Room Type</label>
+                    <select class="form-select" id="roomType">
+                        <option value="">All Types</option>
+                        {{#each roomTypes}}
+                        <option value="{{this._id}}">{{this.name}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row">
+        <!-- Average Occupancy Rate -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Average Occupancy Rate</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.averageOccupancy}}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bed fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Peak Occupancy -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Peak Occupancy</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.peakOccupancy}}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lowest Occupancy -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Lowest Occupancy</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.lowestOccupancy}}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-area fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Impact -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Revenue Impact</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{stats.revenueImpact}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Occupancy Trend Chart -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Occupancy Trend</h6>
+        </div>
+        <div class="card-body">
+            <div class="chart-area">
+                <canvas id="occupancyTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Type Distribution -->
+    <div class="row">
+        <!-- Room Type Occupancy -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Room Type Occupancy</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar">
+                        <canvas id="roomTypeOccupancyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Status Distribution -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Room Status Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie">
+                        <canvas id="roomStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Statistics Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Detailed Statistics</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="statsTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Room Type</th>
+                            <th>Total Rooms</th>
+                            <th>Occupied Rooms</th>
+                            <th>Occupancy Rate</th>
+                            <th>Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each detailedStats}}
+                        <tr>
+                            <td>{{this.date}}</td>
+                            <td>{{this.roomType}}</td>
+                            <td>{{this.totalRooms}}</td>
+                            <td>{{this.occupiedRooms}}</td>
+                            <td>{{this.occupancyRate}}%</td>
+                            <td>${{this.revenue}}</td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize DataTable
+$(document).ready(function() {
+    $('#statsTable').DataTable();
+    initializeCharts();
+});
+
+// Handle date range selection
+function updateDateInputs() {
+    const range = $('#dateRange').val();
+    const dateInputs = $('.date-inputs');
+    
+    if (range === 'custom') {
+        dateInputs.show();
+    } else {
+        dateInputs.hide();
+    }
+}
+
+// Handle form submission
+$('#filterForm').on('submit', async function(e) {
+    e.preventDefault();
+    
+    const filters = {
+        dateRange: $('#dateRange').val(),
+        startDate: $('#startDate').val(),
+        endDate: $('#endDate').val(),
+        roomType: $('#roomType').val()
+    };
+
+    try {
+        const response = await fetch('/admin/reports/occupancy/filter', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch filtered data');
+
+        const data = await response.json();
+        updateCharts(data);
+        updateStats(data);
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to fetch filtered data: ' + error.message
+        });
+    }
+});
+
+// Initialize charts
+function initializeCharts() {
+    // Occupancy Trend Chart
+    const trendCtx = document.getElementById('occupancyTrendChart');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: {{{json occupancyTrend.labels}}},
+            datasets: [{
+                label: 'Occupancy Rate',
+                data: {{{json occupancyTrend.data}}},
+                lineTension: 0.3,
+                backgroundColor: "rgba(78, 115, 223, 0.05)",
+                borderColor: "rgba(78, 115, 223, 1)",
+                pointRadius: 3,
+                pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                pointBorderColor: "rgba(78, 115, 223, 1)",
+                pointHoverRadius: 3,
+                pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                pointHitRadius: 10,
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Room Type Occupancy Chart
+    const roomTypeCtx = document.getElementById('roomTypeOccupancyChart');
+    new Chart(roomTypeCtx, {
+        type: 'bar',
+        data: {
+            labels: {{{json roomTypeOccupancy.labels}}},
+            datasets: [{
+                label: 'Occupancy Rate',
+                data: {{{json roomTypeOccupancy.data}}},
+                backgroundColor: "rgba(78, 115, 223, 0.8)"
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Room Status Chart
+    const statusCtx = document.getElementById('roomStatusChart');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{{json roomStatus.labels}}},
+            datasets: [{
+                data: {{{json roomStatus.data}}},
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)"
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Update charts with new data
+function updateCharts(data) {
+    // Implementation depends on the structure of your filtered data
+    // You'll need to update each chart with the new data
+}
+
+// Update statistics cards
+function updateStats(data) {
+    // Implementation depends on the structure of your filtered data
+    // You'll need to update the statistics cards with the new data
+}
+
+// Export report
+async function exportReport(format) {
+    const filters = {
+        dateRange: $('#dateRange').val(),
+        startDate: $('#startDate').val(),
+        endDate: $('#endDate').val(),
+        roomType: $('#roomType').val(),
+        format
+    };
+
+    try {
+        const response = await fetch('/admin/reports/occupancy/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) throw new Error('Failed to export report');
+
+        // Handle file download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `occupancy-report.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to export report: ' + error.message
+        });
+    }
+}
+</script>
+
+{{> admin/footer}}

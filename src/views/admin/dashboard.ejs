@@ -1,0 +1,376 @@
+<%- include('../partials/header') %>
+<%- include('../partials/admin-nav') %>
+
+<div class="min-h-screen bg-gray-100">
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+                <!-- Total Bookings -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Bookings</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= stats.totalBookings %></div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Revenue -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">$<%= (stats.totalRevenue).toLocaleString() %></div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Guests -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Guests</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= stats.totalGuests %></div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Hotels -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Active Hotels</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= stats.activeHotels %></div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loyalty Members -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Loyalty Members</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= stats.loyaltyMembers %></div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="mt-8">
+                <h2 class="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h2>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <a href="/admin/bookings/new" class="bg-white overflow-hidden shadow rounded-lg p-6 hover:bg-gray-50">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-indigo-500 rounded-md p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">New Booking</h3>
+                                <p class="text-sm text-gray-500">Create a new booking</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="/admin/guests/new" class="bg-white overflow-hidden shadow rounded-lg p-6 hover:bg-gray-50">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">Add Guest</h3>
+                                <p class="text-sm text-gray-500">Register a new guest</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="/admin/inventory" class="bg-white overflow-hidden shadow rounded-lg p-6 hover:bg-gray-50">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">Inventory</h3>
+                                <p class="text-sm text-gray-500">Manage inventory</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="/admin/maintenance" class="bg-white overflow-hidden shadow rounded-lg p-6 hover:bg-gray-50">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">Maintenance</h3>
+                                <p class="text-sm text-gray-500">View maintenance requests</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+                <!-- Booking Trends -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Booking Trends</h3>
+                    <canvas id="bookingTrendsChart" class="w-full" height="300"></canvas>
+                </div>
+
+                <!-- Revenue Trends -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Revenue Trends</h3>
+                    <canvas id="revenueTrendsChart" class="w-full" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+                <!-- Recent Bookings -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Bookings</h3>
+                        <div class="mt-4">
+                            <div class="flow-root">
+                                <ul class="-my-5 divide-y divide-gray-200">
+                                    <% recentBookings.forEach(booking => { %>
+                                    <li class="py-4">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 truncate">
+                                                    <%= booking.user.name %>
+                                                </p>
+                                                <p class="text-sm text-gray-500 truncate">
+                                                    <%= booking.hotel.name %>
+                                                </p>
+                                            </div>
+                                            <div class="inline-flex items-center text-sm font-semibold text-indigo-600">
+                                                <a href="/admin/bookings/<%= booking._id %>">View details</a>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <% }); %>
+                                </ul>
+                            </div>
+                            <div class="mt-6">
+                                <a href="/admin/bookings" class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    View all
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Hotels -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Top Performing Hotels</h3>
+                        <div class="mt-4">
+                            <div class="flow-root">
+                                <ul class="-my-5 divide-y divide-gray-200">
+                                    <% topHotels.forEach(hotel => { %>
+                                    <li class="py-4">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 truncate">
+                                                    <%= hotel.name %>
+                                                </p>
+                                                <p class="text-sm text-gray-500">
+                                                    <%= hotel.totalBookings %> bookings
+                                                </p>
+                                            </div>
+                                            <div class="text-sm font-medium text-green-600">
+                                                $<%= hotel.revenue.toLocaleString() %>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <% }); %>
+                                </ul>
+                            </div>
+                            <div class="mt-6">
+                                <a href="/admin/hotels" class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    View all hotels
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loyalty Program Overview -->
+            <div class="mt-8">
+                <div class="bg-white shadow rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Loyalty Program Overview</h3>
+                        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                            <% ['Bronze', 'Silver', 'Gold', 'Platinum'].forEach(tier => { %>
+                            <div class="bg-gray-50 overflow-hidden shadow rounded-lg">
+                                <div class="p-5">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="h-10 w-10 rounded-full flex items-center justify-center
+                                                <%= tier === 'Bronze' ? 'bg-yellow-700' :
+                                                    tier === 'Silver' ? 'bg-gray-400' :
+                                                    tier === 'Gold' ? 'bg-yellow-500' :
+                                                    'bg-gray-800' %>">
+                                                <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="ml-5 w-0 flex-1">
+                                            <dl>
+                                                <dt class="text-sm font-medium text-gray-500 truncate"><%= tier %> Members</dt>
+                                                <dd class="flex items-baseline">
+                                                    <div class="text-2xl font-semibold text-gray-900">
+                                                        <%= loyaltyStats[tier]?.count || 0 %>
+                                                    </div>
+                                                    <div class="ml-2 flex items-baseline text-sm font-semibold text-green-600">
+                                                        <%= loyaltyStats[tier]?.totalPoints?.toLocaleString() || 0 %> points
+                                                    </div>
+                                                </dd>
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }); %>
+                        </div>
+                        <div class="mt-6">
+                            <a href="/admin/loyalty" class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Manage Loyalty Program
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Booking Trends Chart
+    const bookingCtx = document.getElementById('bookingTrendsChart').getContext('2d');
+    new Chart(bookingCtx, {
+        type: 'line',
+        data: {
+            labels: <%- JSON.stringify(bookingTrends.labels) %>,
+            datasets: [{
+                label: 'Bookings',
+                data: <%- JSON.stringify(bookingTrends.bookings) %>,
+                borderColor: 'rgb(79, 70, 229)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
+    // Revenue Trends Chart
+    const revenueCtx = document.getElementById('revenueTrendsChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: <%- JSON.stringify(bookingTrends.labels) %>,
+            datasets: [{
+                label: 'Revenue ($)',
+                data: <%- JSON.stringify(bookingTrends.revenue) %>,
+                borderColor: 'rgb(34, 197, 94)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<%- include('../partials/footer') %>

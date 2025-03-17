@@ -3,8 +3,8 @@ const Reward = require('../models/Reward');
 const { sendEmail } = require('../utils/email');
 const json2csv = require('json2csv').parse;
 
-// Get rewards dashboard statistics
-exports.getRewardsStats = async (req, res) => {
+// Get rewards dashboard
+exports.getRewards = async (req, res) => {
     try {
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
@@ -196,7 +196,7 @@ exports.getRewardsStats = async (req, res) => {
             redemptions
         });
     } catch (error) {
-        console.error('Error getting rewards stats:', error);
+        console.error('Error getting rewards:', error);
         res.status(500).render('error', {
             message: 'Error loading rewards dashboard'
         });
@@ -230,12 +230,30 @@ exports.getReward = async (req, res) => {
 // Create new reward
 exports.createReward = async (req, res) => {
     try {
-        const reward = new Reward({
-            ...req.body,
-            createdBy: req.user._id
-        });
+        const {
+            name,
+            description,
+            category,
+            pointsRequired,
+            isActive,
+            limitedQuantity,
+            quantity,
+            expiryDate,
+            termsAndConditions
+        } = req.body;
 
-        await reward.save();
+        const reward = await Reward.create({
+            name,
+            description,
+            category,
+            pointsRequired: parseInt(pointsRequired),
+            isActive: isActive === 'true',
+            limitedQuantity: limitedQuantity === 'true',
+            quantity: limitedQuantity === 'true' ? parseInt(quantity) : null,
+            remainingQuantity: limitedQuantity === 'true' ? parseInt(quantity) : null,
+            expiryDate: expiryDate ? new Date(expiryDate) : null,
+            termsAndConditions
+        });
 
         // Notify loyalty members about new reward
         const members = await LoyaltyProgram.find()
@@ -265,7 +283,8 @@ exports.createReward = async (req, res) => {
 
         res.json({
             success: true,
-            message: 'Reward created successfully'
+            message: 'Reward created successfully',
+            reward
         });
     } catch (error) {
         console.error('Error creating reward:', error);
@@ -279,7 +298,36 @@ exports.createReward = async (req, res) => {
 // Update reward
 exports.updateReward = async (req, res) => {
     try {
-        const reward = await Reward.findById(req.params.id);
+        const { id } = req.params;
+        const {
+            name,
+            description,
+            category,
+            pointsRequired,
+            isActive,
+            limitedQuantity,
+            quantity,
+            expiryDate,
+            termsAndConditions
+        } = req.body;
+
+        const reward = await Reward.findByIdAndUpdate(
+            id,
+            {
+                name,
+                description,
+                category,
+                pointsRequired: parseInt(pointsRequired),
+                isActive: isActive === 'true',
+                limitedQuantity: limitedQuantity === 'true',
+                quantity: limitedQuantity === 'true' ? parseInt(quantity) : null,
+                remainingQuantity: limitedQuantity === 'true' ? parseInt(quantity) : null,
+                expiryDate: expiryDate ? new Date(expiryDate) : null,
+                termsAndConditions
+            },
+            { new: true }
+        );
+
         if (!reward) {
             return res.status(404).json({
                 success: false,
@@ -287,19 +335,42 @@ exports.updateReward = async (req, res) => {
             });
         }
 
-        // Update reward fields
-        Object.assign(reward, req.body);
-        await reward.save();
-
         res.json({
             success: true,
-            message: 'Reward updated successfully'
+            message: 'Reward updated successfully',
+            reward
         });
     } catch (error) {
         console.error('Error updating reward:', error);
         res.status(500).json({
             success: false,
             message: 'Error updating reward'
+        });
+    }
+};
+
+// Delete reward
+exports.deleteReward = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const reward = await Reward.findByIdAndDelete(id);
+
+        if (!reward) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reward not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Reward deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting reward:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting reward'
         });
     }
 };

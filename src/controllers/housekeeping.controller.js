@@ -1,6 +1,6 @@
-const HousekeepingTask = require('../models/housekeeping-task.model');
-const LoyaltyProgram = require('../models/loyalty-program.model');
-const User = require('../models/user.model');
+const HousekeepingTask = require('../models/HousekeepingTask');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
+const User = require('../models/User');
 const { NotFoundError, ValidationError } = require('../utils/errors');
 const { sendNotification } = require('../utils/notifications');
 const { validateHousekeepingTask } = require('../validators/housekeeping.validator');

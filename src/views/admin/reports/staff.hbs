@@ -1,0 +1,505 @@
+{{> admin/header title="Staff Performance Reports"}}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Staff Performance Reports</h1>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="exportReport('pdf')">
+                <i class="fas fa-file-pdf"></i> Export PDF
+            </button>
+            <button class="btn btn-success" onclick="exportReport('excel')">
+                <i class="fas fa-file-excel"></i> Export Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form id="filterForm" class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Date Range</label>
+                    <select class="form-select" id="dateRange" onchange="updateDateInputs()">
+                        <option value="thisWeek">This Week</option>
+                        <option value="lastWeek">Last Week</option>
+                        <option value="thisMonth">This Month</option>
+                        <option value="lastMonth">Last Month</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3 date-inputs" style="display: none;">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="startDate">
+                </div>
+                <div class="col-md-3 mb-3 date-inputs" style="display: none;">
+                    <label class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Department</label>
+                    <select class="form-select" id="department">
+                        <option value="">All Departments</option>
+                        <option value="housekeeping">Housekeeping</option>
+                        <option value="frontdesk">Front Desk</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="restaurant">Restaurant</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="row">
+        <!-- Tasks Completed -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Tasks Completed</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.tasksCompleted}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Response Time -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Avg Response Time</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.avgResponseTime}} min</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guest Satisfaction -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Guest Satisfaction</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.guestSatisfaction}}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-smile fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Staff Attendance -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Staff Attendance</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.attendance}}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="row">
+        <!-- Task Completion Trend -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Task Completion Trend</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="taskCompletionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Performance -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Department Performance</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie">
+                        <canvas id="departmentPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Response Time Analysis -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Response Time Analysis</h6>
+        </div>
+        <div class="card-body">
+            <div class="chart-bar">
+                <canvas id="responseTimeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performers Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Top Performers</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="topPerformersTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Staff Name</th>
+                            <th>Department</th>
+                            <th>Tasks Completed</th>
+                            <th>Avg Response Time</th>
+                            <th>Guest Rating</th>
+                            <th>Attendance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each topPerformers}}
+                        <tr>
+                            <td>{{this.name}}</td>
+                            <td>{{this.department}}</td>
+                            <td>{{this.tasksCompleted}}</td>
+                            <td>{{this.avgResponseTime}} min</td>
+                            <td>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: {{this.guestRating}}%">
+                                        {{this.guestRating}}%
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{this.attendance}}%</td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Training and Development -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Training and Development</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="trainingTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Staff Name</th>
+                            <th>Department</th>
+                            <th>Training Completed</th>
+                            <th>Next Training</th>
+                            <th>Skills to Improve</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each trainingData}}
+                        <tr>
+                            <td>{{this.name}}</td>
+                            <td>{{this.department}}</td>
+                            <td>
+                                {{#each this.completedTraining}}
+                                <span class="badge bg-success">{{this}}</span>
+                                {{/each}}
+                            </td>
+                            <td>{{this.nextTraining}}</td>
+                            <td>
+                                {{#each this.skillsToImprove}}
+                                <span class="badge bg-warning">{{this}}</span>
+                                {{/each}}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="scheduleTraining('{{this._id}}')">
+                                    Schedule Training
+                                </button>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize DataTables
+$(document).ready(function() {
+    $('#topPerformersTable').DataTable();
+    $('#trainingTable').DataTable();
+    initializeCharts();
+});
+
+// Handle date range selection
+function updateDateInputs() {
+    const range = $('#dateRange').val();
+    const dateInputs = $('.date-inputs');
+    
+    if (range === 'custom') {
+        dateInputs.show();
+    } else {
+        dateInputs.hide();
+    }
+}
+
+// Handle form submission
+$('#filterForm').on('submit', async function(e) {
+    e.preventDefault();
+    
+    const filters = {
+        dateRange: $('#dateRange').val(),
+        startDate: $('#startDate').val(),
+        endDate: $('#endDate').val(),
+        department: $('#department').val()
+    };
+
+    try {
+        const response = await fetch('/admin/reports/staff/filter', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch filtered data');
+
+        const data = await response.json();
+        updateCharts(data);
+        updateStats(data);
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to fetch filtered data: ' + error.message
+        });
+    }
+});
+
+// Initialize charts
+function initializeCharts() {
+    // Task Completion Trend Chart
+    const taskCtx = document.getElementById('taskCompletionChart');
+    new Chart(taskCtx, {
+        type: 'line',
+        data: {
+            labels: {{{json taskCompletion.labels}}},
+            datasets: [{
+                label: 'Tasks Completed',
+                data: {{{json taskCompletion.data}}},
+                lineTension: 0.3,
+                backgroundColor: "rgba(78, 115, 223, 0.05)",
+                borderColor: "rgba(78, 115, 223, 1)",
+                pointRadius: 3,
+                pointBackgroundColor: "rgba(78, 115, 223, 1)",
+                pointBorderColor: "rgba(78, 115, 223, 1)",
+                pointHoverRadius: 3,
+                pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+                pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+                pointHitRadius: 10,
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Department Performance Chart
+    const deptCtx = document.getElementById('departmentPerformanceChart');
+    new Chart(deptCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{{json departmentPerformance.labels}}},
+            datasets: [{
+                data: {{{json departmentPerformance.data}}},
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)"
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Response Time Chart
+    const responseCtx = document.getElementById('responseTimeChart');
+    new Chart(responseCtx, {
+        type: 'bar',
+        data: {
+            labels: {{{json responseTime.labels}}},
+            datasets: [{
+                label: 'Average Response Time (minutes)',
+                data: {{{json responseTime.data}}},
+                backgroundColor: "rgba(78, 115, 223, 0.8)"
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Update charts with new data
+function updateCharts(data) {
+    // Implementation depends on the structure of your filtered data
+    // You'll need to update each chart with the new data
+}
+
+// Update statistics cards
+function updateStats(data) {
+    // Implementation depends on the structure of your filtered data
+    // You'll need to update the statistics cards with the new data
+}
+
+// Schedule training
+async function scheduleTraining(staffId) {
+    try {
+        const { value: trainingDetails } = await Swal.fire({
+            title: 'Schedule Training',
+            html:
+                '<div class="mb-3">' +
+                '<label class="form-label">Training Type</label>' +
+                '<select class="form-select" id="trainingType">' +
+                '<option value="customer_service">Customer Service</option>' +
+                '<option value="technical">Technical Skills</option>' +
+                '<option value="safety">Safety & Security</option>' +
+                '<option value="leadership">Leadership</option>' +
+                '</select>' +
+                '</div>' +
+                '<div class="mb-3">' +
+                '<label class="form-label">Training Date</label>' +
+                '<input type="date" class="form-control" id="trainingDate">' +
+                '</div>',
+            focusConfirm: false,
+            preConfirm: () => {
+                return {
+                    type: document.getElementById('trainingType').value,
+                    date: document.getElementById('trainingDate').value
+                }
+            }
+        });
+
+        if (trainingDetails) {
+            const response = await fetch(`/admin/staff/${staffId}/schedule-training`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(trainingDetails)
+            });
+
+            if (!response.ok) throw new Error('Failed to schedule training');
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Training Scheduled',
+                text: 'The training has been scheduled successfully.'
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to schedule training: ' + error.message
+        });
+    }
+}
+
+// Export report
+async function exportReport(format) {
+    const filters = {
+        dateRange: $('#dateRange').val(),
+        startDate: $('#startDate').val(),
+        endDate: $('#endDate').val(),
+        department: $('#department').val(),
+        format
+    };
+
+    try {
+        const response = await fetch('/admin/reports/staff/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(filters)
+        });
+
+        if (!response.ok) throw new Error('Failed to export report');
+
+        // Handle file download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `staff-performance.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to export report: ' + error.message
+        });
+    }
+}
+</script>
+
+{{> admin/footer}}

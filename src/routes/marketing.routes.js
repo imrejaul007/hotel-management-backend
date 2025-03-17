@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middlewares/auth.middleware');
-const Promotion = require('../models/promotion.model');
-const EmailCampaign = require('../models/email-campaign.model');
-const User = require('../models/user.model');
+const Promotion = require('../models/Promotion');
+const EmailCampaign = require('../models/EmailCampaign');
+const User = require('../models/User');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
+const Referral = require('../models/Referral');
 const emailService = require('../services/email.service');
 
 // Get all promotions

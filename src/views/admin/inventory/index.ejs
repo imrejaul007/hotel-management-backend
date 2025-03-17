@@ -1,0 +1,425 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/admin-nav') %>
+
+<div class="min-h-screen bg-gray-100">
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                        Inventory Management
+                    </h2>
+                </div>
+                <div class="mt-4 flex md:mt-0 md:ml-4 space-x-2">
+                    <button type="button" onclick="showAddItemModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Add Item
+                    </button>
+                    <button type="button" onclick="showCreateOrderModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Create Order
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Items</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= stats.totalItems %></div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Low Stock Items</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= stats.lowStockItems %></div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Pending Orders</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= stats.pendingOrders %></div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Value</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">$<%= stats.totalValue.toLocaleString() %></div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="mt-8 bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                            <select id="category" name="category" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="">All Categories</option>
+                                <% categories.forEach(category => { %>
+                                <option value="<%= category._id %>"><%= category.name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="supplier" class="block text-sm font-medium text-gray-700">Supplier</label>
+                            <select id="supplier" name="supplier" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="">All Suppliers</option>
+                                <% suppliers.forEach(supplier => { %>
+                                <option value="<%= supplier._id %>"><%= supplier.name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="stock" class="block text-sm font-medium text-gray-700">Stock Level</label>
+                            <select id="stock" name="stock" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="">All Levels</option>
+                                <option value="low">Low Stock</option>
+                                <option value="normal">Normal</option>
+                                <option value="high">High Stock</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="sort" class="block text-sm font-medium text-gray-700">Sort By</label>
+                            <select id="sort" name="sort" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="name">Name</option>
+                                <option value="stock_asc">Stock: Low to High</option>
+                                <option value="stock_desc">Stock: High to Low</option>
+                                <option value="value">Value</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Table -->
+            <div class="mt-8 flex flex-col">
+                <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+                        <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-300">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Item</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Category</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Stock</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Unit Price</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Value</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Last Updated</th>
+                                        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                                            <span class="sr-only">Actions</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 bg-white">
+                                    <% items.forEach(item => { %>
+                                    <tr>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                                            <div class="flex items-center">
+                                                <div class="h-10 w-10 flex-shrink-0">
+                                                    <img class="h-10 w-10 rounded-full" src="<%= item.image || '/images/default-item.png' %>" alt="">
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="font-medium text-gray-900"><%= item.name %></div>
+                                                    <div class="text-gray-500"><%= item.sku %></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <%= item.category.name %>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 <%= item.stock <= item.minStock ? 'bg-red-100 text-red-800' : item.stock <= item.minStock * 2 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800' %>">
+                                                <%= item.stock %> <%= item.unit %>
+                                            </span>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            $<%= item.unitPrice.toFixed(2) %>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            $<%= (item.stock * item.unitPrice).toFixed(2) %>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <%= moment(item.updatedAt).format('MMM D, YYYY') %>
+                                        </td>
+                                        <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                                            <button onclick="editItem('<%= item._id %>')" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                                            <button onclick="showStockModal('<%= item._id %>')" class="text-green-600 hover:text-green-900">Stock</button>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Item Modal -->
+<div id="itemModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <form id="itemForm" method="POST">
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Add New Item</h3>
+                        <p class="mt-1 text-sm text-gray-500">Enter the item details below.</p>
+                    </div>
+
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                        <input type="text" name="name" id="name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    </div>
+
+                    <div>
+                        <label for="sku" class="block text-sm font-medium text-gray-700">SKU</label>
+                        <input type="text" name="sku" id="sku" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    </div>
+
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                        <select name="category" id="category" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" required>
+                            <% categories.forEach(category => { %>
+                            <option value="<%= category._id %>"><%= category.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="stock" class="block text-sm font-medium text-gray-700">Current Stock</label>
+                            <input type="number" name="stock" id="stock" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        </div>
+                        <div>
+                            <label for="minStock" class="block text-sm font-medium text-gray-700">Minimum Stock</label>
+                            <input type="number" name="minStock" id="minStock" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="unitPrice" class="block text-sm font-medium text-gray-700">Unit Price</label>
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">$</span>
+                                </div>
+                                <input type="number" step="0.01" name="unitPrice" id="unitPrice" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="unit" class="block text-sm font-medium text-gray-700">Unit</label>
+                            <input type="text" name="unit" id="unit" placeholder="e.g., pcs, kg, l" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="supplier" class="block text-sm font-medium text-gray-700">Supplier</label>
+                        <select name="supplier" id="supplier" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" required>
+                            <% suppliers.forEach(supplier => { %>
+                            <option value="<%= supplier._id %>"><%= supplier.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="image" class="block text-sm font-medium text-gray-700">Image URL</label>
+                        <input type="url" name="image" id="image" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm">
+                        Save
+                    </button>
+                    <button type="button" onclick="hideItemModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Adjustment Modal -->
+<div id="stockModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <form id="stockForm" method="POST">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Adjust Stock Level</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">
+                            Current stock: <span id="currentStock">0</span> <span id="stockUnit">units</span>
+                        </p>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="adjustmentType" class="block text-sm font-medium text-gray-700">Adjustment Type</label>
+                        <select name="adjustmentType" id="adjustmentType" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="add">Add Stock</option>
+                            <option value="remove">Remove Stock</option>
+                        </select>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+                        <input type="number" name="quantity" id="quantity" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="reason" class="block text-sm font-medium text-gray-700">Reason</label>
+                        <textarea name="reason" id="reason" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm">
+                        Confirm
+                    </button>
+                    <button type="button" onclick="hideStockModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Modal Functions
+    function showAddItemModal() {
+        document.getElementById('modal-title').textContent = 'Add New Item';
+        document.getElementById('itemForm').reset();
+        document.getElementById('itemForm').action = '/admin/inventory';
+        document.getElementById('itemModal').classList.remove('hidden');
+    }
+
+    function hideItemModal() {
+        document.getElementById('itemModal').classList.add('hidden');
+    }
+
+    function editItem(itemId) {
+        fetch(`/admin/inventory/${itemId}`)
+            .then(response => response.json())
+            .then(item => {
+                document.getElementById('modal-title').textContent = 'Edit Item';
+                document.getElementById('name').value = item.name;
+                document.getElementById('sku').value = item.sku;
+                document.getElementById('category').value = item.category;
+                document.getElementById('stock').value = item.stock;
+                document.getElementById('minStock').value = item.minStock;
+                document.getElementById('unitPrice').value = item.unitPrice;
+                document.getElementById('unit').value = item.unit;
+                document.getElementById('supplier').value = item.supplier;
+                document.getElementById('image').value = item.image;
+                document.getElementById('itemForm').action = `/admin/inventory/${itemId}`;
+                document.getElementById('itemModal').classList.remove('hidden');
+            });
+    }
+
+    function showStockModal(itemId) {
+        fetch(`/admin/inventory/${itemId}`)
+            .then(response => response.json())
+            .then(item => {
+                document.getElementById('currentStock').textContent = item.stock;
+                document.getElementById('stockUnit').textContent = item.unit;
+                document.getElementById('stockForm').action = `/admin/inventory/${itemId}/stock`;
+                document.getElementById('stockModal').classList.remove('hidden');
+            });
+    }
+
+    function hideStockModal() {
+        document.getElementById('stockModal').classList.add('hidden');
+    }
+
+    // Filter Functions
+    document.querySelectorAll('select[id^="filter"]').forEach(select => {
+        select.addEventListener('change', function() {
+            applyFilters();
+        });
+    });
+
+    function applyFilters() {
+        const category = document.getElementById('category').value;
+        const supplier = document.getElementById('supplier').value;
+        const stock = document.getElementById('stock').value;
+        const sort = document.getElementById('sort').value;
+
+        const queryParams = new URLSearchParams({
+            category,
+            supplier,
+            stock,
+            sort
+        }).toString();
+
+        window.location.href = `/admin/inventory?${queryParams}`;
+    }
+</script>
+
+<%- include('../../partials/footer') %>

@@ -5,36 +5,22 @@ if (mongoose.models.Maintenance) {
     module.exports = mongoose.models.Maintenance;
 } else {
     const maintenanceSchema = new mongoose.Schema({
-        title: {
-            type: String,
-            required: true,
-            trim: true
-        },
         requestType: {
             type: String,
             required: true,
-            enum: ['maintenance', 'repair', 'inspection']
+            enum: ['maintenance', 'housekeeping', 'amenity', 'other'],
+            default: 'maintenance'
         },
         serviceType: {
             type: String,
             required: true,
-            enum: ['regular-service', 'emergency', 'preventive']
-        },
-        location: {
-            type: {
-                type: String,
-                required: true,
-                enum: ['room', 'public-area', 'facility']
-            },
-            areaName: {
-                type: String,
-                required: true
-            },
-            roomNumber: String
+            enum: ['guest-request', 'regular-service', 'emergency', 'preventive'],
+            default: 'guest-request'
         },
         description: {
             type: String,
-            required: true
+            required: true,
+            trim: true
         },
         priority: {
             type: String,
@@ -48,11 +34,20 @@ if (mongoose.models.Maintenance) {
             enum: ['pending', 'in-progress', 'completed', 'cancelled'],
             default: 'pending'
         },
-        scheduledFor: {
-            type: Date,
+        hotel: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Hotel',
             required: true
         },
-        assignedTo: {
+        location: {
+            room: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Room',
+                required: true
+            },
+            description: String
+        },
+        guest: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true
@@ -61,6 +56,10 @@ if (mongoose.models.Maintenance) {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true
+        },
+        assignedTo: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
         },
         notes: [{
             text: {
@@ -77,22 +76,7 @@ if (mongoose.models.Maintenance) {
                 default: Date.now
             }
         }],
-        completedAt: {
-            type: Date
-        },
-        estimatedCost: {
-            type: Number,
-            min: 0
-        },
-        actualCost: {
-            type: Number,
-            min: 0
-        },
-        parts: [{
-            name: String,
-            quantity: Number,
-            cost: Number
-        }],
+        completedAt: Date,
         loyaltyImpact: {
             affectedBooking: {
                 type: mongoose.Schema.Types.ObjectId,
@@ -100,7 +84,8 @@ if (mongoose.models.Maintenance) {
             },
             compensationPoints: {
                 type: Number,
-                default: 0
+                default: 0,
+                min: 0
             },
             compensationReason: String,
             compensationStatus: {
@@ -110,16 +95,27 @@ if (mongoose.models.Maintenance) {
             }
         }
     }, {
-        timestamps: true
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
     });
 
-    // Indexes
+    // Indexes for performance
     maintenanceSchema.index({ status: 1 });
     maintenanceSchema.index({ priority: 1 });
-    maintenanceSchema.index({ 'location.areaName': 1 });
-    maintenanceSchema.index({ assignedTo: 1 });
-    maintenanceSchema.index({ scheduledFor: 1 });
-    maintenanceSchema.index({ createdAt: 1 });
+    maintenanceSchema.index({ hotel: 1 });
+    maintenanceSchema.index({ 'location.room': 1 });
+    maintenanceSchema.index({ guest: 1 });
+    maintenanceSchema.index({ requestedBy: 1 });
+    maintenanceSchema.index({ createdAt: -1 });
+
+    // Virtual for response time
+    maintenanceSchema.virtual('responseTime').get(function() {
+        if (this.status === 'pending') {
+            return Math.round((Date.now() - this.createdAt) / (1000 * 60)); // in minutes
+        }
+        return null;
+    });
 
     // Process loyalty compensation after maintenance completion
     maintenanceSchema.post('save', async function(doc) {
@@ -128,22 +124,18 @@ if (mongoose.models.Maintenance) {
             doc.loyaltyImpact.compensationPoints > 0 && 
             doc.loyaltyImpact.compensationStatus === 'approved') {
             try {
-                const Booking = mongoose.model('Booking');
                 const LoyaltyProgram = mongoose.model('LoyaltyProgram');
+                const loyalty = await LoyaltyProgram.findOne({ guest: doc.guest });
                 
-                const booking = await Booking.findById(doc.loyaltyImpact.affectedBooking);
-                if (booking) {
-                    const loyalty = await LoyaltyProgram.findOne({ user: booking.user });
-                    if (loyalty) {
-                        await loyalty.addPoints(
-                            doc.loyaltyImpact.compensationPoints,
-                            'compensation',
-                            doc._id,
-                            doc.loyaltyImpact.compensationReason || 'Maintenance compensation'
-                        );
-                        doc.loyaltyImpact.compensationStatus = 'processed';
-                        await doc.save();
-                    }
+                if (loyalty) {
+                    await loyalty.addPoints(
+                        doc.loyaltyImpact.compensationPoints,
+                        'maintenance_compensation',
+                        `Maintenance request ${doc._id}`,
+                        doc.loyaltyImpact.compensationReason || 'Service recovery compensation'
+                    );
+                    doc.loyaltyImpact.compensationStatus = 'processed';
+                    await doc.save();
                 }
             } catch (error) {
                 console.error('Error processing loyalty compensation:', error);

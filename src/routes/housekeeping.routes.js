@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middlewares/auth.middleware');
-const Room = require('../models/room.model');
-const HousekeepingTask = require('../models/housekeeping.model');
-const Notification = require('../models/notification.model');
+const Room = require('../models/Room');
+const HousekeepingTask = require('../models/HousekeepingTask');
+const Notification = require('../models/Notification');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
 
 // Get all housekeeping tasks
 router.get('/', protect, authorize('admin', 'staff'), async (req, res) => {

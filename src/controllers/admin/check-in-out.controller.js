@@ -1,7 +1,7 @@
-const Booking = require('../../models/booking.model');
-const Room = require('../../models/room.model');
-const Guest = require('../../models/guest.model');
-const LoyaltyProgram = require('../../models/loyalty-program.model');
+const Booking = require('../../models/Booking');
+const Room = require('../../models/Room');
+const Guest = require('../../models/Guest');
+const LoyaltyProgram = require('../../models/LoyaltyProgram');
 const { calculateLoyaltyPoints } = require('../../utils/loyalty.utils');
 
 // Get check-in/out dashboard data

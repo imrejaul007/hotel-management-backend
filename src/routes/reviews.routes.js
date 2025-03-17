@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middlewares/auth.middleware');
-const Review = require('../models/review.model');
-const Booking = require('../models/booking.model');
-const Notification = require('../models/notification.model');
-const emailService = require('../services/email.service');
+const Review = require('../models/Review');
+const Booking = require('../models/Booking');
+const Notification = require('../models/Notification');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
+const User = require('../models/User');
 
 // Get all reviews (admin view)
 router.get('/admin', protect, authorize('admin'), async (req, res) => {

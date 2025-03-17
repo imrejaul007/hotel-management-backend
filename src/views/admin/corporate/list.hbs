@@ -1,0 +1,314 @@
+{{> admin/header title="Corporate Accounts"}}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Corporate Accounts</h5>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCorporateModal">
+                        <i class="fas fa-plus"></i> Add Corporate Account
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Search company name or email...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Company Name</th>
+                                    <th>Contact Person</th>
+                                    <th>Contract Status</th>
+                                    <th>Credit Limit</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="corporateTableBody">
+                                {{#each accounts}}
+                                <tr>
+                                    <td>{{companyName}}</td>
+                                    <td>
+                                        {{contactPerson.name}}<br>
+                                        <small class="text-muted">{{contactPerson.email}}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{contractStatusColor contractDetails.status}}">
+                                            {{contractDetails.status}}
+                                        </span>
+                                    </td>
+                                    <td>{{formatCurrency creditLimit.amount}} {{creditLimit.currency}}</td>
+                                    <td>
+                                        <span class="badge bg-{{statusColor status}}">{{status}}</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-info" onclick="viewAccount('{{_id}}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-primary" onclick="editAccount('{{_id}}')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteAccount('{{_id}}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{> admin/pagination}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Corporate Account Modal -->
+<div class="modal fade" id="createCorporateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Corporate Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createCorporateForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" class="form-control" name="companyName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Registration Number</label>
+                            <input type="text" class="form-control" name="registrationNumber" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Contact Person Name</label>
+                            <input type="text" class="form-control" name="contactPerson.name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Contact Email</label>
+                            <input type="email" class="form-control" name="contactPerson.email" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Contact Phone</label>
+                            <input type="tel" class="form-control" name="contactPerson.phone">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Position</label>
+                            <input type="text" class="form-control" name="contactPerson.position">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Credit Limit</label>
+                            <input type="number" class="form-control" name="creditLimit.amount" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Terms</label>
+                            <select class="form-select" name="paymentTerms" required>
+                                <option value="immediate">Immediate</option>
+                                <option value="net15">Net 15</option>
+                                <option value="net30">Net 30</option>
+                                <option value="net45">Net 45</option>
+                                <option value="net60">Net 60</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Contract Start Date</label>
+                            <input type="date" class="form-control" name="contractDetails.startDate" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Contract End Date</label>
+                            <input type="date" class="form-control" name="contractDetails.endDate" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createCorporateAccount()">Create Account</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View/Edit Corporate Account Modal -->
+<div class="modal fade" id="editCorporateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Corporate Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCorporateForm">
+                    <!-- Fields will be populated dynamically -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updateCorporateAccount()">Update Account</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+const itemsPerPage = 10;
+
+// Load corporate accounts
+async function loadCorporateAccounts(page = 1, status = '', search = '') {
+    try {
+        const response = await fetch(`/api/corporate?page=${page}&status=${status}&search=${search}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderAccounts(data.data);
+            renderPagination(data.pagination);
+        }
+    } catch (error) {
+        console.error('Error loading corporate accounts:', error);
+        showAlert('error', 'Failed to load corporate accounts');
+    }
+}
+
+// Create corporate account
+async function createCorporateAccount() {
+    const form = document.getElementById('createCorporateForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/corporate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            $('#createCorporateModal').modal('hide');
+            showAlert('success', 'Corporate account created successfully');
+            loadCorporateAccounts(currentPage);
+        }
+    } catch (error) {
+        console.error('Error creating corporate account:', error);
+        showAlert('error', 'Failed to create corporate account');
+    }
+}
+
+// View account details
+async function viewAccount(id) {
+    try {
+        const response = await fetch(`/api/corporate/${id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            populateEditForm(data.data);
+            $('#editCorporateModal').modal('show');
+        }
+    } catch (error) {
+        console.error('Error loading account details:', error);
+        showAlert('error', 'Failed to load account details');
+    }
+}
+
+// Update corporate account
+async function updateCorporateAccount() {
+    const form = document.getElementById('editCorporateForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    const id = form.dataset.accountId;
+
+    try {
+        const response = await fetch(`/api/corporate/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            $('#editCorporateModal').modal('hide');
+            showAlert('success', 'Corporate account updated successfully');
+            loadCorporateAccounts(currentPage);
+        }
+    } catch (error) {
+        console.error('Error updating corporate account:', error);
+        showAlert('error', 'Failed to update corporate account');
+    }
+}
+
+// Delete corporate account
+async function deleteAccount(id) {
+    if (!confirm('Are you sure you want to delete this corporate account?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/corporate/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showAlert('success', 'Corporate account deleted successfully');
+            loadCorporateAccounts(currentPage);
+        }
+    } catch (error) {
+        console.error('Error deleting corporate account:', error);
+        showAlert('error', 'Failed to delete corporate account');
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    loadCorporateAccounts(1);
+
+    // Search input handler
+    const searchInput = document.getElementById('searchInput');
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const status = document.getElementById('statusFilter').value;
+            loadCorporateAccounts(1, status, e.target.value);
+        }, 300);
+    });
+
+    // Status filter handler
+    document.getElementById('statusFilter').addEventListener('change', (e) => {
+        const search = document.getElementById('searchInput').value;
+        loadCorporateAccounts(1, e.target.value, search);
+    });
+});
+</script>
+
+{{> admin/footer}}

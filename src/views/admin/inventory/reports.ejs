@@ -1,0 +1,315 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/admin-nav') %>
+
+<div class="min-h-screen bg-gray-100">
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                        Inventory Reports
+                    </h2>
+                </div>
+                <div class="mt-4 flex md:mt-0 md:ml-4 space-x-2">
+                    <button type="button" onclick="exportReport()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export Report
+                    </button>
+                    <button type="button" onclick="printReport()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Print Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="mt-8 bg-white shadow sm:rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                        <div>
+                            <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date</label>
+                            <input type="date" id="startDate" name="startDate" value="<%= startDate %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="endDate" class="block text-sm font-medium text-gray-700">End Date</label>
+                            <input type="date" id="endDate" name="endDate" value="<%= endDate %>" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="flex items-end">
+                            <button type="button" onclick="applyDateFilter()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Apply Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Total Inventory Value -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Inventory Value</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">$<%= (stats.totalValue || 0).toLocaleString() %></div>
+                                        <div class="ml-2 flex items-baseline text-sm font-semibold <%= (stats.valueChange >= 0 ? 'text-green-600' : 'text-red-600') %>">
+                                            <%= (stats.valueChange >= 0 ? '+' : '') %><%= stats.valueChange %>%
+                                        </div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Items -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Items</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= (stats.totalItems || 0).toLocaleString() %></div>
+                                        <div class="ml-2 flex items-baseline text-sm font-semibold <%= (stats.itemsChange >= 0 ? 'text-green-600' : 'text-red-600') %>">
+                                            <%= (stats.itemsChange >= 0 ? '+' : '') %><%= stats.itemsChange %>%
+                                        </div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Low Stock Items -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Low Stock Items</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900"><%= (stats.lowStockItems || 0).toLocaleString() %></div>
+                                        <div class="ml-2 flex items-baseline text-sm font-semibold <%= (stats.lowStockChange <= 0 ? 'text-green-600' : 'text-red-600') %>">
+                                            <%= (stats.lowStockChange >= 0 ? '+' : '') %><%= stats.lowStockChange %>%
+                                        </div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Value -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Order Value (Period)</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">$<%= stats.orderValue.toLocaleString() %></div>
+                                        <div class="ml-2 flex items-baseline text-sm font-semibold <%= stats.orderValueChange >= 0 ? 'text-green-600' : 'text-red-600' %>">
+                                            <%= stats.orderValueChange >= 0 ? '+' : '' %><%= stats.orderValueChange %>%
+                                        </div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
+                <!-- Inventory Value Trend -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Inventory Value Trend</h3>
+                        <div class="mt-4" style="height: 300px;">
+                            <canvas id="inventoryValueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Distribution -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Category Distribution</h3>
+                        <div class="mt-4" style="height: 300px;">
+                            <canvas id="categoryDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Reports -->
+            <div class="mt-8 grid grid-cols-1 gap-5">
+                <!-- Low Stock Items -->
+                <div class="bg-white shadow sm:rounded-lg">
+                    <div class="px-4 py-5 sm:px-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Low Stock Items</h3>
+                    </div>
+                    <div class="border-t border-gray-200">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Stock</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <% lowStockItems.forEach(item => { %>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <%= item.name %>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <%= item.sku %>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <%= item.category %>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <%= item.currentStock %>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <%= item.minStock %>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex rounded-full px-2 text-xs font-semibold leading-5 <%= item.currentStock === 0 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' %>">
+                                                <%= item.currentStock === 0 ? 'Out of Stock' : 'Low Stock' %>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Initialize charts
+    document.addEventListener('DOMContentLoaded', function() {
+        // Parse server-side data safely
+        const serverData = JSON.parse('<%- JSON.stringify(charts || {}) %>');
+        const inventoryValue = serverData.inventoryValue || {};
+        const categoryDistribution = serverData.categoryDistribution || {};
+
+        // Inventory Value Trend Chart
+        const valueCtx = document.getElementById('inventoryValueChart').getContext('2d');
+        new Chart(valueCtx, {
+            type: 'line',
+            data: {
+                labels: inventoryValue.labels || [],
+                datasets: [{
+                    label: 'Inventory Value',
+                    data: inventoryValue.data || [],
+                    borderColor: 'rgb(79, 70, 229)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + (value || 0).toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Category Distribution Chart
+        const categoryCtx = document.getElementById('categoryDistributionChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryDistribution.labels || [],
+                datasets: [{
+                    data: categoryDistribution.data || [],
+                    backgroundColor: [
+                        'rgb(79, 70, 229)',
+                        'rgb(16, 185, 129)',
+                        'rgb(245, 158, 11)',
+                        'rgb(239, 68, 68)',
+                        'rgb(107, 114, 128)',
+                        'rgb(167, 139, 250)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    });
+
+    // Filter functions
+    function applyDateFilter() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        window.location.href = `/admin/inventory/reports?startDate=${startDate}&endDate=${endDate}`;
+    }
+
+    // Export functions
+    function exportReport() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        window.location.href = `/admin/inventory/reports/export?startDate=${startDate}&endDate=${endDate}`;
+    }
+
+    function printReport() {
+        window.print();
+    }
+</script>
+
+<%- include('../../partials/footer') %>

@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const User = require('../models/user.model');
-const Hotel = require('../models/hotel.model');
-const Room = require('../models/room.model');
-const Booking = require('../models/booking.model');
+const User = require('../models/User');
+const Hotel = require('../models/Hotel');
+const Room = require('../models/Room');
+const Booking = require('../models/Booking');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
+const Reward = require('../models/Reward');
+const Referral = require('../models/Referral');
 const { protect, authorize } = require('../middlewares/auth.middleware');
 
 // Middleware to check if user is logged in for templates

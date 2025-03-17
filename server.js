@@ -152,6 +152,8 @@ const maintenanceRoutes = require('./src/routes/maintenance.routes');
 const otaRoutes = require('./src/routes/ota.routes');
 const indexRoutes = require('./src/routes/index.routes');
 const checkInOutRoutes = require('./src/routes/checkInOut.routes');
+const corporateRoutes = require('./src/routes/corporate.routes');
+const groupRoutes = require('./src/routes/group.routes');
 
 // Mount routes
 app.get('/login', (req, res) => res.redirect('/auth/login'));
@@ -163,6 +165,8 @@ app.use('/maintenance', maintenanceRoutes);
 app.use('/api/ota', otaRoutes);
 app.use('/', indexRoutes);
 app.use('/check-in-out', checkInOutRoutes);
+app.use('/api/corporate', corporateRoutes);
+app.use('/api/group-bookings', groupRoutes);
 
 const PORT = process.env.PORT || 3000;
 

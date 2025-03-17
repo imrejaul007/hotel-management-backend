@@ -1,8 +1,32 @@
-const User = require('../models/user.model');
-const Booking = require('../models/booking.model');
-const LoyaltyProgram = require('../models/loyalty-program.model');
-const Review = require('../models/review.model');
+const User = require('../models/User');
+const Booking = require('../models/Booking');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
+const Review = require('../models/Review');
 const { NotFoundError, ValidationError } = require('../utils/errors');
+
+// Get guest profile for admin view
+exports.getProfile = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const profile = await exports.getGuestProfile(id);
+
+        res.render('admin/guests/profile', {
+            title: 'Guest Profile',
+            ...profile
+        });
+    } catch (error) {
+        console.error('Error getting guest profile:', error);
+        if (error instanceof NotFoundError) {
+            res.status(404).render('error', {
+                message: error.message
+            });
+        } else {
+            res.status(500).render('error', {
+                message: 'Error loading guest profile'
+            });
+        }
+    }
+};
 
 // Get guest profile
 exports.getGuestProfile = async (userId) => {

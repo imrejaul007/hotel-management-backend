@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const Inventory = require('../models/inventory.model');
-const Hotel = require('../models/hotel.model');
 const { protect, authorize } = require('../middlewares/auth.middleware');
+const Inventory = require('../models/Inventory');
+const Hotel = require('../models/Hotel');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
+const Reward = require('../models/Reward');
 
 // Get inventory dashboard
 router.get('/', protect, authorize('admin'), async (req, res) => {

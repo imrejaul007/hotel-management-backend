@@ -1,54 +1,50 @@
-{{#extend "layout"}}
-{{#content "head"}}
-<title>Housekeeping Dashboard - Hotel Management</title>
-<link href="/assets/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
-<link href="/assets/vendor/select2/select2.min.css" rel="stylesheet">
-{{/content}}
+{{> admin/header title="Housekeeping Dashboard"}}
 
-{{#content "body"}}
-<!-- Begin Page Content -->
 <div class="container-fluid">
-
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Housekeeping Dashboard</h1>
         <div>
-            <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm mr-2" data-toggle="modal" data-target="#newTaskModal">
-                <i class="fas fa-plus fa-sm text-white-50"></i> New Task
-            </a>
-            <a href="/api/housekeeping/export" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm">
-                <i class="fas fa-download fa-sm text-white-50"></i> Export Report
-            </a>
+            <button class="btn btn-success" onclick="assignTasks()">
+                <i class="fas fa-tasks"></i> Auto-Assign Tasks
+            </button>
+            <button class="btn btn-primary" onclick="refreshDashboard()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
         </div>
     </div>
 
-    <!-- Content Row -->
+    <!-- Task Overview Cards -->
     <div class="row">
-        <!-- Total Tasks Card -->
+        <!-- Pending Tasks -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Tasks</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.totalTasks}}</div>
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Pending Tasks</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingTasksCount">
+                                {{stats.pendingTasks}}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Pending Tasks Card -->
+        <!-- In Progress -->
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card border-left-info shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Tasks</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.pendingTasks}}</div>
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                In Progress</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="inProgressCount">
+                                {{stats.inProgressTasks}}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-clock fa-2x text-gray-300"></i>
@@ -58,34 +54,38 @@
             </div>
         </div>
 
-        <!-- In Progress Tasks Card -->
+        <!-- Completed Today -->
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
+            <div class="card border-left-success shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">In Progress</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.inProgressTasks}}</div>
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Completed Today</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="completedCount">
+                                {{stats.completedToday}}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-spinner fa-2x text-gray-300"></i>
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- High Priority Tasks Card -->
+        <!-- Staff Available -->
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card border-left-warning shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">High Priority</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.highPriorityTasks}}</div>
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Staff Available</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="staffCount">
+                                {{stats.availableStaff}}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                            <i class="fas fa-user-friends fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -93,82 +93,89 @@
         </div>
     </div>
 
-    <!-- Content Row -->
-    <div class="row">
-        <!-- Tasks Table -->
+    <!-- Room Status Grid -->
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">Housekeeping Tasks</h6>
-                    <div class="dropdown no-arrow">
-                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown">
-                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
-                            <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterModal">
-                                <i class="fas fa-filter fa-sm fa-fw mr-2 text-gray-400"></i>
-                                Filter Tasks
-                            </a>
-                            <a class="dropdown-item" href="/api/housekeeping/reports/staff-performance">
-                                <i class="fas fa-chart-line fa-sm fa-fw mr-2 text-gray-400"></i>
-                                Staff Performance
-                            </a>
-                            <a class="dropdown-item" href="/api/housekeeping/reports/room-cleaning">
-                                <i class="fas fa-chart-bar fa-sm fa-fw mr-2 text-gray-400"></i>
-                                Room Cleaning Report
-                            </a>
-                        </div>
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Room Status Overview</h6>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary btn-sm" onclick="filterRooms('all')">All</button>
+                        <button class="btn btn-outline-warning btn-sm" onclick="filterRooms('dirty')">Dirty</button>
+                        <button class="btn btn-outline-info btn-sm" onclick="filterRooms('cleaning')">Cleaning</button>
+                        <button class="btn btn-outline-success btn-sm" onclick="filterRooms('clean')">Clean</button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="filterRooms('inspection')">Inspection</button>
                     </div>
                 </div>
                 <div class="card-body">
+                    <div class="room-grid" id="roomGrid">
+                        {{#each rooms}}
+                        <div class="room-card {{status}}" id="room-{{number}}" onclick="showRoomDetails('{{id}}')">
+                            <div class="room-number">{{number}}</div>
+                            <div class="room-type">{{type}}</div>
+                            <div class="room-status">{{status}}</div>
+                            <div class="room-info">
+                                {{#if assignedTo}}
+                                <span class="badge badge-info">{{assignedTo}}</span>
+                                {{/if}}
+                                {{#if priority}}
+                                <span class="badge badge-danger">Priority</span>
+                                {{/if}}
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Active Tasks</h6>
+                </div>
+                <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered" id="tasksTable" width="100%" cellspacing="0">
+                        <table class="table table-bordered" id="tasksTable">
                             <thead>
                                 <tr>
                                     <th>Room</th>
-                                    <th>Description</th>
+                                    <th>Task Type</th>
                                     <th>Priority</th>
-                                    <th>Status</th>
                                     <th>Assigned To</th>
-                                    <th>Scheduled</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tasksList">
                                 {{#each tasks}}
-                                <tr>
-                                    <td>{{room.number}}</td>
-                                    <td>{{description}}</td>
+                                <tr id="task-{{id}}">
+                                    <td>{{roomNumber}}</td>
+                                    <td>{{type}}</td>
                                     <td>
                                         <span class="badge badge-{{priorityColor priority}}">
-                                            {{formatCategory priority}}
+                                            {{priority}}
                                         </span>
                                     </td>
+                                    <td>{{assignedTo}}</td>
                                     <td>
                                         <span class="badge badge-{{statusColor status}}">
-                                            {{formatCategory status}}
+                                            {{status}}
                                         </span>
                                     </td>
-                                    <td>{{assignedTo.name}}</td>
-                                    <td>{{formatDateTime scheduledDate}}</td>
+                                    <td>{{formatTime createdAt}}</td>
                                     <td>
                                         <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-info" onclick="viewTask('{{_id}}')">
-                                                <i class="fas fa-eye"></i>
+                                            <button class="btn btn-info btn-sm" onclick="updateTaskStatus('{{id}}')">
+                                                Update
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-primary" onclick="editTask('{{_id}}')">
-                                                <i class="fas fa-edit"></i>
+                                            <button class="btn btn-warning btn-sm" onclick="reassignTask('{{id}}')">
+                                                Reassign
                                             </button>
-                                            {{#if (eq status 'pending')}}
-                                            <button type="button" class="btn btn-sm btn-success" onclick="startTask('{{_id}}')">
-                                                <i class="fas fa-play"></i>
-                                            </button>
-                                            {{/if}}
-                                            {{#if (eq status 'in-progress')}}
-                                            <button type="button" class="btn btn-sm btn-success" onclick="completeTask('{{_id}}')">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                            {{/if}}
                                         </div>
                                     </td>
                                 </tr>
@@ -182,357 +189,428 @@
     </div>
 </div>
 
-<!-- New Task Modal -->
-<div class="modal fade" id="newTaskModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+<!-- Room Details Modal -->
+<div class="modal fade" id="roomDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">New Housekeeping Task</h5>
+                <h5 class="modal-title">Room Details</h5>
                 <button type="button" class="close" data-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
-            <form id="newTaskForm">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Room</label>
-                        <select class="form-control select2" name="room" required>
-                            {{#each rooms}}
-                            <option value="{{_id}}">Room {{number}} ({{type}})</option>
-                            {{/each}}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea class="form-control" name="description" required></textarea>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label>Priority</label>
-                            <select class="form-control" name="priority">
-                                <option value="normal">Normal</option>
-                                <option value="high">High</option>
-                                <option value="low">Low</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label>Assigned To</label>
-                            <select class="form-control select2" name="assignedTo">
-                                {{#each staff}}
-                                <option value="{{_id}}">{{name}}</option>
-                                {{/each}}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Scheduled Date</label>
-                        <input type="datetime-local" class="form-control" name="scheduledDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Checklist</label>
-                        <div id="checklistItems">
-                            <div class="input-group mb-2">
-                                <input type="text" class="form-control" name="checklist[]" placeholder="Checklist item">
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-danger" onclick="removeChecklistItem(this)">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="addChecklistItem()">
-                            <i class="fas fa-plus"></i> Add Item
-                        </button>
-                    </div>
-                    <div class="form-group">
-                        <label>Supplies Needed</label>
-                        <div id="suppliesItems">
-                            <div class="input-group mb-2">
-                                <select class="form-control select2" name="supplies[][item]">
-                                    {{#each supplies}}
-                                    <option value="{{_id}}">{{name}} ({{unit}})</option>
-                                    {{/each}}
-                                </select>
-                                <input type="number" class="form-control" name="supplies[][quantity]" placeholder="Quantity" min="1">
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-danger" onclick="removeSupplyItem(this)">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="addSupplyItem()">
-                            <i class="fas fa-plus"></i> Add Supply
-                        </button>
-                    </div>
-                    <div class="form-group">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="isRecurring" name="recurring[isRecurring]">
-                            <label class="custom-control-label" for="isRecurring">Recurring Task</label>
-                        </div>
-                    </div>
-                    <div id="recurringOptions" style="display: none;">
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Frequency</label>
-                                <select class="form-control" name="recurring[frequency]">
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
-                                </select>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>End Date</label>
-                                <input type="date" class="form-control" name="recurring[endDate]">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Task</button>
-                </div>
-            </form>
+            <div class="modal-body">
+                <div id="roomDetailsContent"></div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Filter Modal -->
-<div class="modal fade" id="filterModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Filter Tasks</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <form id="filterForm">
-                <div class="modal-body">
+<!-- WebSocket Integration -->
+<script src="/js/websocket.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDataTables();
+    setupWebSocket();
+});
+
+function initializeDataTables() {
+    $('#tasksTable').DataTable({
+        order: [[2, 'desc'], [5, 'desc']],
+        pageLength: 25
+    });
+}
+
+function setupWebSocket() {
+    // Room status updates
+    hotelWS.on('ROOM_STATUS_UPDATE', function(data) {
+        const roomCard = document.getElementById(`room-${data.roomNumber}`);
+        if (roomCard) {
+            roomCard.className = `room-card ${data.status}`;
+            roomCard.querySelector('.room-status').textContent = data.status;
+            
+            // Update assigned staff if present
+            const roomInfo = roomCard.querySelector('.room-info');
+            if (data.assignedTo) {
+                roomInfo.innerHTML = `<span class="badge badge-info">${data.assignedTo}</span>`;
+            } else {
+                roomInfo.innerHTML = '';
+            }
+        }
+
+        // Update statistics
+        updateDashboardStats();
+    });
+
+    // Task updates
+    hotelWS.on('TASK_UPDATE', function(data) {
+        const table = $('#tasksTable').DataTable();
+        const existingRow = table.row(`#task-${data.id}`);
+        
+        if (existingRow.length) {
+            existingRow.remove();
+        }
+        
+        if (data.status !== 'completed') {
+            table.row.add([
+                data.roomNumber,
+                data.type,
+                `<span class="badge badge-${getPriorityColor(data.priority)}">${data.priority}</span>`,
+                data.assignedTo,
+                `<span class="badge badge-${getStatusColor(data.status)}">${data.status}</span>`,
+                formatTime(data.createdAt),
+                `<div class="btn-group">
+                    <button class="btn btn-info btn-sm" onclick="updateTaskStatus('${data.id}')">
+                        Update
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="reassignTask('${data.id}')">
+                        Reassign
+                    </button>
+                </div>`
+            ]).draw(false);
+        }
+
+        // Update statistics
+        updateDashboardStats();
+    });
+}
+
+function updateDashboardStats() {
+    fetch('/admin/housekeeping/stats')
+        .then(response => response.json())
+        .then(stats => {
+            document.getElementById('pendingTasksCount').textContent = stats.pendingTasks;
+            document.getElementById('inProgressCount').textContent = stats.inProgressTasks;
+            document.getElementById('completedCount').textContent = stats.completedToday;
+            document.getElementById('staffCount').textContent = stats.availableStaff;
+        });
+}
+
+function filterRooms(status) {
+    const rooms = document.querySelectorAll('.room-card');
+    if (status === 'all') {
+        rooms.forEach(room => room.style.display = 'block');
+    } else {
+        rooms.forEach(room => {
+            room.style.display = room.classList.contains(status) ? 'block' : 'none';
+        });
+    }
+}
+
+function showRoomDetails(roomId) {
+    fetch(`/admin/housekeeping/room/${roomId}`)
+        .then(response => response.json())
+        .then(data => {
+            const content = document.getElementById('roomDetailsContent');
+            content.innerHTML = `
+                <div class="room-details">
+                    <h4>Room ${data.number}</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Type:</strong> ${data.type}</p>
+                            <p><strong>Status:</strong> ${data.status}</p>
+                            <p><strong>Last Cleaned:</strong> ${formatTime(data.lastCleaned)}</p>
+                            <p><strong>Assigned To:</strong> ${data.assignedTo || 'Not assigned'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Guest Status:</strong> ${data.guestStatus}</p>
+                            <p><strong>Special Requests:</strong> ${data.specialRequests || 'None'}</p>
+                            <p><strong>Notes:</strong> ${data.notes || 'None'}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-primary" onclick="assignTask('${roomId}')">
+                            Assign Task
+                        </button>
+                        <button class="btn btn-info" onclick="markInspection('${roomId}')">
+                            Mark for Inspection
+                        </button>
+                        <button class="btn btn-success" onclick="markComplete('${roomId}')">
+                            Mark Complete
+                        </button>
+                    </div>
+                </div>
+            `;
+            $('#roomDetailsModal').modal('show');
+        });
+}
+
+function assignTask(roomId) {
+    fetch('/admin/housekeeping/staff')
+        .then(response => response.json())
+        .then(staff => {
+            Swal.fire({
+                title: 'Assign Task',
+                html: `
                     <div class="form-group">
-                        <label>Status</label>
-                        <select class="form-control" name="status">
-                            <option value="">All</option>
-                            <option value="pending">Pending</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                        <label>Select Staff</label>
+                        <select class="form-control" id="staffSelect">
+                            ${staff.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Priority</label>
-                        <select class="form-control" name="priority">
-                            <option value="">All</option>
-                            <option value="high">High</option>
-                            <option value="normal">Normal</option>
+                        <select class="form-control" id="prioritySelect">
                             <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Room</label>
-                        <select class="form-control select2" name="room">
-                            <option value="">All</option>
-                            {{#each rooms}}
-                            <option value="{{_id}}">Room {{number}}</option>
-                            {{/each}}
-                        </select>
+                        <label>Notes</label>
+                        <textarea class="form-control" id="taskNotes"></textarea>
                     </div>
-                    <div class="form-group">
-                        <label>Assigned To</label>
-                        <select class="form-control select2" name="assignedTo">
-                            <option value="">All</option>
-                            {{#each staff}}
-                            <option value="{{_id}}">{{name}}</option>
-                            {{/each}}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" class="form-control" name="date">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Apply Filters</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-{{/content}}
-
-{{#content "scripts"}}
-<script src="/assets/vendor/datatables/jquery.dataTables.min.js"></script>
-<script src="/assets/vendor/datatables/dataTables.bootstrap4.min.js"></script>
-<script src="/assets/vendor/select2/select2.min.js"></script>
-<script>
-    $(document).ready(function() {
-        // Initialize DataTables
-        $('#tasksTable').DataTable();
-
-        // Initialize Select2
-        $('.select2').select2({
-            theme: 'bootstrap4'
-        });
-
-        // Toggle recurring options
-        $('#isRecurring').change(function() {
-            $('#recurringOptions').toggle(this.checked);
-        });
-
-        // Handle new task form submission
-        $('#newTaskForm').submit(function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
-
-            // Convert checklist items to array
-            data.checklist = Array.from(formData.getAll('checklist[]'))
-                .filter(item => item)
-                .map(item => ({ item }));
-
-            // Convert supplies to array of objects
-            const supplies = [];
-            const supplyItems = formData.getAll('supplies[][item]');
-            const supplyQuantities = formData.getAll('supplies[][quantity]');
-            supplyItems.forEach((item, index) => {
-                if (item && supplyQuantities[index]) {
-                    supplies.push({
-                        item,
-                        quantity: parseInt(supplyQuantities[index])
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Assign',
+                focusConfirm: false,
+                preConfirm: () => {
+                    return {
+                        staffId: document.getElementById('staffSelect').value,
+                        priority: document.getElementById('prioritySelect').value,
+                        notes: document.getElementById('taskNotes').value
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/admin/housekeeping/assign-task`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            roomId,
+                            ...result.value
+                        })
+                    }).then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Success', 'Task assigned successfully', 'success');
+                            $('#roomDetailsModal').modal('hide');
+                        } else {
+                            throw new Error(data.error);
+                        }
+                    }).catch(error => {
+                        Swal.fire('Error', error.message, 'error');
                     });
                 }
             });
-            data.supplies = supplies;
+        });
+}
 
-            // Handle recurring options
-            if (data.recurring?.isRecurring) {
-                data.recurring.daysOfWeek = [];
-                if (data.recurring.frequency === 'weekly') {
-                    const selectedDays = formData.getAll('recurring[daysOfWeek][]');
-                    data.recurring.daysOfWeek = selectedDays.map(day => parseInt(day));
+function updateTaskStatus(taskId) {
+    Swal.fire({
+        title: 'Update Task Status',
+        input: 'select',
+        inputOptions: {
+            'pending': 'Pending',
+            'in_progress': 'In Progress',
+            'completed': 'Completed',
+            'delayed': 'Delayed'
+        },
+        inputPlaceholder: 'Select status',
+        showCancelButton: true,
+        inputValidator: (value) => {
+            return new Promise((resolve) => {
+                if (value) {
+                    resolve()
+                } else {
+                    resolve('You need to select a status')
                 }
-            }
-
-            $.ajax({
-                url: '/api/housekeeping',
+            })
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/admin/housekeeping/update-task-status`, {
                 method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(data),
-                success: function(response) {
-                    $('#newTaskModal').modal('hide');
-                    location.reload();
+                headers: {
+                    'Content-Type': 'application/json'
                 },
-                error: function(xhr) {
-                    alert('Error creating task: ' + xhr.responseText);
+                body: JSON.stringify({
+                    taskId,
+                    status: result.value
+                })
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success', 'Task status updated successfully', 'success');
+                } else {
+                    throw new Error(data.error);
                 }
+            }).catch(error => {
+                Swal.fire('Error', error.message, 'error');
             });
-        });
-
-        // Handle filter form submission
-        $('#filterForm').submit(function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const params = new URLSearchParams(formData);
-            window.location.search = params.toString();
-        });
+        }
     });
+}
 
-    // Add checklist item
-    function addChecklistItem() {
-        const item = `
-            <div class="input-group mb-2">
-                <input type="text" class="form-control" name="checklist[]" placeholder="Checklist item">
-                <div class="input-group-append">
-                    <button type="button" class="btn btn-danger" onclick="removeChecklistItem(this)">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        $('#checklistItems').append(item);
-    }
-
-    // Remove checklist item
-    function removeChecklistItem(button) {
-        $(button).closest('.input-group').remove();
-    }
-
-    // Add supply item
-    function addSupplyItem() {
-        const item = `
-            <div class="input-group mb-2">
-                <select class="form-control select2" name="supplies[][item]">
-                    {{#each supplies}}
-                    <option value="{{_id}}">{{name}} ({{unit}})</option>
-                    {{/each}}
-                </select>
-                <input type="number" class="form-control" name="supplies[][quantity]" placeholder="Quantity" min="1">
-                <div class="input-group-append">
-                    <button type="button" class="btn btn-danger" onclick="removeSupplyItem(this)">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        const $item = $(item);
-        $('#suppliesItems').append($item);
-        $item.find('.select2').select2({
-            theme: 'bootstrap4'
+function reassignTask(taskId) {
+    fetch('/admin/housekeeping/staff')
+        .then(response => response.json())
+        .then(staff => {
+            Swal.fire({
+                title: 'Reassign Task',
+                input: 'select',
+                inputOptions: Object.fromEntries(
+                    staff.map(s => [s.id, s.name])
+                ),
+                inputPlaceholder: 'Select staff member',
+                showCancelButton: true,
+                inputValidator: (value) => {
+                    return new Promise((resolve) => {
+                        if (value) {
+                            resolve()
+                        } else {
+                            resolve('You need to select a staff member')
+                        }
+                    })
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/admin/housekeeping/reassign-task`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            taskId,
+                            staffId: result.value
+                        })
+                    }).then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Success', 'Task reassigned successfully', 'success');
+                        } else {
+                            throw new Error(data.error);
+                        }
+                    }).catch(error => {
+                        Swal.fire('Error', error.message, 'error');
+                    });
+                }
+            });
         });
-    }
+}
 
-    // Remove supply item
-    function removeSupplyItem(button) {
-        $(button).closest('.input-group').remove();
-    }
-
-    // View task details
-    function viewTask(id) {
-        window.location.href = `/admin/housekeeping/tasks/${id}`;
-    }
-
-    // Edit task
-    function editTask(id) {
-        window.location.href = `/admin/housekeeping/tasks/${id}/edit`;
-    }
-
-    // Start task
-    function startTask(id) {
-        if (confirm('Start this task?')) {
-            $.ajax({
-                url: `/api/housekeeping/${id}`,
-                method: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify({ status: 'in-progress' }),
-                success: function(response) {
-                    location.reload();
-                },
-                error: function(xhr) {
-                    alert('Error starting task: ' + xhr.responseText);
+function assignTasks() {
+    Swal.fire({
+        title: 'Auto-Assign Tasks',
+        text: 'This will automatically assign all pending tasks to available staff members. Continue?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, assign tasks',
+        cancelButtonText: 'No, cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/admin/housekeeping/auto-assign', {
+                method: 'POST'
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Success', 'Tasks have been automatically assigned', 'success');
+                } else {
+                    throw new Error(data.error);
                 }
+            }).catch(error => {
+                Swal.fire('Error', error.message, 'error');
             });
         }
-    }
+    });
+}
 
-    // Complete task
-    function completeTask(id) {
-        if (confirm('Mark this task as completed?')) {
-            $.ajax({
-                url: `/api/housekeeping/${id}`,
-                method: 'PUT',
-                contentType: 'application/json',
-                data: JSON.stringify({ status: 'completed' }),
-                success: function(response) {
-                    location.reload();
-                },
-                error: function(xhr) {
-                    alert('Error completing task: ' + xhr.responseText);
-                }
-            });
-        }
-    }
+function refreshDashboard() {
+    location.reload();
+}
+
+// Helper functions
+function getPriorityColor(priority) {
+    const colors = {
+        low: 'info',
+        medium: 'warning',
+        high: 'danger'
+    };
+    return colors[priority] || 'secondary';
+}
+
+function getStatusColor(status) {
+    const colors = {
+        pending: 'warning',
+        in_progress: 'info',
+        completed: 'success',
+        delayed: 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+function formatTime(timestamp) {
+    return new Date(timestamp).toLocaleString();
+}
 </script>
-{{/content}}
-{{/extend}}
+
+<style>
+.room-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.room-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 0.35rem;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.room-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.room-card.dirty {
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+.room-card.cleaning {
+    background-color: #cce5ff;
+    border-color: #b8daff;
+}
+
+.room-card.clean {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.room-card.inspection {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.room-number {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.room-type {
+    font-size: 0.875rem;
+    color: #858796;
+    margin-bottom: 0.5rem;
+}
+
+.room-status {
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    margin-bottom: 0.5rem;
+}
+
+.room-info {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+</style>
+
+{{> admin/footer}}

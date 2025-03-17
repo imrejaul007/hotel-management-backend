@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const Hotel = require('../models/hotel.model');
+const Hotel = require('../models/Hotel');
 require('dotenv').config();
 
 const hotels = [

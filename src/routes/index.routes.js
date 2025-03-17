@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Hotel = require('../models/hotel.model');
+const Hotel = require('../models/Hotel');
 
 // Home page
 router.get('/', async (req, res) => {

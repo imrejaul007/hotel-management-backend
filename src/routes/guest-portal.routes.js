@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/user.model');
-const Booking = require('../models/booking.model');
-const Room = require('../models/room.model');
-const Hotel = require('../models/hotel.model');
-const Maintenance = require('../models/maintenance.model');
-const AmenityRequest = require('../models/amenity-request.model');
-const Inventory = require('../models/inventory.model');
+const User = require('../models/User');
+const Booking = require('../models/Booking');
+const Room = require('../models/Room');
+const Hotel = require('../models/Hotel');
+const Maintenance = require('../models/Maintenance');
+const AmenityRequest = require('../models/AmenityRequest');
+const Inventory = require('../models/Inventory');
 const { protect } = require('../middlewares/auth.middleware');
 const bcrypt = require('bcryptjs');
 

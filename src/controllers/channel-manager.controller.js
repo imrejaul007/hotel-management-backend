@@ -1,5 +1,5 @@
-const OTAChannel = require('../models/ota-channel.model');
-const OTABooking = require('../models/ota-booking.model');
+const OTAChannel = require('../models/OTAChannel');
+const OTABooking = require('../models/OTABooking');
 const OTAService = require('../services/ota.service');
 const cacheService = require('../services/cache.service');
 

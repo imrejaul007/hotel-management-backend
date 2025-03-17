@@ -1,0 +1,136 @@
+<!-- Footer -->
+<footer class="bg-white shadow-inner mt-8">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <!-- Quick Links -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-600 tracking-wider uppercase">Quick Links</h3>
+                <ul class="mt-4 space-y-2">
+                    <li>
+                        <a href="/admin/dashboard" class="text-sm text-gray-500 hover:text-gray-900">Dashboard</a>
+                    </li>
+                    <li>
+                        <a href="/admin/bookings" class="text-sm text-gray-500 hover:text-gray-900">Bookings</a>
+                    </li>
+                    <li>
+                        <a href="/admin/guests" class="text-sm text-gray-500 hover:text-gray-900">Guests</a>
+                    </li>
+                    <li>
+                        <a href="/admin/loyalty" class="text-sm text-gray-500 hover:text-gray-900">Loyalty Program</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Reports -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-600 tracking-wider uppercase">Reports</h3>
+                <ul class="mt-4 space-y-2">
+                    <li>
+                        <a href="/admin/reports/occupancy" class="text-sm text-gray-500 hover:text-gray-900">Occupancy Reports</a>
+                    </li>
+                    <li>
+                        <a href="/admin/reports/revenue" class="text-sm text-gray-500 hover:text-gray-900">Revenue Reports</a>
+                    </li>
+                    <li>
+                        <a href="/admin/reports/guest" class="text-sm text-gray-500 hover:text-gray-900">Guest Analytics</a>
+                    </li>
+                    <li>
+                        <a href="/admin/reports/loyalty" class="text-sm text-gray-500 hover:text-gray-900">Loyalty Reports</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Support -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-600 tracking-wider uppercase">Support</h3>
+                <ul class="mt-4 space-y-2">
+                    <li>
+                        <a href="/admin/help" class="text-sm text-gray-500 hover:text-gray-900">Help Center</a>
+                    </li>
+                    <li>
+                        <a href="/admin/documentation" class="text-sm text-gray-500 hover:text-gray-900">Documentation</a>
+                    </li>
+                    <li>
+                        <a href="/admin/contact" class="text-sm text-gray-500 hover:text-gray-900">Contact Support</a>
+                    </li>
+                    <li>
+                        <a href="/admin/feedback" class="text-sm text-gray-500 hover:text-gray-900">Submit Feedback</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Contact -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-600 tracking-wider uppercase">Contact</h3>
+                <ul class="mt-4 space-y-2">
+                    <li class="flex items-center text-sm text-gray-500">
+                        <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        support@hotelmanagement.com
+                    </li>
+                    <li class="flex items-center text-sm text-gray-500">
+                        <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        +1 (555) 123-4567
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="mt-8 border-t border-gray-200 pt-8">
+            <div class="flex justify-between items-center">
+                <p class="text-sm text-gray-400">&copy; <%= new Date().getFullYear() %> Hotel Management System. All rights reserved.</p>
+                <div class="flex space-x-6">
+                    <a href="/privacy" class="text-sm text-gray-400 hover:text-gray-500">Privacy Policy</a>
+                    <a href="/terms" class="text-sm text-gray-400 hover:text-gray-500">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Handle active navigation items
+        document.addEventListener('DOMContentLoaded', function() {
+            const path = window.location.pathname;
+            const navLinks = document.querySelectorAll('nav a');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === path) {
+                    link.classList.add('border-indigo-500', 'text-gray-900');
+                    link.classList.remove('border-transparent', 'text-gray-500');
+                }
+            });
+        });
+
+        // Handle flash messages auto-hide
+        const flashMessages = document.querySelectorAll('[role="alert"]');
+        flashMessages.forEach(message => {
+            setTimeout(() => {
+                message.style.opacity = '0';
+                setTimeout(() => message.remove(), 300);
+            }, 5000);
+        });
+
+        // Handle loading states
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<div class="loading mr-2"></div>Processing...';
+                submitButton.disabled = true;
+
+                // Reset button after form submission (success or error)
+                setTimeout(() => {
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

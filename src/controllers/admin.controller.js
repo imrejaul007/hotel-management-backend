@@ -1,231 +1,322 @@
-const OTAChannel = require('../models/ota-channel.model');
-const OTABooking = require('../models/ota-booking.model');
-const User = require('../models/user.model');
-const Booking = require('../models/booking.model');
-const Tier = require('../models/Tier');
-const Referral = require('../models/Referral');
+const User = require('../models/User');
+const Booking = require('../models/Booking');
+const Hotel = require('../models/Hotel');
+const Room = require('../models/Room');
 const LoyaltyProgram = require('../models/LoyaltyProgram');
-const adminLoyaltyController = require('./admin.loyalty.controller');
+const Transaction = require('../models/Transaction');
+const Invoice = require('../models/Invoice');
 
-const getDashboardStats = async () => {
-    const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-
-    // Get total revenue and active bookings
-    const [totalRevenue, activeBookings] = await Promise.all([
-        Booking.aggregate([
-            { $match: { status: 'confirmed' } },
-            { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-        ]),
-        Booking.countDocuments({ 
-            status: 'active',
-            checkInDate: { $lte: today },
-            checkOutDate: { $gte: today }
-        })
-    ]);
-
-    // Get loyalty program stats
-    const [loyaltyMembers, bronzeMembers, silverMembers, goldMembers, platinumMembers] = await Promise.all([
-        User.countDocuments({ role: 'member' }),
-        User.countDocuments({ role: 'member', 'currentTier.name': 'Bronze' }),
-        User.countDocuments({ role: 'member', 'currentTier.name': 'Silver' }),
-        User.countDocuments({ role: 'member', 'currentTier.name': 'Gold' }),
-        User.countDocuments({ role: 'member', 'currentTier.name': 'Platinum' })
-    ]);
-
-    // Get new members this month
-    const newMembersThisMonth = await User.countDocuments({
-        role: 'member',
-        createdAt: { 
-            $gte: firstDayOfMonth,
-            $lte: lastDayOfMonth
-        }
-    });
-
-    // Get recent loyalty activity
-    const recentLoyaltyActivity = await adminLoyaltyController.getRecentActivity();
-
-    // Get loyalty trends data
-    const loyaltyTrends = await adminLoyaltyController.getMemberTrends();
-
-    // Calculate revenue growth
-    const lastMonthRevenue = await Booking.aggregate([
-        {
-            $match: {
-                status: 'confirmed',
-                createdAt: {
-                    $gte: new Date(today.getFullYear(), today.getMonth() - 1, 1),
-                    $lt: firstDayOfMonth
-                }
-            }
-        },
-        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-
-    const currentMonthRevenue = await Booking.aggregate([
-        {
-            $match: {
-                status: 'confirmed',
-                createdAt: {
-                    $gte: firstDayOfMonth,
-                    $lte: lastDayOfMonth
-                }
-            }
-        },
-        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
-    ]);
-
-    const revenueGrowth = lastMonthRevenue.length && currentMonthRevenue.length ?
-        ((currentMonthRevenue[0].total - lastMonthRevenue[0].total) / lastMonthRevenue[0].total * 100).toFixed(1) :
-        0;
-
-    // Get recent bookings
-    const recentBookings = await Booking.find()
-        .populate('guest', 'name email')
-        .populate('room', 'number type')
-        .sort({ createdAt: -1 })
-        .limit(5);
-
-    return {
-        totalRevenue: totalRevenue.length ? totalRevenue[0].total : 0,
-        revenueGrowth,
-        activeBookings,
-        occupancyRate: ((activeBookings / totalRooms) * 100).toFixed(1),
-        loyaltyMembers,
-        newMembersThisMonth,
-        satisfactionRate: 92, // Example static value, implement actual calculation
-        reviewCount: 150, // Example static value, implement actual calculation
-        bronzeMembers,
-        silverMembers,
-        goldMembers,
-        platinumMembers,
-        recentLoyaltyActivity,
-        loyaltyTrends,
-        recentBookings
-    };
-};
-
+// Dashboard
 exports.getDashboard = async (req, res) => {
     try {
-        // For new admin without hotel
-        if (!req.user || !req.user.hotel) {
-            return res.render('admin/dashboard', {
-                title: 'Admin Dashboard',
-                otaStats: {
-                    totalChannels: 0,
-                    activeChannels: 0,
-                    totalBookings: 0,
-                    totalRevenue: 0
+        // Get basic statistics
+        const [
+            totalBookings,
+            totalRevenue,
+            totalGuests,
+            activeHotels,
+            loyaltyMembers,
+            recentBookings,
+            topHotels
+        ] = await Promise.all([
+            Booking.countDocuments(),
+            Transaction.aggregate([
+                { $group: { _id: null, total: { $sum: "$amount" } } }
+            ]),
+            User.countDocuments({ role: 'guest' }),
+            Hotel.countDocuments({ status: 'active' }),
+            LoyaltyProgram.countDocuments(),
+            Booking.find()
+                .populate('user', 'name email')
+                .populate('hotel', 'name')
+                .sort('-createdAt')
+                .limit(5),
+            Hotel.aggregate([
+                {
+                    $lookup: {
+                        from: 'bookings',
+                        localField: '_id',
+                        foreignField: 'hotel',
+                        as: 'bookings'
+                    }
                 },
-                channelPerformance: [],
-                recentBookings: []
-            });
-        }
-
-        // Get OTA statistics
-        const [channels, bookings] = await Promise.all([
-            OTAChannel.find({ hotel: req.user.hotel }),
-            OTABooking.find({
-                hotel: req.user.hotel,
-                createdAt: {
-                    $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-                }
-            })
+                {
+                    $project: {
+                        name: 1,
+                        totalBookings: { $size: '$bookings' },
+                        revenue: {
+                            $sum: '$bookings.totalAmount'
+                        }
+                    }
+                },
+                { $sort: { totalBookings: -1 } },
+                { $limit: 5 }
+            ])
         ]);
 
-        const otaStats = {
-            totalChannels: channels.length,
-            activeChannels: channels.filter(c => c.isActive).length,
-            totalBookings: bookings.length,
-            totalRevenue: bookings.reduce((sum, b) => sum + (b.bookingDetails.otaPrice || 0), 0)
-        };
+        // Get loyalty program statistics
+        const loyaltyStats = await LoyaltyProgram.aggregate([
+            {
+                $group: {
+                    _id: '$membershipTier',
+                    count: { $sum: 1 },
+                    totalPoints: { $sum: '$points' }
+                }
+            }
+        ]);
 
-        // Get OTA performance data for charts
-        const channelPerformance = await OTABooking.aggregate([
+        // Get booking trends (last 7 days)
+        const last7Days = [...Array(7)].map((_, i) => {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            return date.toISOString().split('T')[0];
+        }).reverse();
+
+        const bookingTrends = await Booking.aggregate([
             {
                 $match: {
-                    hotel: req.user.hotel,
                     createdAt: {
-                        $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+                        $gte: new Date(last7Days[0]),
+                        $lte: new Date(last7Days[6] + 'T23:59:59.999Z')
                     }
                 }
             },
             {
                 $group: {
-                    _id: {
-                        channel: '$channel',
-                        date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
-                    },
-                    bookings: { $sum: 1 },
-                    revenue: { $sum: '$bookingDetails.otaPrice' }
+                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                    count: { $sum: 1 },
+                    revenue: { $sum: '$totalAmount' }
                 }
             },
-            {
-                $lookup: {
-                    from: 'otachannels',
-                    localField: '_id.channel',
-                    foreignField: '_id',
-                    as: 'channelInfo'
-                }
-            },
-            {
-                $sort: { '_id.date': 1 }
-            }
+            { $sort: { '_id': 1 } }
         ]);
 
-        // Format data for charts
-        const dates = [...new Set(channelPerformance.map(p => p._id.date))].sort();
-        const channelNames = [...new Set(channelPerformance.map(p => p.channelInfo[0]?.name || 'Unknown'))];
-
-        const chartData = {
-            bookings: {
-                labels: dates,
-                datasets: channelNames.map(name => ({
-                    label: name,
-                    data: dates.map(date => {
-                        const record = channelPerformance.find(p => 
-                            p._id.date === date && 
-                            p.channelInfo[0]?.name === name
-                        );
-                        return record ? record.bookings : 0;
-                    })
-                }))
-            },
-            revenue: {
-                labels: dates,
-                datasets: channelNames.map(name => ({
-                    label: name,
-                    data: dates.map(date => {
-                        const record = channelPerformance.find(p => 
-                            p._id.date === date && 
-                            p.channelInfo[0]?.name === name
-                        );
-                        return record ? record.revenue : 0;
-                    })
-                }))
-            }
-        };
-
-        // Get recent bookings
-        const recentBookings = await OTABooking.find({ hotel: req.user.hotel })
-            .sort({ createdAt: -1 })
-            .limit(5)
-            .populate('channel');
-
-        const dashboardStats = await getDashboardStats();
+        // Fill in missing dates with zero values
+        const bookingsByDate = Object.fromEntries(
+            last7Days.map(date => [date, { count: 0, revenue: 0 }])
+        );
+        bookingTrends.forEach(({ _id, count, revenue }) => {
+            bookingsByDate[_id] = { count, revenue };
+        });
 
         res.render('admin/dashboard', {
             title: 'Admin Dashboard',
-            otaStats,
-            chartData: JSON.stringify(chartData),
-            channelPerformance,
+            stats: {
+                totalBookings,
+                totalRevenue: totalRevenue[0]?.total || 0,
+                totalGuests,
+                activeHotels,
+                loyaltyMembers
+            },
             recentBookings,
-            dashboardStats
+            topHotels,
+            loyaltyStats: loyaltyStats.reduce((acc, { _id, count, totalPoints }) => {
+                acc[_id] = { count, totalPoints };
+                return acc;
+            }, {}),
+            bookingTrends: {
+                labels: Object.keys(bookingsByDate),
+                bookings: Object.values(bookingsByDate).map(v => v.count),
+                revenue: Object.values(bookingsByDate).map(v => v.revenue)
+            }
         });
     } catch (error) {
-        console.error('Admin Dashboard Error:', error);
-        req.flash('error', 'Error loading dashboard');
-        res.redirect('/');
+        console.error('Dashboard error:', error);
+        res.status(500).render('error', {
+            message: 'Error loading dashboard'
+        });
+    }
+};
+
+// Hotels
+exports.getHotels = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [hotels, total] = await Promise.all([
+            Hotel.find()
+                .populate('rooms')
+                .sort('-createdAt')
+                .skip(skip)
+                .limit(limit),
+            Hotel.countDocuments()
+        ]);
+
+        res.render('admin/hotels', {
+            title: 'Hotels Management',
+            hotels,
+            pagination: {
+                page,
+                pageCount: Math.ceil(total / limit),
+                limit
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching hotels:', error);
+        res.status(500).render('error', {
+            message: 'Error loading hotels'
+        });
+    }
+};
+
+// Rooms
+exports.getRooms = async (req, res) => {
+    try {
+        const hotelId = req.params.hotelId;
+        const hotel = await Hotel.findById(hotelId).populate('rooms');
+        
+        if (!hotel) {
+            return res.status(404).render('error', {
+                message: 'Hotel not found'
+            });
+        }
+
+        res.render('admin/rooms', {
+            title: `Rooms - ${hotel.name}`,
+            hotel,
+            rooms: hotel.rooms
+        });
+    } catch (error) {
+        console.error('Error fetching rooms:', error);
+        res.status(500).render('error', {
+            message: 'Error loading rooms'
+        });
+    }
+};
+
+// Users
+exports.getUsers = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [users, total] = await Promise.all([
+            User.find()
+                .sort('-createdAt')
+                .skip(skip)
+                .limit(limit),
+            User.countDocuments()
+        ]);
+
+        res.render('admin/users', {
+            title: 'User Management',
+            users,
+            pagination: {
+                page,
+                pageCount: Math.ceil(total / limit),
+                limit
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).render('error', {
+            message: 'Error loading users'
+        });
+    }
+};
+
+// Bookings
+exports.getBookings = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [bookings, total] = await Promise.all([
+            Booking.find()
+                .populate('user', 'name email')
+                .populate('hotel', 'name')
+                .populate('room', 'number type')
+                .sort('-createdAt')
+                .skip(skip)
+                .limit(limit),
+            Booking.countDocuments()
+        ]);
+
+        res.render('admin/bookings', {
+            title: 'Booking Management',
+            bookings,
+            pagination: {
+                page,
+                pageCount: Math.ceil(total / limit),
+                limit
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching bookings:', error);
+        res.status(500).render('error', {
+            message: 'Error loading bookings'
+        });
+    }
+};
+
+// Invoices
+exports.getInvoices = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [invoices, total] = await Promise.all([
+            Invoice.find()
+                .populate('booking')
+                .populate('user', 'name email')
+                .sort('-createdAt')
+                .skip(skip)
+                .limit(limit),
+            Invoice.countDocuments()
+        ]);
+
+        res.render('admin/invoices', {
+            title: 'Invoice Management',
+            invoices,
+            pagination: {
+                page,
+                pageCount: Math.ceil(total / limit),
+                limit
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching invoices:', error);
+        res.status(500).render('error', {
+            message: 'Error loading invoices'
+        });
+    }
+};
+
+// Transactions
+exports.getTransactions = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const skip = (page - 1) * limit;
+
+        const [transactions, total] = await Promise.all([
+            Transaction.find()
+                .populate('booking')
+                .populate('user', 'name email')
+                .sort('-createdAt')
+                .skip(skip)
+                .limit(limit),
+            Transaction.countDocuments()
+        ]);
+
+        res.render('admin/transactions', {
+            title: 'Transaction History',
+            transactions,
+            pagination: {
+                page,
+                pageCount: Math.ceil(total / limit),
+                limit
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching transactions:', error);
+        res.status(500).render('error', {
+            message: 'Error loading transactions'
+        });
     }
 };

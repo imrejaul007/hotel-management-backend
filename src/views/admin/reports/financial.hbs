@@ -1,0 +1,118 @@
+{{> admin/header title="Financial Reports"}}
+
+<div class="container-fluid">
+    <!-- Revenue Overview Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Revenue Overview</h6>
+        </div>
+        <div class="card-body">
+            <div class="chart-area">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Methods Card -->
+    <div class="row">
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Payment Methods Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie">
+                        <canvas id="paymentMethodsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue by Room Type -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Revenue by Room Type</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar">
+                        <canvas id="roomTypeRevenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Revenue Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+        labels: {{{json revenue.map '_id'}}},
+        datasets: [{
+            label: 'Daily Revenue',
+            data: {{{json revenue.map 'total'}}},
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            tension: 0.3
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: "rgb(234, 236, 244)",
+                    zeroLineColor: "rgb(234, 236, 244)",
+                    drawBorder: false
+                },
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value;
+                    }
+                }
+            },
+            x: {
+                grid: {
+                    display: false,
+                    drawBorder: false
+                }
+            }
+        }
+    }
+});
+
+// Payment Methods Chart
+const paymentMethodsCtx = document.getElementById('paymentMethodsChart').getContext('2d');
+new Chart(paymentMethodsCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{{json paymentMethods.map '_id'}}},
+        datasets: [{
+            data: {{{json paymentMethods.map 'total'}}},
+            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+            hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a'],
+            hoverBorderColor: "rgba(234, 236, 244, 1)",
+        }]
+    },
+    options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        },
+        cutout: '70%'
+    }
+});
+</script>
+
+{{> admin/footer}}

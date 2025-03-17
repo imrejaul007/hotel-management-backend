@@ -1,71 +1,205 @@
-{{#extend "admin-layout"}}
-{{#content "content"}}
-<div class="container-fluid px-4">
-    <h1 class="mt-4">Channel Manager Dashboard</h1>
-    
-    <!-- Channel Overview Cards -->
-    <div class="row mt-4">
-        {{#each channels}}
-        <div class="col-xl-3 col-md-6">
-            <div class="card bg-light mb-4">
+{{> admin/header title="Channel Manager Dashboard"}}
+
+<div class="container-fluid">
+    <!-- OTA Connection Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">OTA Connection Status</h6>
+                    <button class="btn btn-primary btn-sm" onclick="refreshAllConnections()">
+                        <i class="fas fa-sync"></i> Refresh All
+                    </button>
+                </div>
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="small text-muted">{{name}}</div>
-                            <div class="text-lg fw-bold">
-                                {{stats.totalBookings}} Bookings
+                    <div class="row" id="otaConnections">
+                        <!-- Booking.com -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-primary h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Booking.com
+                                            </div>
+                                            <div class="h6 mb-0 font-weight-bold text-gray-800" id="bookingComStatus">
+                                                <span class="badge badge-success">Connected</span>
+                                            </div>
+                                            <div class="small text-gray-600" id="bookingComLastSync">
+                                                Last sync: 5 minutes ago
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <img src="/img/booking-com.png" alt="Booking.com" height="40">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="text-end">
-                            <div class="small text-muted">Revenue</div>
-                            <div class="text-lg fw-bold">${{stats.totalRevenue}}</div>
+
+                        <!-- Airbnb -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-danger h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                                Airbnb
+                                            </div>
+                                            <div class="h6 mb-0 font-weight-bold text-gray-800" id="airbnbStatus">
+                                                <span class="badge badge-success">Connected</span>
+                                            </div>
+                                            <div class="small text-gray-600" id="airbnbLastSync">
+                                                Last sync: 2 minutes ago
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <img src="/img/airbnb.png" alt="Airbnb" height="40">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Expedia -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-warning h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                Expedia
+                                            </div>
+                                            <div class="h6 mb-0 font-weight-bold text-gray-800" id="expediaStatus">
+                                                <span class="badge badge-success">Connected</span>
+                                            </div>
+                                            <div class="small text-gray-600" id="expediaLastSync">
+                                                Last sync: 7 minutes ago
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <img src="/img/expedia.png" alt="Expedia" height="40">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TripAdvisor -->
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-info h-100">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                TripAdvisor
+                                            </div>
+                                            <div class="h6 mb-0 font-weight-bold text-gray-800" id="tripadvisorStatus">
+                                                <span class="badge badge-success">Connected</span>
+                                            </div>
+                                            <div class="small text-gray-600" id="tripadvisorLastSync">
+                                                Last sync: 10 minutes ago
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <img src="/img/tripadvisor.png" alt="TripAdvisor" height="40">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-2">
-                        <div class="badge bg-{{statusColor status}}">{{status}}</div>
-                    </div>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a href="/admin/channel-manager/channels/{{_id}}" class="small text-dark stretched-link">View Details</a>
-                    <div class="small text-dark"><i class="fas fa-angle-right"></i></div>
                 </div>
             </div>
         </div>
-        {{/each}}
     </div>
 
-    <!-- Sync Status and Recent Activities -->
-    <div class="row">
-        <!-- Sync Status -->
-        <div class="col-xl-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-sync-alt me-1"></i>
-                    Sync Status
+    <!-- Sync Activity Log -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Sync Activity Log</h6>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-bordered" id="syncLogTable">
                             <thead>
                                 <tr>
-                                    <th>Channel</th>
-                                    <th>Last Inventory Sync</th>
-                                    <th>Last Rate Sync</th>
-                                    <th>Last Booking Sync</th>
+                                    <th>Timestamp</th>
+                                    <th>Platform</th>
+                                    <th>Action</th>
                                     <th>Status</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="syncLogBody">
+                                <!-- Sync log entries will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rate Management -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Rate Management</h6>
+                    <div>
+                        <button class="btn btn-success btn-sm mr-2" onclick="enableAutoRates()">
+                            <i class="fas fa-robot"></i> Enable Auto-Rates
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="pushRateUpdates()">
+                            <i class="fas fa-sync"></i> Push Updates
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="rateTable">
+                            <thead>
+                                <tr>
+                                    <th>Room Type</th>
+                                    <th>Base Rate</th>
+                                    <th>Booking.com</th>
+                                    <th>Airbnb</th>
+                                    <th>Expedia</th>
+                                    <th>TripAdvisor</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {{#each channels}}
+                                {{#each roomTypes}}
                                 <tr>
                                     <td>{{name}}</td>
-                                    <td>{{formatTimeAgo lastSync.inventory}}</td>
-                                    <td>{{formatTimeAgo lastSync.prices}}</td>
-                                    <td>{{formatTimeAgo lastSync.bookings}}</td>
                                     <td>
-                                        <span class="badge bg-{{syncStatusColor syncStatus}}">
-                                            {{syncStatus}}
-                                        </span>
+                                        <input type="number" class="form-control form-control-sm base-rate" 
+                                               value="{{baseRate}}" data-room-type="{{id}}">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm ota-rate" 
+                                               value="{{bookingComRate}}" data-platform="booking">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm ota-rate" 
+                                               value="{{airbnbRate}}" data-platform="airbnb">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm ota-rate" 
+                                               value="{{expediaRate}}" data-platform="expedia">
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm ota-rate" 
+                                               value="{{tripadvisorRate}}" data-platform="tripadvisor">
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm" onclick="updateRates('{{id}}')">
+                                            Update
+                                        </button>
                                     </td>
                                 </tr>
                                 {{/each}}
@@ -75,226 +209,277 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Recent Activities -->
-        <div class="col-xl-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-list me-1"></i>
-                    Recent Activities
+    <!-- Market Analysis -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Competitive Rate Analysis</h6>
                 </div>
                 <div class="card-body">
-                    <div class="timeline">
-                        {{#each recentActivities}}
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-{{typeColor type}}"></div>
-                            <div class="timeline-content">
-                                <h3 class="timeline-title">{{title}}</h3>
-                                <p class="timeline-text">{{message}}</p>
-                                <p class="timeline-time">{{formatTimeAgo timestamp}}</p>
-                            </div>
-                        </div>
-                        {{/each}}
+                    <div class="chart-area">
+                        <canvas id="competitiveRateChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Booking Statistics -->
-    <div class="row">
-        <div class="col-xl-12">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-chart-bar me-1"></i>
-                    Booking Statistics
-                    <div class="float-end">
-                        <select class="form-select form-select-sm d-inline-block w-auto" id="statsTimeRange">
-                            <option value="7">Last 7 Days</option>
-                            <option value="30">Last 30 Days</option>
-                            <option value="90">Last 90 Days</option>
-                        </select>
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Booking Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie">
+                        <canvas id="bookingDistributionChart"></canvas>
                     </div>
-                </div>
-                <div class="card-body">
-                    <canvas id="bookingStats" width="100%" height="40"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Channel Performance Comparison -->
-    <div class="row">
-        <div class="col-xl-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-chart-pie me-1"></i>
-                    Revenue Distribution
-                </div>
-                <div class="card-body">
-                    <canvas id="revenueDistribution" width="100%" height="50"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-chart-line me-1"></i>
-                    Conversion Rates
-                </div>
-                <div class="card-body">
-                    <canvas id="conversionRates" width="100%" height="50"></canvas>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Quick Action Modal -->
-<div class="modal fade" id="quickActionModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Quick Actions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="list-group">
-                    <button class="list-group-item list-group-item-action" onclick="syncAllChannels()">
-                        <i class="fas fa-sync-alt me-2"></i> Sync All Channels
-                    </button>
-                    <button class="list-group-item list-group-item-action" onclick="updateAllRates()">
-                        <i class="fas fa-tags me-2"></i> Update All Rates
-                    </button>
-                    <button class="list-group-item list-group-item-action" onclick="checkAllBookings()">
-                        <i class="fas fa-book me-2"></i> Check New Bookings
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{/content}}
-
-{{#content "scripts"}}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- WebSocket Integration -->
+<script src="/js/websocket.js"></script>
 <script>
-    // Initialize charts
-    document.addEventListener('DOMContentLoaded', function() {
-        // Booking Statistics Chart
-        const bookingStatsCtx = document.getElementById('bookingStats').getContext('2d');
-        new Chart(bookingStatsCtx, {
-            type: 'bar',
-            data: {
-                labels: {{{json bookingStats.labels}}},
-                datasets: {{{json bookingStats.datasets}}}
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    initializeDataTables();
+    setupWebSocket();
+});
+
+function initializeDataTables() {
+    $('#syncLogTable').DataTable({
+        order: [[0, 'desc']],
+        pageLength: 10
+    });
+}
+
+function initializeCharts() {
+    // Competitive Rate Chart
+    const rateCtx = document.getElementById('competitiveRateChart');
+    new Chart(rateCtx, {
+        type: 'line',
+        data: {
+            labels: {{{json competitiveRates.labels}}},
+            datasets: [{
+                label: 'Your Rates',
+                data: {{{json competitiveRates.yourRates}}},
+                borderColor: 'rgba(78, 115, 223, 1)',
+                backgroundColor: 'rgba(78, 115, 223, 0.1)'
+            }, {
+                label: 'Market Average',
+                data: {{{json competitiveRates.marketAverage}}},
+                borderColor: 'rgba(28, 200, 138, 1)',
+                backgroundColor: 'rgba(28, 200, 138, 0.1)'
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
+        }
+    });
 
-        // Revenue Distribution Chart
-        const revenueCtx = document.getElementById('revenueDistribution').getContext('2d');
-        new Chart(revenueCtx, {
-            type: 'pie',
-            data: {
-                labels: {{{json revenueDistribution.labels}}},
-                datasets: [{
-                    data: {{{json revenueDistribution.data}}},
-                    backgroundColor: {{{json revenueDistribution.colors}}}
-                }]
-            }
-        });
+    // Booking Distribution Chart
+    const distributionCtx = document.getElementById('bookingDistributionChart');
+    new Chart(distributionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Booking.com', 'Airbnb', 'Expedia', 'TripAdvisor'],
+            datasets: [{
+                data: {{{json bookingDistribution}}},
+                backgroundColor: ['#4e73df', '#e74a3b', '#f6c23e', '#36b9cc']
+            }]
+        },
+        options: {
+            maintainAspectRatio: false
+        }
+    });
+}
 
-        // Conversion Rates Chart
-        const conversionCtx = document.getElementById('conversionRates').getContext('2d');
-        new Chart(conversionCtx, {
-            type: 'line',
-            data: {
-                labels: {{{json conversionRates.labels}}},
-                datasets: {{{json conversionRates.datasets}}}
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 100
-                    }
-                }
-            }
+function setupWebSocket() {
+    // OTA connection status updates
+    hotelWS.on('OTA_STATUS_UPDATE', function(data) {
+        const statusElement = document.getElementById(`${data.platform}Status`);
+        const lastSyncElement = document.getElementById(`${data.platform}LastSync`);
+        
+        if (statusElement) {
+            statusElement.innerHTML = `<span class="badge badge-${data.connected ? 'success' : 'danger'}">
+                ${data.connected ? 'Connected' : 'Disconnected'}
+            </span>`;
+        }
+        
+        if (lastSyncElement) {
+            lastSyncElement.textContent = `Last sync: ${data.lastSync}`;
+        }
+
+        // Add to sync log
+        addSyncLogEntry({
+            timestamp: new Date().toLocaleString(),
+            platform: data.platform,
+            action: 'Connection Status',
+            status: data.connected ? 'Success' : 'Failed',
+            details: data.message
         });
     });
 
-    // Quick Actions
-    async function syncAllChannels() {
-        try {
-            const response = await fetch('/api/channel-manager/sync-all', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                showToast('success', 'Sync initiated for all channels');
-            } else {
-                showToast('error', data.error);
-            }
-        } catch (error) {
-            showToast('error', 'Failed to sync channels');
-        }
-    }
+    // Rate update notifications
+    hotelWS.on('RATE_UPDATE', function(data) {
+        addSyncLogEntry({
+            timestamp: new Date().toLocaleString(),
+            platform: data.platform,
+            action: 'Rate Update',
+            status: data.success ? 'Success' : 'Failed',
+            details: data.message
+        });
+    });
+}
 
-    async function updateAllRates() {
-        try {
-            const response = await fetch('/api/channel-manager/update-rates', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                showToast('success', 'Rate update initiated for all channels');
-            } else {
-                showToast('error', data.error);
-            }
-        } catch (error) {
-            showToast('error', 'Failed to update rates');
-        }
-    }
+function addSyncLogEntry(entry) {
+    const table = $('#syncLogTable').DataTable();
+    
+    table.row.add([
+        entry.timestamp,
+        entry.platform,
+        entry.action,
+        `<span class="badge badge-${entry.status === 'Success' ? 'success' : 'danger'}">${entry.status}</span>`,
+        entry.details
+    ]).draw(false);
+}
 
-    async function checkAllBookings() {
-        try {
-            const response = await fetch('/api/channel-manager/check-bookings', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+function refreshAllConnections() {
+    fetch('/admin/channel-manager/refresh-connections', {
+        method: 'POST'
+    }).then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Connections Refreshed',
+                text: 'All OTA connections have been refreshed successfully.'
             });
-            const data = await response.json();
-            if (data.success) {
-                showToast('success', 'Checking for new bookings');
-            } else {
-                showToast('error', data.error);
-            }
-        } catch (error) {
-            showToast('error', 'Failed to check bookings');
+        } else {
+            throw new Error('Failed to refresh connections');
         }
-    }
+    }).catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to refresh OTA connections: ' + error.message
+        });
+    });
+}
 
-    // Helper function to show toast notifications
-    function showToast(type, message) {
-        // Implementation depends on your toast notification library
-    }
+function enableAutoRates() {
+    Swal.fire({
+        title: 'Enable Auto-Rates',
+        text: 'This will enable automatic rate adjustments based on market demand. Continue?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Enable',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/admin/channel-manager/enable-auto-rates', {
+                method: 'POST'
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Auto-Rates Enabled',
+                        text: 'Automatic rate adjustments are now active.'
+                    });
+                } else {
+                    throw new Error('Failed to enable auto-rates');
+                }
+            }).catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to enable auto-rates: ' + error.message
+                });
+            });
+        }
+    });
+}
+
+function updateRates(roomTypeId) {
+    const baseRate = document.querySelector(`input[data-room-type="${roomTypeId}"].base-rate`).value;
+    const otaRates = {};
+    
+    document.querySelectorAll(`input[data-room-type="${roomTypeId}"].ota-rate`).forEach(input => {
+        otaRates[input.dataset.platform] = input.value;
+    });
+
+    fetch('/admin/channel-manager/update-rates', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            roomTypeId,
+            baseRate,
+            otaRates
+        })
+    }).then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Rates Updated',
+                text: 'Room rates have been updated successfully.'
+            });
+        } else {
+            throw new Error('Failed to update rates');
+        }
+    }).catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to update rates: ' + error.message
+        });
+    });
+}
+
+function pushRateUpdates() {
+    Swal.fire({
+        title: 'Push Rate Updates',
+        text: 'This will push all rate updates to connected OTAs. Continue?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Push Updates',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/admin/channel-manager/push-rates', {
+                method: 'POST'
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Rates Pushed',
+                        text: 'All rate updates have been pushed to OTAs successfully.'
+                    });
+                } else {
+                    throw new Error('Failed to push rate updates');
+                }
+            }).catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to push rate updates: ' + error.message
+                });
+            });
+        }
+    });
+}
 </script>
-{{/content}}
-{{/extend}}
+
+{{> admin/footer}}

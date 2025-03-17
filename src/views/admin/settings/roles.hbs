@@ -1,0 +1,206 @@
+{{> admin/header title="Role Management"}}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Role Management</h1>
+        <button class="btn btn-primary" onclick="showCreateRoleModal()">
+            <i class="fas fa-plus"></i> Add New Role
+        </button>
+    </div>
+
+    <!-- Roles Table -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="rolesTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Role Name</th>
+                            <th>Permissions</th>
+                            <th>Users Count</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each roles}}
+                        <tr>
+                            <td>{{this.name}}</td>
+                            <td>
+                                {{#each this.permissions}}
+                                <span class="badge bg-info me-1">{{this}}</span>
+                                {{/each}}
+                            </td>
+                            <td>{{this.usersCount}}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-info" onclick="showEditRoleModal('{{this._id}}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {{#unless this.isDefault}}
+                                    <button class="btn btn-sm btn-danger" onclick="deleteRole('{{this._id}}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {{/unless}}
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Role Modal -->
+<div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="roleModalTitle">Add New Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roleForm">
+                    <input type="hidden" id="roleId">
+                    <div class="mb-3">
+                        <label class="form-label">Role Name</label>
+                        <input type="text" class="form-control" id="roleName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Permissions</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="manage_bookings" id="perm_bookings">
+                            <label class="form-check-label">Manage Bookings</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="manage_guests" id="perm_guests">
+                            <label class="form-check-label">Manage Guests</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="manage_rooms" id="perm_rooms">
+                            <label class="form-check-label">Manage Rooms</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="manage_housekeeping" id="perm_housekeeping">
+                            <label class="form-check-label">Manage Housekeeping</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="manage_inventory" id="perm_inventory">
+                            <label class="form-check-label">Manage Inventory</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="manage_payments" id="perm_payments">
+                            <label class="form-check-label">Manage Payments</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="manage_reports" id="perm_reports">
+                            <label class="form-check-label">Access Reports</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="manage_settings" id="perm_settings">
+                            <label class="form-check-label">Manage Settings</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveRole()">Save Role</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize DataTable
+$(document).ready(function() {
+    $('#rolesTable').DataTable();
+});
+
+// Show create role modal
+function showCreateRoleModal() {
+    $('#roleModalTitle').text('Add New Role');
+    $('#roleForm')[0].reset();
+    $('#roleId').val('');
+    $('#roleModal').modal('show');
+}
+
+// Show edit role modal
+async function showEditRoleModal(roleId) {
+    try {
+        const response = await fetch(`/admin/settings/roles/${roleId}`);
+        const role = await response.json();
+
+        $('#roleModalTitle').text('Edit Role');
+        $('#roleId').val(role._id);
+        $('#roleName').val(role.name);
+
+        // Reset all checkboxes
+        $('input[type="checkbox"]').prop('checked', false);
+
+        // Check permissions that the role has
+        role.permissions.forEach(perm => {
+            $(`#perm_${perm}`).prop('checked', true);
+        });
+
+        $('#roleModal').modal('show');
+    } catch (error) {
+        alert('Error fetching role details: ' + error.message);
+    }
+}
+
+// Save role
+async function saveRole() {
+    const roleId = $('#roleId').val();
+    const permissions = [];
+    $('input[type="checkbox"]:checked').each(function() {
+        permissions.push($(this).val());
+    });
+
+    const roleData = {
+        name: $('#roleName').val(),
+        permissions
+    };
+
+    try {
+        const url = roleId ? `/admin/settings/roles/${roleId}` : '/admin/settings/roles';
+        const method = roleId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(roleData)
+        });
+
+        if (!response.ok) throw new Error('Failed to save role');
+
+        $('#roleModal').modal('hide');
+        location.reload();
+    } catch (error) {
+        alert('Error saving role: ' + error.message);
+    }
+}
+
+// Delete role
+async function deleteRole(roleId) {
+    if (!confirm('Are you sure you want to delete this role? Users with this role will need to be reassigned.')) return;
+
+    try {
+        const response = await fetch(`/admin/settings/roles/${roleId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Failed to delete role');
+
+        location.reload();
+    } catch (error) {
+        alert('Error deleting role: ' + error.message);
+    }
+}
+</script>
+
+{{> admin/footer}}

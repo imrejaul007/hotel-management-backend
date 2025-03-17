@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
 const authService = require('../services/auth.service');
 const emailService = require('../services/email.service');
-const User = require('../models/user.model');
+const User = require('../models/User');
+const LoyaltyProgram = require('../models/LoyaltyProgram');
 const crypto = require('crypto-js');
 const { successResponse, errorResponse } = require('../utils/response.util');
 
@@ -13,6 +14,21 @@ const cookieOptions = {
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
 };
 
+// Initialize loyalty program for new user
+const initializeLoyaltyProgram = async (userId) => {
+    await LoyaltyProgram.create({
+        user: userId,
+        tier: 'Bronze',
+        points: 100, // Welcome bonus
+        pointsHistory: [{
+            points: 100,
+            type: 'welcome_bonus',
+            description: 'Welcome Bonus Points',
+            date: new Date()
+        }]
+    });
+};
+
 exports.register = async (req, res) => {
     try {
         const { name, email, password, confirmPassword } = req.body;
@@ -20,46 +36,45 @@ exports.register = async (req, res) => {
         // Check if passwords match
         if (password !== confirmPassword) {
             return res.render('auth/register', {
-                title: 'Create Admin Account',
+                title: 'Create Account',
                 error: 'Passwords do not match',
                 name,
                 email
             });
         }
 
-        // Check if email already exists
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.render('auth/register', {
-                title: 'Create Admin Account',
-                error: 'Email already registered',
-                name
-            });
-        }
-
-        // Create admin user
-        const user = await User.create({
+        // Register user through auth service
+        const { user, token } = await authService.register({
             name,
             email,
             password,
-            role: 'admin'
+            role: 'guest' // Default role for registration
         });
 
-        // Generate token
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-            expiresIn: '1d'
-        });
+        // Initialize loyalty program for the new user
+        await initializeLoyaltyProgram(user._id);
 
         // Set cookie
         res.cookie('token', token, cookieOptions);
 
-        // Redirect to admin dashboard
-        res.redirect('/admin/dashboard');
+        // Send welcome email with loyalty program details
+        await emailService.sendWelcomeEmail(user.email, {
+            name: user.name,
+            loyaltyTier: 'Bronze',
+            welcomePoints: 100
+        });
+
+        // Redirect based on role
+        if (user.role === 'admin') {
+            res.redirect('/admin/dashboard');
+        } else {
+            res.redirect('/guest/dashboard');
+        }
     } catch (error) {
         console.error('Registration error:', error);
         res.render('auth/register', {
-            title: 'Create Admin Account',
-            error: 'Failed to create account. Please try again.'
+            title: 'Create Account',
+            error: error.message || 'Failed to create account. Please try again.'
         });
     }
 };
@@ -71,7 +86,16 @@ exports.login = async (req, res) => {
         // Set JWT as HTTP-only cookie
         res.cookie('token', token, cookieOptions);
         
-        return successResponse(res, 200, 'Login successful', { user });
+        // Get loyalty program status
+        const loyaltyProgram = await LoyaltyProgram.findOne({ user: user._id });
+        
+        return successResponse(res, 200, 'Login successful', { 
+            user,
+            loyalty: loyaltyProgram ? {
+                tier: loyaltyProgram.tier,
+                points: loyaltyProgram.points
+            } : null
+        });
     } catch (error) {
         return errorResponse(res, 401, error.message);
     }
@@ -95,6 +119,12 @@ exports.googleCallback = async (req, res) => {
         }
 
         const { token, user } = await authService.handleGoogleAuthCallback(req.user);
+        
+        // Initialize loyalty program if new user
+        const existingLoyalty = await LoyaltyProgram.findOne({ user: user._id });
+        if (!existingLoyalty) {
+            await initializeLoyaltyProgram(user._id);
+        }
         
         // Set JWT as HTTP-only cookie
         res.cookie('token', token, cookieOptions);
@@ -179,7 +209,17 @@ exports.getResetPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
-        const { password } = req.body;
+        const { password, confirmPassword } = req.body;
+
+        // Validate password match
+        if (password !== confirmPassword) {
+            return res.render('auth/reset-password', {
+                title: 'Reset Password',
+                error: 'Passwords do not match',
+                token
+            });
+        }
+
         const tokenHash = crypto.SHA256(token).toString();
 
         // Find user with valid reset token
@@ -201,15 +241,20 @@ exports.resetPassword = async (req, res) => {
         user.resetPasswordExpires = undefined;
         await user.save();
 
+        // Send password change confirmation email
+        await emailService.sendPasswordChangeEmail(user.email);
+
         res.render('auth/login', {
             title: 'Login',
-            success: 'Your password has been changed successfully'
+            success: 'Password has been reset successfully. Please login with your new password.'
         });
     } catch (error) {
         res.render('auth/reset-password', {
             title: 'Reset Password',
-            token: req.params.token,
-            error: 'Failed to reset password'
+            error: 'Failed to reset password',
+            token: req.params.token
         });
     }
 };
+
+module.exports = exports;

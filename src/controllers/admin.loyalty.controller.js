@@ -3,8 +3,8 @@ const User = require('../models/User');
 const { sendEmail } = require('../utils/email');
 const json2csv = require('json2csv').parse;
 
-// Get loyalty program dashboard statistics
-exports.getDashboardStats = async (req, res) => {
+// Get loyalty program dashboard
+exports.getDashboard = async (req, res) => {
     try {
         // Get total members
         const totalMembers = await LoyaltyProgram.countDocuments();
@@ -180,218 +180,306 @@ exports.getDashboardStats = async (req, res) => {
             }))
         });
     } catch (error) {
-        console.error('Error getting loyalty dashboard stats:', error);
+        console.error('Error getting loyalty dashboard:', error);
         res.status(500).render('error', {
             message: 'Error loading loyalty dashboard'
         });
     }
 };
 
-// Get member details
-exports.getMemberDetails = async (req, res) => {
+// Get all loyalty program members
+exports.getMembers = async (req, res) => {
     try {
-        const member = await LoyaltyProgram.findById(req.params.id)
-            .populate('userId', 'name email profileImage')
-            .populate('pointsHistory.bookingId')
-            .populate('rewards.bookingId');
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const tier = req.query.tier || '';
+        const sort = req.query.sort || '-points';
 
-        if (!member) {
-            return res.status(404).render('error', {
-                message: 'Member not found'
-            });
+        // Build query
+        let query = {};
+        if (search) {
+            query.$or = [
+                { 'userId.name': { $regex: search, $options: 'i' } },
+                { 'userId.email': { $regex: search, $options: 'i' } }
+            ];
+        }
+        if (tier) {
+            query.membershipTier = tier;
         }
 
-        res.render('admin/loyalty/member-details', {
-            member
+        // Get members with pagination
+        const [members, total] = await Promise.all([
+            LoyaltyProgram.find(query)
+                .populate('userId', 'name email profileImage')
+                .sort(sort)
+                .skip((page - 1) * limit)
+                .limit(limit),
+            LoyaltyProgram.countDocuments(query)
+        ]);
+
+        res.render('admin/loyalty/members', {
+            members,
+            pagination: {
+                page,
+                pageCount: Math.ceil(total / limit),
+                limit
+            },
+            filters: { search, tier, sort }
         });
     } catch (error) {
-        console.error('Error getting member details:', error);
+        console.error('Error getting loyalty members:', error);
         res.status(500).render('error', {
-            message: 'Error loading member details'
+            message: 'Error loading loyalty members'
         });
     }
 };
 
-// Adjust member points
-exports.adjustPoints = async (req, res) => {
+// Get loyalty program tiers
+exports.getTiers = async (req, res) => {
     try {
-        const { memberId, points, reason, notes } = req.body;
-        const adjustmentPoints = parseInt(points);
+        const tiers = [
+            {
+                name: 'Bronze',
+                pointsRequired: 0,
+                benefits: ['Basic member benefits', 'Points on stays', 'Member-only rates'],
+                icon: 'ni-medal',
+                color: 'bronze'
+            },
+            {
+                name: 'Silver',
+                pointsRequired: 10000,
+                benefits: ['10% bonus points', 'Early check-in', 'Late check-out', 'Room upgrades'],
+                icon: 'ni-medal',
+                color: 'silver'
+            },
+            {
+                name: 'Gold',
+                pointsRequired: 25000,
+                benefits: ['20% bonus points', 'Guaranteed room availability', 'Executive lounge access', 'Welcome amenities'],
+                icon: 'ni-medal',
+                color: 'gold'
+            },
+            {
+                name: 'Platinum',
+                pointsRequired: 50000,
+                benefits: ['30% bonus points', 'Suite upgrades', '24/7 concierge service', 'Exclusive events'],
+                icon: 'ni-crown',
+                color: 'platinum'
+            }
+        ];
 
-        const member = await LoyaltyProgram.findById(memberId)
-            .populate('userId', 'name email');
+        // Get member distribution
+        const memberDistribution = await LoyaltyProgram.aggregate([
+            {
+                $group: {
+                    _id: '$membershipTier',
+                    count: { $sum: 1 },
+                    avgPoints: { $avg: '$points' }
+                }
+            }
+        ]);
 
-        if (!member) {
-            return res.status(404).json({
-                success: false,
-                message: 'Member not found'
-            });
-        }
+        res.render('admin/loyalty/tiers', {
+            tiers: tiers.map(tier => ({
+                ...tier,
+                members: memberDistribution.find(m => m._id === tier.name)?.count || 0,
+                avgPoints: Math.round(memberDistribution.find(m => m._id === tier.name)?.avgPoints || 0)
+            }))
+        });
+    } catch (error) {
+        console.error('Error getting loyalty tiers:', error);
+        res.status(500).render('error', {
+            message: 'Error loading loyalty tiers'
+        });
+    }
+};
 
-        // Add points to member's account
-        await member.addPoints(
-            adjustmentPoints,
-            adjustmentPoints > 0 ? 'earned' : 'adjusted',
-            'system',
-            null,
-            `${reason}: ${notes}`
-        );
+// Get loyalty program referrals
+exports.getReferrals = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
 
-        // Send notification email to member
-        await sendEmail({
-            to: member.userId.email,
-            subject: 'Points Adjustment Notification',
-            template: 'loyalty-points-adjustment',
-            context: {
-                name: member.userId.name,
-                points: Math.abs(adjustmentPoints),
-                type: adjustmentPoints > 0 ? 'added to' : 'deducted from',
-                reason,
-                notes
+        // Get referral stats
+        const stats = await LoyaltyProgram.aggregate([
+            { $unwind: '$referrals' },
+            {
+                $group: {
+                    _id: null,
+                    totalReferrals: { $sum: 1 },
+                    successfulReferrals: {
+                        $sum: { $cond: [{ $eq: ['$referrals.status', 'completed'] }, 1, 0] }
+                    },
+                    totalBonusPoints: {
+                        $sum: { $cond: [{ $eq: ['$referrals.status', 'completed'] }, '$referrals.bonusPoints', 0] }
+                    }
+                }
+            }
+        ]);
+
+        // Get top referrers
+        const topReferrers = await LoyaltyProgram.aggregate([
+            { $unwind: '$referrals' },
+            {
+                $match: {
+                    'referrals.status': 'completed'
+                }
+            },
+            {
+                $group: {
+                    _id: '$userId',
+                    totalReferrals: { $sum: 1 },
+                    totalBonusPoints: { $sum: '$referrals.bonusPoints' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            { $sort: { totalReferrals: -1 } },
+            { $limit: 5 }
+        ]);
+
+        // Get recent referrals
+        const [referrals, total] = await Promise.all([
+            LoyaltyProgram.find()
+                .populate('userId', 'name email')
+                .populate('referrals.referredUser', 'name email')
+                .sort('-referrals.date')
+                .skip((page - 1) * limit)
+                .limit(limit),
+            LoyaltyProgram.countDocuments({ 'referrals.0': { $exists: true } })
+        ]);
+
+        res.render('admin/loyalty/referrals', {
+            stats: stats[0] || { totalReferrals: 0, successfulReferrals: 0, totalBonusPoints: 0 },
+            topReferrers: topReferrers.map(r => ({
+                name: r.user[0]?.name,
+                email: r.user[0]?.email,
+                totalReferrals: r.totalReferrals,
+                totalBonusPoints: r.totalBonusPoints
+            })),
+            referrals,
+            pagination: {
+                page,
+                pageCount: Math.ceil(total / limit),
+                limit
             }
         });
-
-        res.json({
-            success: true,
-            message: 'Points adjusted successfully'
-        });
     } catch (error) {
-        console.error('Error adjusting points:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error adjusting points'
+        console.error('Error getting referrals:', error);
+        res.status(500).render('error', {
+            message: 'Error loading referrals'
         });
     }
 };
 
-// Export member data
+// Helper functions
+exports.adjustPoints = async (req, res) => {
+    try {
+        const { memberId, points, reason } = req.body;
+        const member = await LoyaltyProgram.findById(memberId);
+
+        if (!member) {
+            return res.status(404).json({ message: 'Member not found' });
+        }
+
+        member.points += parseInt(points);
+        member.pointsHistory.push({
+            type: points > 0 ? 'earned' : 'deducted',
+            points: Math.abs(points),
+            description: reason,
+            date: new Date()
+        });
+
+        await member.save();
+        res.json({ success: true, message: 'Points adjusted successfully' });
+    } catch (error) {
+        console.error('Error adjusting points:', error);
+        res.status(500).json({ message: 'Error adjusting points' });
+    }
+};
+
 exports.exportMemberData = async (req, res) => {
     try {
         const members = await LoyaltyProgram.find()
             .populate('userId', 'name email')
             .lean();
 
-        const fields = [
-            'Member Name',
-            'Email',
-            'Membership Tier',
-            'Current Points',
-            'Lifetime Points',
-            'Member Since',
-            'Last Activity',
-            'Referral Code',
-            'Referral Count'
-        ];
+        const fields = ['_id', 'userId.name', 'userId.email', 'membershipTier', 'points', 'lifetimePoints', 'memberSince'];
+        const csv = json2csv(members, { fields });
 
-        const data = members.map(member => ({
-            'Member Name': member.userId.name,
-            'Email': member.userId.email,
-            'Membership Tier': member.membershipTier,
-            'Current Points': member.points,
-            'Lifetime Points': member.lifetimePoints,
-            'Member Since': member.memberSince,
-            'Last Activity': member.lastActivity,
-            'Referral Code': member.referralCode,
-            'Referral Count': member.referralCount
-        }));
-
-        const csv = json2csv(data, { fields });
-
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename=loyalty-members.csv');
+        res.header('Content-Type', 'text/csv');
+        res.attachment('loyalty-members.csv');
         res.send(csv);
     } catch (error) {
         console.error('Error exporting member data:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error exporting member data'
-        });
+        res.status(500).json({ message: 'Error exporting member data' });
     }
 };
 
-// Export member points history
 exports.exportMemberHistory = async (req, res) => {
     try {
-        const member = await LoyaltyProgram.findById(req.params.id)
+        const { memberId } = req.params;
+        const member = await LoyaltyProgram.findById(memberId)
             .populate('userId', 'name email')
-            .populate('pointsHistory.bookingId');
+            .lean();
 
         if (!member) {
-            return res.status(404).json({
-                success: false,
-                message: 'Member not found'
-            });
+            return res.status(404).json({ message: 'Member not found' });
         }
 
-        const fields = [
-            'Date',
-            'Points',
-            'Type',
-            'Source',
-            'Description',
-            'Booking ID'
-        ];
+        const fields = ['date', 'type', 'points', 'description'];
+        const csv = json2csv(member.pointsHistory, { fields });
 
-        const data = member.pointsHistory.map(history => ({
-            'Date': history.date,
-            'Points': history.points,
-            'Type': history.type,
-            'Source': history.source,
-            'Description': history.description,
-            'Booking ID': history.bookingId ? history.bookingId._id : '-'
-        }));
-
-        const csv = json2csv(data, { fields });
-
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename=points-history-${member._id}.csv`);
+        res.header('Content-Type', 'text/csv');
+        res.attachment(`member-${memberId}-history.csv`);
         res.send(csv);
     } catch (error) {
         console.error('Error exporting member history:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error exporting member history'
-        });
+        res.status(500).json({ message: 'Error exporting member history' });
     }
 };
 
-// Send welcome email to member
-exports.sendWelcomeEmail = async (req, res) => {
+exports.sendWelcomeEmail = async (memberId) => {
     try {
-        const member = await LoyaltyProgram.findById(req.params.id)
+        const member = await LoyaltyProgram.findById(memberId)
             .populate('userId', 'name email');
 
         if (!member) {
-            return res.status(404).json({
-                success: false,
-                message: 'Member not found'
-            });
+            throw new Error('Member not found');
         }
 
-        // Send welcome email
         await sendEmail({
             to: member.userId.email,
-            subject: 'Welcome to Our Loyalty Program',
+            subject: 'Welcome to Our Loyalty Program!',
             template: 'loyalty-welcome',
             context: {
                 name: member.userId.name,
                 membershipTier: member.membershipTier,
                 points: member.points,
-                referralCode: member.referralCode,
-                referralBonus: process.env.REFERRAL_BONUS_POINTS || 1000,
-                dashboardUrl: `${process.env.FRONTEND_URL}/loyalty/dashboard`
+                benefits: getTierBenefits(member.membershipTier)
             }
         });
 
-        res.json({
-            success: true,
-            message: 'Welcome email sent successfully'
-        });
+        return true;
     } catch (error) {
         console.error('Error sending welcome email:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error sending welcome email'
-        });
+        return false;
     }
 };
+
+function getTierBenefits(tier) {
+    const benefits = {
+        Bronze: ['Basic member benefits', 'Points on stays', 'Member-only rates'],
+        Silver: ['10% bonus points', 'Early check-in', 'Late check-out', 'Room upgrades'],
+        Gold: ['20% bonus points', 'Guaranteed room availability', 'Executive lounge access', 'Welcome amenities'],
+        Platinum: ['30% bonus points', 'Suite upgrades', '24/7 concierge service', 'Exclusive events']
+    };
+    return benefits[tier] || benefits.Bronze;
+}

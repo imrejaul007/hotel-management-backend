@@ -1,0 +1,254 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/admin-nav') %>
+
+<div class="min-h-screen bg-gray-100">
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                        Loyalty Program Management
+                    </h2>
+                </div>
+                <div class="mt-4 flex md:mt-0 md:ml-4">
+                    <a href="/admin/loyalty/rewards/new" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Add New Reward
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tier Overview -->
+            <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+                <div class="px-4 py-5 sm:px-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Membership Tiers
+                    </h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                        Overview of loyalty program tiers and their benefits
+                    </p>
+                </div>
+                <div class="border-t border-gray-200">
+                    <div class="bg-gray-50 px-4 py-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <% ['Bronze', 'Silver', 'Gold', 'Platinum'].forEach(tier => { %>
+                        <div class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-400">
+                            <div class="flex-shrink-0">
+                                <div class="h-10 w-10 rounded-full flex items-center justify-center
+                                    <%= tier === 'Bronze' ? 'bg-yellow-700' :
+                                        tier === 'Silver' ? 'bg-gray-400' :
+                                        tier === 'Gold' ? 'bg-yellow-500' :
+                                        'bg-gray-800' %>">
+                                    <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <a href="/admin/loyalty/tiers/<%= tier.toLowerCase() %>" class="focus:outline-none">
+                                    <p class="text-sm font-medium text-gray-900"><%= tier %></p>
+                                    <p class="text-sm text-gray-500 truncate">
+                                        <%= loyaltyStats[tier]?.count || 0 %> members
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Program Statistics -->
+            <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Total Points -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Points Issued</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">
+                                            <%= totalPoints.toLocaleString() %>
+                                        </div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Points Redeemed -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Points Redeemed</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">
+                                            <%= pointsRedeemed.toLocaleString() %>
+                                        </div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Rewards -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                                </svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Active Rewards</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">
+                                            <%= activeRewards %>
+                                        </div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
+                <!-- Recent Redemptions -->
+                <div class="bg-white shadow sm:rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            Recent Redemptions
+                        </h3>
+                        <div class="mt-5">
+                            <div class="flow-root">
+                                <ul class="-my-5 divide-y divide-gray-200">
+                                    <% recentRedemptions.forEach(redemption => { %>
+                                    <li class="py-4">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 truncate">
+                                                    <%= redemption.user.name %>
+                                                </p>
+                                                <p class="text-sm text-gray-500 truncate">
+                                                    <%= redemption.reward.name %> (<%= redemption.pointsCost %> points)
+                                                </p>
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                <%= moment(redemption.date).fromNow() %>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <% }); %>
+                                </ul>
+                            </div>
+                            <div class="mt-6">
+                                <a href="/admin/loyalty/redemptions" class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    View all redemptions
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Rewards -->
+                <div class="bg-white shadow sm:rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            Popular Rewards
+                        </h3>
+                        <div class="mt-5">
+                            <div class="flow-root">
+                                <ul class="-my-5 divide-y divide-gray-200">
+                                    <% topRewards.forEach(reward => { %>
+                                    <li class="py-4">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 truncate">
+                                                    <%= reward.name %>
+                                                </p>
+                                                <p class="text-sm text-gray-500 truncate">
+                                                    <%= reward.redemptions %> redemptions
+                                                </p>
+                                            </div>
+                                            <div class="text-sm font-medium text-indigo-600">
+                                                <%= reward.pointsCost %> points
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <% }); %>
+                                </ul>
+                            </div>
+                            <div class="mt-6">
+                                <a href="/admin/loyalty/rewards" class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                    View all rewards
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral Program -->
+            <div class="mt-8">
+                <div class="bg-white shadow sm:rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">
+                            Referral Program Overview
+                        </h3>
+                        <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
+                            <div class="px-4 py-5 bg-gray-50 shadow rounded-lg overflow-hidden sm:p-6">
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Total Referrals
+                                </dt>
+                                <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                                    <%= referralStats.total %>
+                                </dd>
+                            </div>
+                            <div class="px-4 py-5 bg-gray-50 shadow rounded-lg overflow-hidden sm:p-6">
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Successful Conversions
+                                </dt>
+                                <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                                    <%= referralStats.conversions %>
+                                </dd>
+                            </div>
+                            <div class="px-4 py-5 bg-gray-50 shadow rounded-lg overflow-hidden sm:p-6">
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Points Awarded
+                                </dt>
+                                <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                                    <%= referralStats.pointsAwarded.toLocaleString() %>
+                                </dd>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <a href="/admin/loyalty/referrals" class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                View referral details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

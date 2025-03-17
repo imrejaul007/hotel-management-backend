@@ -1,0 +1,142 @@
+{{> admin/header title="Current Bookings"}}
+
+<div class="container-fluid">
+    <!-- Current Bookings Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Current Bookings</h6>
+            <div class="btn-group">
+                <a href="/admin/bookings" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-list"></i> All Bookings
+                </a>
+                <a href="/admin/bookings/upcoming" class="btn btn-success btn-sm">
+                    <i class="fas fa-calendar-alt"></i> Upcoming
+                </a>
+                <a href="/admin/bookings/past" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-history"></i> Past
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Check-out</th>
+                            <th>Guest</th>
+                            <th>Room</th>
+                            <th>Duration</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each bookings}}
+                        <tr>
+                            <td>
+                                <strong>{{formatDate checkOut}}</strong><br>
+                                <small class="text-{{#if (lt daysUntilCheckOut 1)}}danger{{else}}warning{{/if}}">
+                                    {{#if (lt daysUntilCheckOut 1)}}
+                                        Due today
+                                    {{else}}
+                                        In {{daysUntilCheckOut}} days
+                                    {{/if}}
+                                </small>
+                            </td>
+                            <td>
+                                <strong>{{user.name}}</strong><br>
+                                <small>{{user.email}}</small><br>
+                                {{#if user.phone}}
+                                <small>{{formatPhone user.phone}}</small>
+                                {{/if}}
+                                {{#if user.loyaltyProgram}}
+                                <br>
+                                <span class="badge bg-{{tierColor user.loyaltyProgram.tier}}">
+                                    {{user.loyaltyProgram.tier}}
+                                </span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <strong>{{room.type}} - {{room.number}}</strong><br>
+                                {{hotel.name}}<br>
+                                <small>{{hotel.location}}</small>
+                            </td>
+                            <td>
+                                <strong>{{nights}} nights</strong><br>
+                                <small>Check-in: {{formatDate checkIn}}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{bookingSourceDisplay}}</span>
+                                {{#if corporateAccount}}
+                                <br><small>{{corporateAccount.companyName}}</small>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{statusColor status}}">{{formatBookingStatus status}}</span>
+                            </td>
+                            <td>
+                                ${{formatNumber totalAmount}}<br>
+                                {{#if payment}}
+                                <span class="badge bg-{{paymentStatusColor payment.status}}">
+                                    {{formatPaymentStatus payment.status}}
+                                </span>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/admin/bookings/{{_id}}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-success btn-sm" onclick="checkOut('{{_id}}')">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="editBooking('{{_id}}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {{> admin/pagination}}
+        </div>
+    </div>
+</div>
+
+<script>
+async function editBooking(id) {
+    window.location.href = `/admin/bookings/${id}/edit`;
+}
+
+async function checkOut(id) {
+    if (!confirm('Are you sure you want to check out this guest?')) return;
+
+    try {
+        const response = await fetch(`/admin/check-out/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showAlert('success', 'Guest checked out successfully');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showAlert('error', data.message || 'Failed to check out guest');
+        }
+    } catch (error) {
+        console.error('Error checking out guest:', error);
+        showAlert('error', 'Failed to check out guest');
+    }
+}
+</script>
+
+{{> admin/footer}}
