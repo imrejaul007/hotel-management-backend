@@ -1,6 +1,23 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// Helper function to determine if it's an API request
+const isApiRequest = (req) => {
+    return req.originalUrl.startsWith('/api/') || req.xhr || req.headers.accept?.includes('application/json');
+};
+
+// Helper function to handle unauthorized response
+const handleUnauthorized = (req, res, message) => {
+    if (isApiRequest(req)) {
+        return res.status(401).json({
+            success: false,
+            message: message || 'Please authenticate'
+        });
+    }
+    // For web routes, redirect to login page
+    res.redirect('/auth/login');
+};
+
 // Protect routes
 exports.protect = async (req, res, next) => {
     try {
@@ -16,40 +33,23 @@ exports.protect = async (req, res, next) => {
         }
 
         if (!token) {
-            return res.status(401).json({
-                success: false,
-                message: 'Not authorized to access this route'
-            });
+            return handleUnauthorized(req, res);
         }
 
         try {
             // Verify token
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-123');
 
             // Get user from token
             const user = await User.findById(decoded.userId || decoded.id);
 
             if (!user) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'User not found'
-                });
+                return handleUnauthorized(req, res, 'User not found');
             }
 
             // Check if user is active
             if (!user.isActive) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'User account is deactivated'
-                });
-            }
-
-            // Check if token is in user's tokens array
-            if (user.tokens && !user.tokens.includes(token)) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'Invalid token'
-                });
+                return handleUnauthorized(req, res, 'User account is deactivated');
             }
 
             req.user = user;
@@ -57,17 +57,18 @@ exports.protect = async (req, res, next) => {
             next();
         } catch (err) {
             console.error('Token verification error:', err);
-            return res.status(401).json({
-                success: false,
-                message: 'Not authorized to access this route'
-            });
+            return handleUnauthorized(req, res);
         }
     } catch (error) {
         console.error('Auth middleware error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error'
-        });
+        if (isApiRequest(req)) {
+            res.status(500).json({
+                success: false,
+                message: 'Internal server error'
+            });
+        } else {
+            res.redirect('/auth/login');
+        }
     }
 };
 
@@ -75,20 +76,23 @@ exports.protect = async (req, res, next) => {
 exports.authorize = (...roles) => {
     return (req, res, next) => {
         if (!req.user) {
-            return res.status(401).json({
-                success: false,
-                message: 'Not authorized to access this route'
-            });
+            return handleUnauthorized(req, res);
         }
 
         // Check both role and isAdmin flag
         if (!roles.includes(req.user.role) && !req.user.isAdmin) {
-            return res.status(403).json({
-                success: false,
-                message: `User role ${req.user.role} is not authorized to access this route`
-            });
+            if (isApiRequest(req)) {
+                return res.status(403).json({
+                    success: false,
+                    message: `User role ${req.user.role} is not authorized to access this route`
+                });
+            } else {
+                return res.redirect('/');
+            }
         }
 
         next();
     };
 };
+
+module.exports = exports;

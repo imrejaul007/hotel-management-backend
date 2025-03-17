@@ -17,7 +17,7 @@
                 </div>
                 {{/if}}
                 
-                <form action="/auth/login" method="POST" class="needs-validation" novalidate>
+                <form id="loginForm" method="POST" action="/auth/login" class="needs-validation" novalidate>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email address</label>
                         <input type="email" class="form-control" id="email" name="email" required>
@@ -39,6 +39,8 @@
                         <label class="form-check-label" for="rememberMe">Remember me</label>
                     </div>
 
+                    <div class="alert alert-danger d-none" id="errorAlert" role="alert"></div>
+
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary">Sign In</button>
                     </div>
@@ -46,7 +48,7 @@
 
                 <div class="text-center mt-3">
                     <div class="mb-2">
-                        <a href="/forgot-password" class="text-decoration-none">Forgot Password?</a>
+                        <a href="/auth/forgot-password" class="text-decoration-none">Forgot Password?</a>
                     </div>
                     <div>
                         <a href="/auth/register" class="btn btn-outline-primary btn-sm">Create Admin Account</a>
@@ -58,32 +60,38 @@
 </div>
 
 <script>
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const rememberMe = document.getElementById('rememberMe').checked;
 
-    try {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include', // Important: needed for cookies
-            body: JSON.stringify({ email, password, rememberMe })
+    const formData = new FormData(e.target);
+    const data = {
+        email: formData.get('email'),
+        password: formData.get('password'),
+        rememberMe: formData.get('rememberMe') === 'on'
+    };
+
+    // Submit form
+    fetch('/auth/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        // Always try to parse JSON response
+        return response.json().then(data => {
+            if (!response.ok) {
+                throw new Error(data.message || 'Login failed');
+            }
+            return data;
         });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Login failed');
-        }
-
-        // If remember me is checked, store email
-        if (rememberMe) {
-            localStorage.setItem('userEmail', email);
+    })
+    .then(data => {
+        // Store email if remember me is checked
+        if (data.rememberMe) {
+            localStorage.setItem('userEmail', data.email);
         } else {
             localStorage.removeItem('userEmail');
         }
@@ -94,8 +102,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         } else {
             window.location.href = '/';
         }
-
-    } catch (error) {
+    })
+    .catch(error => {
         const errorAlert = document.getElementById('errorAlert');
         errorAlert.textContent = error.message;
         errorAlert.classList.remove('d-none');
@@ -103,7 +111,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         setTimeout(() => {
             errorAlert.classList.add('d-none');
         }, 5000);
-    }
+    });
 });
 
 // Check for remembered email

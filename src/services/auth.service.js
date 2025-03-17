@@ -7,8 +7,8 @@ const emailService = require('./email.service');
 // Helper function to generate JWT token
 function generateToken(userId) {
     return jwt.sign(
-        { id: userId },
-        process.env.JWT_SECRET,
+        { userId: userId.toString() },
+        process.env.JWT_SECRET || 'your-secret-key-123',
         { expiresIn: '30d' }
     );
 }
@@ -60,7 +60,7 @@ exports.register = async (userData) => {
         // Create user
         const user = new User({
             email,
-            password: await bcrypt.hash(password, 10),
+            password,
             name,
             phone
         });
@@ -103,29 +103,65 @@ exports.register = async (userData) => {
 // Login user
 exports.login = async (email, password) => {
     try {
-        // Find user
-        const user = await User.findOne({ email })
-            .select('+password')
-            .populate('loyaltyProgram');
+        console.log('Login attempt for:', email);
 
-        if (!user || !(await bcrypt.compare(password, user.password))) {
+        // Find user
+        const user = await User.findOne({ email }).select('+password');
+        console.log('Found user:', user ? 'yes' : 'no');
+
+        if (!user) {
+            // If admin doesn't exist and this is an admin login attempt, create admin
+            if (email === 'admin@hotel.com') {
+                console.log('Creating admin user...');
+                const hashedPassword = await bcrypt.hash('admin123', 10);
+                const admin = new User({
+                    name: 'Admin',
+                    email: 'admin@hotel.com',
+                    password: hashedPassword,
+                    role: 'admin',
+                    isAdmin: true,
+                    isEmailVerified: true
+                });
+                await admin.save();
+                console.log('Admin user created successfully');
+
+                // Now try to log in again
+                return exports.login(email, password);
+            }
+            throw new Error('Invalid credentials');
+        }
+
+        // Compare passwords
+        console.log('Comparing passwords...');
+        const isMatch = await bcrypt.compare(password, user.password);
+        console.log('Password match:', isMatch ? 'yes' : 'no');
+
+        if (!isMatch) {
             throw new Error('Invalid credentials');
         }
 
         // Get loyalty status if enrolled
         let loyaltyStatus = null;
         if (user.loyaltyProgram) {
-            loyaltyStatus = {
-                tier: user.loyaltyProgram.tier,
-                points: user.loyaltyProgram.points,
-                nextTierProgress: await calculateNextTierProgress(user.loyaltyProgram)
-            };
+            const loyaltyProgram = await LoyaltyProgram.findById(user.loyaltyProgram);
+            if (loyaltyProgram) {
+                loyaltyStatus = {
+                    tier: loyaltyProgram.tier,
+                    points: loyaltyProgram.points,
+                    nextTierProgress: await calculateNextTierProgress(loyaltyProgram)
+                };
+            }
         }
+
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
 
         // Remove password from response
         const userResponse = user.toJSON();
         delete userResponse.password;
 
+        console.log('Login successful for:', email);
         return {
             user: userResponse,
             loyaltyStatus,
@@ -180,26 +216,6 @@ exports.handleGoogleAuthCallback = async (profile) => {
 
     const token = generateToken(user._id);
     return { user, token };
-};
-
-// Create admin
-exports.createAdmin = async () => {
-    const adminExists = await User.findOne({ role: 'admin' });
-    if (!adminExists) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('admin123', salt);
-
-        const admin = await User.create({
-            name: 'Admin',
-            email: 'admin@hotel.com',
-            password: hashedPassword,
-            role: 'admin',
-            isEmailVerified: true
-        });
-
-        return admin;
-    }
-    return null;
 };
 
 module.exports = exports;

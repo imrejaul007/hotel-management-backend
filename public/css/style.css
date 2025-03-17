@@ -1,0 +1,203 @@
+/* Global Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* Navbar Styles */
+.navbar {
+    padding: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Form Styles */
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.btn-primary {
+    padding: 0.5rem 1.5rem;
+}
+
+/* Feature Icons */
+.fas {
+    color: #007bff;
+}
+
+/* Footer Styles */
+.footer {
+    background-color: #343a40;
+    color: #fff;
+    padding: 2rem 0;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .card-img-top {
+        height: 150px;
+    }
+}
+
+/* Hotel Search Form */
+.search-form {
+    background-color: #f8f9fa;
+    padding: 2rem;
+    border-radius: 10px;
+}
+
+/* Featured Hotels Section */
+.featured-hotels {
+    padding: 4rem 0;
+    background-color: #f8f9fa;
+}
+
+/* Newsletter Section */
+.newsletter {
+    background-color: #e9ecef;
+    padding: 3rem 0;
+}
+
+/* Why Choose Us Section */
+.why-choose-us {
+    padding: 4rem 0;
+}
+
+.why-choose-us .icon-box {
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Hotel Details Page */
+.hotel-details {
+    padding: 2rem 0;
+}
+
+.hotel-details .gallery img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    margin-bottom: 1rem;
+}
+
+.hotel-details .amenities {
+    list-style: none;
+    padding: 0;
+}
+
+.hotel-details .amenities li {
+    margin-bottom: 0.5rem;
+}
+
+/* Room Types */
+.room-type {
+    margin-bottom: 2rem;
+}
+
+.room-type img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+/* Booking Form */
+.booking-form {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+/* User Dashboard */
+.dashboard-stats {
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.dashboard-stats h3 {
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+/* Loading Spinner */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Alert Messages */
+.alert {
+    margin-bottom: 1rem;
+    border-radius: 5px;
+}
+
+/* Pagination */
+.pagination {
+    margin-top: 2rem;
+}
+
+.page-link {
+    color: #007bff;
+}
+
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

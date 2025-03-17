@@ -9,22 +9,26 @@ if (mongoose.models.LoyaltyProgram) {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true,
-            unique: true
+            unique: true,
+            index: true
         },
         membershipTier: {
             type: String,
             enum: ['Bronze', 'Silver', 'Gold', 'Platinum'],
-            default: 'Bronze'
+            default: 'Bronze',
+            index: true
         },
         points: {
             type: Number,
             default: 0,
-            min: 0
+            min: 0,
+            index: true
         },
         lifetimePoints: {
             type: Number,
             default: 0,
-            min: 0
+            min: 0,
+            index: true
         },
         pointsHistory: [{
             points: Number,
@@ -104,7 +108,8 @@ if (mongoose.models.LoyaltyProgram) {
         },
         referralCode: {
             type: String,
-            unique: true
+            unique: true,
+            index: true
         },
         referredBy: {
             type: mongoose.Schema.Types.ObjectId,
@@ -199,30 +204,21 @@ if (mongoose.models.LoyaltyProgram) {
         }
 
         if (this.membershipTier !== newTier) {
-            const oldTier = this.membershipTier;
-            this.membershipTier = newTier;
-            
-            // Add tier upgrade milestone
+            // Record tier upgrade milestone
             this.milestones.push({
                 type: 'tier_upgrade',
-                description: `Upgraded from ${oldTier} to ${newTier}`,
-                rewardPoints: 1000,
+                description: `Upgraded to ${newTier} tier`,
+                rewardPoints: 1000, // Bonus points for tier upgrade
                 status: 'pending'
             });
-            
-            // Send tier upgrade email
-            try {
-                const emailService = require('../services/email.service');
-                await emailService.sendTierUpgradeEmail(this.user, oldTier, newTier);
-            } catch (error) {
-                console.error('Error sending tier upgrade email:', error);
-            }
+
+            this.membershipTier = newTier;
         }
     };
 
     // Instance method to check and process milestones
     loyaltyProgramSchema.methods.checkMilestones = async function() {
-        // Points milestones
+        // Points earned milestones
         const pointsMilestones = [10000, 25000, 50000, 100000];
         for (const milestone of pointsMilestones) {
             if (this.lifetimePoints >= milestone) {
@@ -230,12 +226,12 @@ if (mongoose.models.LoyaltyProgram) {
                     m.type === 'points_earned' && 
                     m.description.includes(`${milestone} points`)
                 );
-                
+
                 if (!existingMilestone) {
                     this.milestones.push({
                         type: 'points_earned',
                         description: `Earned ${milestone} lifetime points`,
-                        rewardPoints: Math.floor(milestone * 0.01),
+                        rewardPoints: Math.floor(milestone * 0.01), // 1% bonus
                         status: 'pending'
                     });
                 }
@@ -250,39 +246,37 @@ if (mongoose.models.LoyaltyProgram) {
                     m.type === 'referral_milestone' && 
                     m.description.includes(`${milestone} referrals`)
                 );
-                
+
                 if (!existingMilestone) {
                     this.milestones.push({
                         type: 'referral_milestone',
-                        description: `Achieved ${milestone} successful referrals`,
-                        rewardPoints: milestone * 500,
+                        description: `Completed ${milestone} referrals`,
+                        rewardPoints: milestone * 500, // 500 points per referral milestone
                         status: 'pending'
                     });
                 }
             }
         }
 
-        // Process pending milestones
-        for (const milestone of this.milestones) {
-            if (milestone.status === 'pending' && milestone.rewardPoints) {
-                this.points += milestone.rewardPoints;
-                this.lifetimePoints += milestone.rewardPoints;
-                
-                this.pointsHistory.push({
-                    points: milestone.rewardPoints,
-                    type: 'earned',
-                    source: 'system',
-                    description: `Milestone reward: ${milestone.description}`
-                });
-                
-                milestone.status = 'awarded';
-                
-                // Send milestone achievement email
-                try {
-                    const emailService = require('../services/email.service');
-                    await emailService.sendMilestoneEmail(this.user, milestone);
-                } catch (error) {
-                    console.error('Error sending milestone email:', error);
+        // Years of membership milestones
+        const yearsSinceMembership = Math.floor(
+            (Date.now() - this.memberSince.getTime()) / (1000 * 60 * 60 * 24 * 365)
+        );
+        const yearMilestones = [1, 3, 5, 10];
+        for (const milestone of yearMilestones) {
+            if (yearsSinceMembership >= milestone) {
+                const existingMilestone = this.milestones.find(m => 
+                    m.type === 'years_membership' && 
+                    m.description.includes(`${milestone} year`)
+                );
+
+                if (!existingMilestone) {
+                    this.milestones.push({
+                        type: 'years_membership',
+                        description: `${milestone} year${milestone > 1 ? 's' : ''} of membership`,
+                        rewardPoints: milestone * 1000, // 1000 points per year milestone
+                        status: 'pending'
+                    });
                 }
             }
         }
@@ -290,18 +284,25 @@ if (mongoose.models.LoyaltyProgram) {
 
     // Static method to generate referral code
     loyaltyProgramSchema.statics.generateReferralCode = async function(userId) {
-        const prefix = 'REF';
-        const user = await mongoose.model('User').findById(userId).select('name');
-        const namePart = user.name.substring(0, 3).toUpperCase();
-        const randomPart = Math.random().toString(36).substring(2, 5).toUpperCase();
-        return `${prefix}${namePart}${randomPart}`;
-    };
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let referralCode;
+        let isUnique = false;
 
-    // Index for searching
-    loyaltyProgramSchema.index({ user: 1 });
-    loyaltyProgramSchema.index({ membershipTier: 1 });
-    loyaltyProgramSchema.index({ points: 1 });
-    loyaltyProgramSchema.index({ referralCode: 1 });
+        while (!isUnique) {
+            referralCode = Array.from(
+                { length: 8 },
+                () => characters[Math.floor(Math.random() * characters.length)]
+            ).join('');
+
+            // Check if code already exists
+            const existing = await this.findOne({ referralCode });
+            if (!existing) {
+                isUnique = true;
+            }
+        }
+
+        return referralCode;
+    };
 
     const LoyaltyProgram = mongoose.model('LoyaltyProgram', loyaltyProgramSchema);
     module.exports = LoyaltyProgram;

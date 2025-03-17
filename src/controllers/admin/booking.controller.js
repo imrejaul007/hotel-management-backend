@@ -10,6 +10,154 @@ const getBaseQuery = () => {
         .populate('corporateAccount', 'companyName');
 };
 
+// Helper function to format booking source
+const formatBookingSource = (source) => {
+    const sourceMap = {
+        'direct': 'Direct Booking',
+        'website': 'Website',
+        'phone': 'Phone',
+        'email': 'Email',
+        'ota': 'Online Travel Agency',
+        'corporate': 'Corporate Account',
+        'walk_in': 'Walk-in'
+    };
+    return sourceMap[source] || source;
+};
+
+// Helper function to calculate total amount
+const calculateTotalAmount = (booking) => {
+    const baseAmount = booking.room.price * Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24));
+    const taxAmount = baseAmount * (booking.taxRate || 0.1); // Default 10% tax
+    return baseAmount + taxAmount;
+};
+
+// Helper function to get booking statistics
+const getBookingStats = async () => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    const stats = await Booking.aggregate([
+        {
+            $facet: {
+                'totalBookings': [
+                    { $count: 'count' }
+                ],
+                'recentBookings': [
+                    {
+                        $match: {
+                            createdAt: { $gte: thirtyDaysAgo }
+                        }
+                    },
+                    { $count: 'count' }
+                ],
+                'statusDistribution': [
+                    {
+                        $group: {
+                            _id: '$status',
+                            count: { $sum: 1 }
+                        }
+                    }
+                ],
+                'sourceDistribution': [
+                    {
+                        $group: {
+                            _id: '$bookingSource',
+                            count: { $sum: 1 }
+                        }
+                    }
+                ]
+            }
+        }
+    ]);
+
+    return {
+        total: stats[0].totalBookings[0]?.count || 0,
+        recent: stats[0].recentBookings[0]?.count || 0,
+        byStatus: stats[0].statusDistribution,
+        bySource: stats[0].sourceDistribution
+    };
+};
+
+// Get new booking form
+exports.getNewBookingForm = async (req, res) => {
+    try {
+        const [hotels, rooms] = await Promise.all([
+            Hotel.find().select('name location').lean(),
+            Room.find().select('type number capacity price status').lean()
+        ]);
+
+        // Get available rooms (not under maintenance and not booked for the selected dates)
+        const availableRooms = rooms.filter(room => room.status === 'available');
+
+        res.render('admin/bookings/new', {
+            title: 'New Booking',
+            hotels,
+            rooms: availableRooms,
+            bookingSources: [
+                { value: 'direct', label: 'Direct Booking' },
+                { value: 'website', label: 'Website' },
+                { value: 'phone', label: 'Phone' },
+                { value: 'email', label: 'Email' },
+                { value: 'ota', label: 'Online Travel Agency' },
+                { value: 'corporate', label: 'Corporate Account' },
+                { value: 'walk_in', label: 'Walk-in' }
+            ]
+        });
+    } catch (error) {
+        console.error('Error loading new booking form:', error);
+        res.status(500).render('error', {
+            message: 'Error loading booking form'
+        });
+    }
+};
+
+// Create new booking
+exports.createBooking = async (req, res) => {
+    try {
+        const {
+            userId,
+            hotelId,
+            roomId,
+            checkIn,
+            checkOut,
+            guests,
+            specialRequests,
+            bookingSource,
+            corporateAccountId,
+            status
+        } = req.body;
+
+        // Validate required fields
+        if (!userId || !hotelId || !roomId || !checkIn || !checkOut) {
+            return res.status(400).json({
+                message: 'Missing required fields'
+            });
+        }
+
+        // Create booking
+        const booking = await Booking.create({
+            user: userId,
+            hotel: hotelId,
+            room: roomId,
+            checkIn: new Date(checkIn),
+            checkOut: new Date(checkOut),
+            guests,
+            specialRequests,
+            bookingSource: bookingSource || 'direct',
+            corporateAccount: corporateAccountId,
+            status: status || 'confirmed',
+            createdBy: req.user._id
+        });
+
+        res.redirect(`/admin/bookings/${booking._id}`);
+    } catch (error) {
+        console.error('Error creating booking:', error);
+        res.status(500).render('error', {
+            message: 'Error creating booking'
+        });
+    }
+};
+
 // Get all bookings with filters
 exports.getAllBookings = async (req, res) => {
     try {
@@ -224,6 +372,7 @@ exports.getPastBookings = async (req, res) => {
         const enhancedBookings = bookings.map(booking => ({
             ...booking,
             nights: Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24)),
+            daysAgo: Math.ceil((now - booking.checkOut) / (1000 * 60 * 60 * 24)),
             bookingSourceDisplay: formatBookingSource(booking.bookingSource),
             totalAmount: calculateTotalAmount(booking)
         }));
@@ -281,218 +430,43 @@ exports.getBookingDetails = async (req, res) => {
     }
 };
 
-// Update booking status
-exports.updateBookingStatus = async (req, res) => {
+// Update booking
+exports.updateBooking = async (req, res) => {
     try {
-        const { status } = req.body;
-        const booking = await Booking.findByIdAndUpdate(
-            req.params.id,
-            { status },
-            { new: true }
-        );
+        const {
+            roomId,
+            checkIn,
+            checkOut,
+            guests,
+            specialRequests,
+            status
+        } = req.body;
+
+        const booking = await Booking.findById(req.params.id);
 
         if (!booking) {
-            return res.status(404).json({
-                success: false,
+            return res.status(404).render('error', {
                 message: 'Booking not found'
             });
         }
 
-        res.json({
-            success: true,
-            message: 'Booking status updated successfully'
-        });
-    } catch (error) {
-        console.error('Error updating booking status:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating booking status'
-        });
-    }
-};
+        // Update fields
+        if (roomId) booking.room = roomId;
+        if (checkIn) booking.checkIn = new Date(checkIn);
+        if (checkOut) booking.checkOut = new Date(checkOut);
+        if (guests) booking.guests = guests;
+        if (specialRequests) booking.specialRequests = specialRequests;
+        if (status) booking.status = status;
 
-// Create new booking
-exports.createBooking = async (req, res) => {
-    try {
-        const {
-            hotelId,
-            roomId,
-            guestId,
-            checkIn,
-            checkOut,
-            adults,
-            children,
-            specialRequests,
-            paymentMethod,
-            bookingSource = 'ADMIN'
-        } = req.body;
+        booking.updatedBy = req.user._id;
+        await booking.save();
 
-        // Validate dates
-        const checkInDate = moment(checkIn);
-        const checkOutDate = moment(checkOut);
-        
-        if (!checkInDate.isValid() || !checkOutDate.isValid()) {
-            return res.status(400).json({ message: 'Invalid dates provided' });
-        }
-        
-        if (checkInDate.isBefore(moment(), 'day')) {
-            return res.status(400).json({ message: 'Check-in date cannot be in the past' });
-        }
-        
-        if (checkOutDate.isSameOrBefore(checkInDate)) {
-            return res.status(400).json({ message: 'Check-out date must be after check-in date' });
-        }
-
-        // Check room availability
-        const room = await Room.findById(roomId);
-        if (!room) {
-            return res.status(404).json({ message: 'Room not found' });
-        }
-
-        const isRoomAvailable = await Room.checkAvailability(roomId, checkIn, checkOut);
-        if (!isRoomAvailable) {
-            return res.status(400).json({ message: 'Room is not available for the selected dates' });
-        }
-
-        // Calculate total amount
-        const nights = checkOutDate.diff(checkInDate, 'days');
-        const totalAmount = room.price * nights;
-
-        // Create booking
-        const booking = await Booking.create({
-            hotel: hotelId,
-            room: roomId,
-            guest: guestId,
-            checkIn,
-            checkOut,
-            adults,
-            children,
-            specialRequests,
-            totalAmount,
-            bookingSource,
-            status: 'CONFIRMED',
-            createdBy: req.user._id
-        });
-
-        // Create payment record
-        await Payment.create({
-            booking: booking._id,
-            amount: totalAmount,
-            paymentMethod,
-            status: 'PENDING'
-        });
-
-        // Send confirmation notification
-        await notificationService.sendBookingConfirmation(booking._id);
-
-        // Get complete booking details
-        const completeBooking = await getBaseQuery()
-            .findById(booking._id)
-            .populate('payments')
-            .lean();
-
-        res.status(201).json({
-            message: 'Booking created successfully',
-            booking: {
-                ...completeBooking,
-                totalAmount: calculateTotalAmount(completeBooking),
-                source: formatBookingSource(completeBooking.bookingSource),
-                checkIn: moment(completeBooking.checkIn).format('YYYY-MM-DD'),
-                checkOut: moment(completeBooking.checkOut).format('YYYY-MM-DD'),
-                nights
-            }
-        });
-    } catch (error) {
-        console.error('Error creating booking:', error);
-        res.status(500).json({ message: 'Error creating booking' });
-    }
-};
-
-// Update booking
-exports.updateBooking = async (req, res) => {
-    try {
-        const bookingId = req.params.id;
-        const updates = req.body;
-
-        // Get current booking
-        const currentBooking = await Booking.findById(bookingId);
-        if (!currentBooking) {
-            return res.status(404).json({ message: 'Booking not found' });
-        }
-
-        // Check if dates are being updated
-        if (updates.checkIn || updates.checkOut) {
-            const checkInDate = moment(updates.checkIn || currentBooking.checkIn);
-            const checkOutDate = moment(updates.checkOut || currentBooking.checkOut);
-            
-            if (!checkInDate.isValid() || !checkOutDate.isValid()) {
-                return res.status(400).json({ message: 'Invalid dates provided' });
-            }
-            
-            if (checkInDate.isBefore(moment(), 'day')) {
-                return res.status(400).json({ message: 'Check-in date cannot be in the past' });
-            }
-            
-            if (checkOutDate.isSameOrBefore(checkInDate)) {
-                return res.status(400).json({ message: 'Check-out date must be after check-in date' });
-            }
-
-            // Check room availability if dates or room are being changed
-            if (updates.roomId || updates.checkIn || updates.checkOut) {
-                const roomId = updates.roomId || currentBooking.room;
-                const isRoomAvailable = await Room.checkAvailability(
-                    roomId,
-                    checkInDate.toDate(),
-                    checkOutDate.toDate(),
-                    bookingId // Exclude current booking from availability check
-                );
-                if (!isRoomAvailable) {
-                    return res.status(400).json({ message: 'Room is not available for the selected dates' });
-                }
-            }
-
-            // Update total amount if dates or room changed
-            if (updates.roomId || updates.checkIn || updates.checkOut) {
-                const room = await Room.findById(updates.roomId || currentBooking.room);
-                const nights = checkOutDate.diff(checkInDate, 'days');
-                updates.totalAmount = room.price * nights;
-            }
-        }
-
-        // Update booking
-        const booking = await Booking.findByIdAndUpdate(
-            bookingId,
-            { 
-                ...updates,
-                lastModifiedBy: req.user._id,
-                lastModifiedAt: new Date()
-            },
-            { new: true }
-        );
-
-        // Get complete booking details
-        const completeBooking = await getBaseQuery()
-            .findById(booking._id)
-            .populate('payments')
-            .lean();
-
-        // Send update notification
-        await notificationService.sendBookingUpdate(booking._id);
-
-        res.json({
-            message: 'Booking updated successfully',
-            booking: {
-                ...completeBooking,
-                totalAmount: calculateTotalAmount(completeBooking),
-                source: formatBookingSource(completeBooking.bookingSource),
-                checkIn: moment(completeBooking.checkIn).format('YYYY-MM-DD'),
-                checkOut: moment(completeBooking.checkOut).format('YYYY-MM-DD'),
-                nights: moment(completeBooking.checkOut).diff(moment(completeBooking.checkIn), 'days')
-            }
-        });
+        res.redirect(`/admin/bookings/${booking._id}`);
     } catch (error) {
         console.error('Error updating booking:', error);
-        res.status(500).json({ message: 'Error updating booking' });
+        res.status(500).render('error', {
+            message: 'Error updating booking'
+        });
     }
 };
 
@@ -500,97 +474,19 @@ exports.updateBooking = async (req, res) => {
 exports.deleteBooking = async (req, res) => {
     try {
         const booking = await Booking.findById(req.params.id);
-        if (!booking) {
-            return res.status(404).json({ message: 'Booking not found' });
-        }
 
-        // Only allow deletion of pending or cancelled bookings
-        if (!['PENDING', 'CANCELLED'].includes(booking.status)) {
-            return res.status(400).json({ 
-                message: 'Cannot delete confirmed or active bookings. Please cancel the booking first.' 
+        if (!booking) {
+            return res.status(404).render('error', {
+                message: 'Booking not found'
             });
         }
 
         await booking.remove();
-        res.json({ message: 'Booking deleted successfully' });
+        res.redirect('/admin/bookings');
     } catch (error) {
         console.error('Error deleting booking:', error);
-        res.status(500).json({ message: 'Error deleting booking' });
+        res.status(500).render('error', {
+            message: 'Error deleting booking'
+        });
     }
 };
-
-// Helper function to format booking source
-function formatBookingSource(source) {
-    const sourceMap = {
-        'website': 'Website',
-        'walk_in': 'Walk-in',
-        'ota': 'OTA Platform',
-        'corporate': 'Corporate',
-        'phone': 'Phone',
-        'email': 'Email'
-    };
-    return sourceMap[source] || source;
-}
-
-// Helper function to calculate total amount
-function calculateTotalAmount(booking) {
-    const baseAmount = booking.room.price * booking.nights;
-    const taxRate = 0.1; // 10% tax
-    const tax = baseAmount * taxRate;
-    return baseAmount + tax;
-}
-
-// Helper function to get booking statistics
-async function getBookingStats() {
-    const now = new Date();
-    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(now.setHours(23, 59, 59, 999));
-
-    const [
-        totalBookings,
-        todayCheckIns,
-        todayCheckOuts,
-        occupiedRooms,
-        upcomingBookings,
-        revenueStats
-    ] = await Promise.all([
-        Booking.countDocuments(),
-        Booking.countDocuments({
-            checkIn: {
-                $gte: startOfDay,
-                $lte: endOfDay
-            }
-        }),
-        Booking.countDocuments({
-            checkOut: {
-                $gte: startOfDay,
-                $lte: endOfDay
-            }
-        }),
-        Booking.countDocuments({
-            checkIn: { $lte: now },
-            checkOut: { $gte: now }
-        }),
-        Booking.countDocuments({
-            checkIn: { $gt: now }
-        }),
-        Booking.aggregate([
-            {
-                $group: {
-                    _id: null,
-                    totalRevenue: { $sum: '$totalAmount' },
-                    averageRevenue: { $avg: '$totalAmount' }
-                }
-            }
-        ])
-    ]);
-
-    return {
-        totalBookings,
-        todayCheckIns,
-        todayCheckOuts,
-        occupiedRooms,
-        upcomingBookings,
-        revenue: revenueStats[0] || { totalRevenue: 0, averageRevenue: 0 }
-    };
-}

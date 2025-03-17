@@ -9,8 +9,8 @@ const inventoryItemSchema = new mongoose.Schema({
     sku: {
         type: String,
         required: true,
-        unique: true,
-        trim: true
+        trim: true,
+        index: { unique: true }
     },
     description: {
         type: String,
@@ -168,6 +168,13 @@ inventoryItemSchema.methods.removeStock = async function(quantity, reason, userI
     });
     await this.save();
 };
+
+// Create indexes
+inventoryItemSchema.index({ name: 1 });
+inventoryItemSchema.index({ category: 1 });
+inventoryItemSchema.index({ supplier: 1 });
+inventoryItemSchema.index({ status: 1 });
+inventoryItemSchema.index({ isActive: 1 });
 
 const InventoryItem = mongoose.model('InventoryItem', inventoryItemSchema);
 module.exports = InventoryItem;

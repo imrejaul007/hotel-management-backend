@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateAdmin } = require('../../middleware/auth');
+const { protect, authorize } = require('../../middleware/auth');
 const Reward = require('../../models/Reward');
 const Loyalty = require('../../models/Loyalty');
 
 // Get all rewards
-router.get('/', authenticateAdmin, async (req, res) => {
+router.get('/', protect, authorize('admin'), async (req, res) => {
     try {
         const rewards = await Reward.find()
             .sort({ createdAt: -1 });
@@ -23,7 +23,7 @@ router.get('/', authenticateAdmin, async (req, res) => {
 });
 
 // Create new reward
-router.post('/', authenticateAdmin, async (req, res) => {
+router.post('/', protect, authorize('admin'), async (req, res) => {
     try {
         const reward = await Reward.create(req.body);
         
@@ -40,7 +40,7 @@ router.post('/', authenticateAdmin, async (req, res) => {
 });
 
 // Update reward
-router.put('/:id', authenticateAdmin, async (req, res) => {
+router.put('/:id', protect, authorize('admin'), async (req, res) => {
     try {
         const reward = await Reward.findByIdAndUpdate(
             req.params.id,
@@ -68,7 +68,7 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
 });
 
 // Delete reward
-router.delete('/:id', authenticateAdmin, async (req, res) => {
+router.delete('/:id', protect, authorize('admin'), async (req, res) => {
     try {
         const reward = await Reward.findById(req.params.id);
         
@@ -106,7 +106,7 @@ router.delete('/:id', authenticateAdmin, async (req, res) => {
 });
 
 // Get reward redemption statistics
-router.get('/statistics', authenticateAdmin, async (req, res) => {
+router.get('/statistics', protect, authorize('admin'), async (req, res) => {
     try {
         const stats = await Reward.aggregate([
             {
@@ -147,7 +147,7 @@ router.get('/statistics', authenticateAdmin, async (req, res) => {
 });
 
 // Get specific reward redemption history
-router.get('/:id/redemptions', authenticateAdmin, async (req, res) => {
+router.get('/:id/redemptions', protect, authorize('admin'), async (req, res) => {
     try {
         const reward = await Reward.findById(req.params.id)
             .populate({

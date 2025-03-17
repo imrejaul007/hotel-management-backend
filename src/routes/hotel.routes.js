@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const hotelController = require('../controllers/hotel.controller');
-const { protect, authorize } = require('../middlewares/auth.middleware');
+const { protect, authorize } = require('../middleware/auth');
 
 /**
  * @swagger

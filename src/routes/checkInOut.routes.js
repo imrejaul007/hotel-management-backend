@@ -1,27 +1,30 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateUser, checkRole } = require('../middleware/auth');
-const checkInOutController = require('../controllers/checkInOut.controller');
+const { protect, authorize } = require('../middleware/auth');
+const checkInOutController = require('../controllers/admin/check-in-out.controller');
 
 // Protect all routes
-router.use(authenticateUser);
+// router.use(authenticateUser);
 
 // Check-in routes
 router.post('/check-in/:bookingId', 
-    checkRole(['admin', 'receptionist']), 
-    checkInOutController.checkIn
+    protect,
+    authorize('admin', 'receptionist'), 
+    checkInOutController.processCheckIn
 );
 
 // Check-out routes
 router.post('/check-out/:bookingId',
-    checkRole(['admin', 'receptionist']),
-    checkInOutController.checkOut
+    protect,
+    authorize('admin', 'receptionist'),
+    checkInOutController.processCheckOut
 );
 
 // Get check-in/out details
 router.get('/details/:bookingId',
-    checkRole(['admin', 'receptionist']),
-    checkInOutController.getCheckInOutDetails
+    protect,
+    authorize('admin', 'receptionist'),
+    checkInOutController.getCheckInDetails
 );
 
 module.exports = router;

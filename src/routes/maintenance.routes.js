@@ -3,7 +3,7 @@ const router = express.Router();
 const Maintenance = require('../models/Maintenance');
 const Booking = require('../models/Booking');
 const Hotel = require('../models/Hotel'); 
-const { protect } = require('../middlewares/auth.middleware');
+const { protect } = require('../middleware/auth.middleware');
 
 // Guest maintenance dashboard
 router.get('/', protect, async (req, res) => {

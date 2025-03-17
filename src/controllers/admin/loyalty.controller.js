@@ -5,6 +5,7 @@ const Referral = require('../../models/Referral');
 const Reward = require('../../models/Reward');
 const Tier = require('../../models/Tier');
 const notificationService = require('../../services/notification.service');
+const emailService = require('../../services/email.service');
 
 // Get loyalty program dashboard data
 exports.getDashboard = async (req, res) => {
@@ -69,12 +70,49 @@ exports.getDashboard = async (req, res) => {
     }
 };
 
+// Get all loyalty program members
+exports.getAllMembers = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const query = { 'loyalty.isEnrolled': true };
+        if (req.query.tier) query['loyalty.tier'] = req.query.tier;
+        if (req.query.minPoints) query['loyalty.points'] = { $gte: parseInt(req.query.minPoints) };
+
+        const [members, total] = await Promise.all([
+            User.find(query)
+                .select('name email loyalty')
+                .populate('loyalty.tier')
+                .sort('-loyalty.points')
+                .skip(skip)
+                .limit(limit),
+            User.countDocuments(query)
+        ]);
+
+        res.json({
+            success: true,
+            data: members,
+            pagination: {
+                page,
+                limit,
+                total,
+                pages: Math.ceil(total / limit)
+            }
+        });
+    } catch (error) {
+        console.error('Error getting loyalty members:', error);
+        res.status(500).json({ message: 'Error getting loyalty members' });
+    }
+};
+
 // Get member details
 exports.getMemberDetails = async (req, res) => {
     try {
-        const { memberId } = req.params;
+        const { id } = req.params;
 
-        const member = await User.findById(memberId)
+        const member = await User.findById(id)
             .populate('loyalty.tier')
             .select('name email loyalty');
 
@@ -83,34 +121,123 @@ exports.getMemberDetails = async (req, res) => {
         }
 
         // Get point history
-        const pointHistory = await LoyaltyProgram.find({ user: memberId })
+        const pointHistory = await LoyaltyProgram.find({ user: id })
             .sort({ createdAt: -1 })
             .limit(20);
 
         // Get booking history
-        const bookings = await Booking.find({ guest: memberId })
+        const bookings = await Booking.find({ guest: id })
             .sort({ checkIn: -1 })
             .limit(10);
 
         // Get referral history
-        const referrals = await Referral.find({ referrer: memberId })
+        const referrals = await Referral.find({ referrer: id })
             .populate('referred', 'name email')
             .sort({ createdAt: -1 });
 
         // Get reward redemptions
-        const rewards = await Reward.find({ user: memberId })
+        const rewards = await Reward.find({ 'redemptions.user': id })
             .sort({ createdAt: -1 });
 
         res.json({
-            member,
-            pointHistory,
-            bookings,
-            referrals,
-            rewards
+            success: true,
+            data: {
+                member,
+                pointHistory,
+                bookings,
+                referrals,
+                rewards
+            }
         });
     } catch (error) {
         console.error('Error getting member details:', error);
         res.status(500).json({ message: 'Error getting member details' });
+    }
+};
+
+// Update member
+exports.updateMember = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { tierId, points, reason } = req.body;
+
+        const member = await User.findById(id);
+        if (!member) {
+            return res.status(404).json({ message: 'Member not found' });
+        }
+
+        // Update tier if provided
+        if (tierId) {
+            const tier = await Tier.findById(tierId);
+            if (!tier) {
+                return res.status(404).json({ message: 'Tier not found' });
+            }
+
+            member.loyalty.tier = tierId;
+            member.loyalty.tierUpdateReason = reason;
+            member.loyalty.tierUpdateDate = new Date();
+
+            // Create loyalty program entry for tier update
+            await LoyaltyProgram.create({
+                user: id,
+                type: 'TIER_UPDATE',
+                description: `Tier updated to ${tier.name}`,
+                metadata: {
+                    previousTier: member.loyalty.tier,
+                    newTier: tierId,
+                    reason
+                }
+            });
+
+            // Send tier update email
+            await emailService.sendTierUpdateEmail(member.email, {
+                name: member.name,
+                newTier: tier.name,
+                benefits: tier.benefits
+            });
+        }
+
+        // Update points if provided
+        if (points !== undefined) {
+            const previousPoints = member.loyalty.points;
+            member.loyalty.points = points;
+
+            // Create loyalty program entry for points update
+            await LoyaltyProgram.create({
+                user: id,
+                type: 'POINTS_ADJUSTMENT',
+                points: points - previousPoints,
+                description: reason || 'Manual points adjustment',
+                metadata: {
+                    previousPoints,
+                    newPoints: points,
+                    reason
+                }
+            });
+
+            // Send points update email
+            await emailService.sendPointsUpdateEmail(member.email, {
+                name: member.name,
+                pointsChange: points - previousPoints,
+                newBalance: points,
+                reason: reason || 'Manual points adjustment'
+            });
+        }
+
+        await member.save();
+
+        // Get updated member with populated tier
+        const updatedMember = await User.findById(id)
+            .populate('loyalty.tier')
+            .select('name email loyalty');
+
+        res.json({
+            success: true,
+            data: updatedMember
+        });
+    } catch (error) {
+        console.error('Error updating member:', error);
+        res.status(500).json({ message: 'Error updating member' });
     }
 };
 
@@ -257,12 +384,27 @@ exports.deductPoints = async (req, res) => {
 // Get tier list
 exports.getTiers = async (req, res) => {
     try {
-        const { hotelId } = req.params;
-
-        const tiers = await Tier.find({ hotel: hotelId })
+        const tiers = await Tier.find()
             .sort({ minimumPoints: 1 });
 
-        res.json(tiers);
+        res.json({
+            success: true,
+            data: tiers
+        });
+    } catch (error) {
+        console.error('Error getting tiers:', error);
+        res.status(500).json({ message: 'Error getting tiers' });
+    }
+};
+
+// Get all tiers
+exports.getAllTiers = async (req, res) => {
+    try {
+        const tiers = await Tier.find({ isActive: true }).sort('minimumPoints');
+        res.json({
+            success: true,
+            data: tiers
+        });
     } catch (error) {
         console.error('Error getting tiers:', error);
         res.status(500).json({ message: 'Error getting tiers' });
@@ -272,15 +414,21 @@ exports.getTiers = async (req, res) => {
 // Create tier
 exports.createTier = async (req, res) => {
     try {
-        const { hotelId } = req.params;
-        const tierData = req.body;
+        const { name, minimumPoints, pointsMultiplier, benefits, color, icon } = req.body;
 
         const tier = await Tier.create({
-            ...tierData,
-            hotel: hotelId
+            name,
+            minimumPoints,
+            pointsMultiplier,
+            benefits,
+            color,
+            icon
         });
 
-        res.status(201).json(tier);
+        res.json({
+            success: true,
+            data: tier
+        });
     } catch (error) {
         console.error('Error creating tier:', error);
         res.status(500).json({ message: 'Error creating tier' });
@@ -290,15 +438,23 @@ exports.createTier = async (req, res) => {
 // Update tier
 exports.updateTier = async (req, res) => {
     try {
-        const { tierId } = req.params;
-        const updates = req.body;
+        const { id } = req.params;
+        const { name, minimumPoints, pointsMultiplier, benefits, color, icon } = req.body;
 
-        const tier = await Tier.findByIdAndUpdate(tierId, updates, { new: true });
+        const tier = await Tier.findByIdAndUpdate(
+            id,
+            { name, minimumPoints, pointsMultiplier, benefits, color, icon },
+            { new: true }
+        );
+
         if (!tier) {
             return res.status(404).json({ message: 'Tier not found' });
         }
 
-        res.json(tier);
+        res.json({
+            success: true,
+            data: tier
+        });
     } catch (error) {
         console.error('Error updating tier:', error);
         res.status(500).json({ message: 'Error updating tier' });
@@ -308,19 +464,25 @@ exports.updateTier = async (req, res) => {
 // Delete tier
 exports.deleteTier = async (req, res) => {
     try {
-        const { tierId } = req.params;
+        const { id } = req.params;
 
-        // Check if any members are in this tier
-        const membersInTier = await User.countDocuments({ 'loyalty.tier': tierId });
-        if (membersInTier > 0) {
-            return res.status(400).json({ 
-                message: 'Cannot delete tier with active members',
-                membersCount: membersInTier
+        // Check if tier is being used
+        const membersUsingTier = await User.countDocuments({ 'loyalty.tier': id });
+        if (membersUsingTier > 0) {
+            return res.status(400).json({
+                message: 'Cannot delete tier as it is currently assigned to members'
             });
         }
 
-        await Tier.findByIdAndDelete(tierId);
-        res.json({ message: 'Tier deleted successfully' });
+        const tier = await Tier.findByIdAndDelete(id);
+        if (!tier) {
+            return res.status(404).json({ message: 'Tier not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Tier deleted successfully'
+        });
     } catch (error) {
         console.error('Error deleting tier:', error);
         res.status(500).json({ message: 'Error deleting tier' });
@@ -330,32 +492,151 @@ exports.deleteTier = async (req, res) => {
 // Get rewards list
 exports.getRewards = async (req, res) => {
     try {
-        const { hotelId } = req.params;
+        const rewards = await Reward.find()
+            .sort({ pointsCost: 1 });
 
-        const rewards = await Reward.find({ hotel: hotelId })
-            .sort({ createdAt: -1 })
-            .populate('user', 'name email');
-
-        res.json(rewards);
+        res.json({
+            success: true,
+            data: rewards
+        });
     } catch (error) {
         console.error('Error getting rewards:', error);
         res.status(500).json({ message: 'Error getting rewards' });
     }
 };
 
-// Get referrals list
-exports.getReferrals = async (req, res) => {
+// Get all rewards
+exports.getAllRewards = async (req, res) => {
     try {
-        const { hotelId } = req.params;
+        const rewards = await Reward.find({ isActive: true })
+            .populate('minimumTier')
+            .sort('pointsCost');
 
-        const referrals = await Referral.find({ hotel: hotelId })
-            .sort({ createdAt: -1 })
-            .populate('referrer', 'name email')
-            .populate('referred', 'name email');
-
-        res.json(referrals);
+        res.json({
+            success: true,
+            data: rewards
+        });
     } catch (error) {
-        console.error('Error getting referrals:', error);
-        res.status(500).json({ message: 'Error getting referrals' });
+        console.error('Error getting rewards:', error);
+        res.status(500).json({ message: 'Error getting rewards' });
+    }
+};
+
+// Create reward
+exports.createReward = async (req, res) => {
+    try {
+        const {
+            name,
+            description,
+            pointsCost,
+            type,
+            discountValue,
+            validityDays,
+            minimumTier,
+            termsAndConditions,
+            maxRedemptionsPerUser
+        } = req.body;
+
+        const reward = await Reward.create({
+            name,
+            description,
+            pointsCost,
+            type,
+            discountValue,
+            validityDays,
+            minimumTier,
+            termsAndConditions,
+            maxRedemptionsPerUser
+        });
+
+        res.json({
+            success: true,
+            data: reward
+        });
+    } catch (error) {
+        console.error('Error creating reward:', error);
+        res.status(500).json({ message: 'Error creating reward' });
+    }
+};
+
+// Update reward
+exports.updateReward = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            name,
+            description,
+            pointsCost,
+            type,
+            discountValue,
+            validityDays,
+            minimumTier,
+            termsAndConditions,
+            maxRedemptionsPerUser,
+            isActive
+        } = req.body;
+
+        const reward = await Reward.findByIdAndUpdate(
+            id,
+            {
+                name,
+                description,
+                pointsCost,
+                type,
+                discountValue,
+                validityDays,
+                minimumTier,
+                termsAndConditions,
+                maxRedemptionsPerUser,
+                isActive
+            },
+            { new: true }
+        );
+
+        if (!reward) {
+            return res.status(404).json({ message: 'Reward not found' });
+        }
+
+        res.json({
+            success: true,
+            data: reward
+        });
+    } catch (error) {
+        console.error('Error updating reward:', error);
+        res.status(500).json({ message: 'Error updating reward' });
+    }
+};
+
+// Delete reward
+exports.deleteReward = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Check if reward has any redemptions
+        const reward = await Reward.findById(id);
+        if (!reward) {
+            return res.status(404).json({ message: 'Reward not found' });
+        }
+
+        if (reward.totalRedemptions > 0) {
+            // Instead of deleting, mark as inactive
+            reward.isActive = false;
+            await reward.save();
+
+            return res.json({
+                success: true,
+                message: 'Reward has been marked as inactive'
+            });
+        }
+
+        await reward.remove();
+
+        res.json({
+            success: true,
+            message: 'Reward deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting reward:', error);
+        res.status(500).json({ message: 'Error deleting reward' });
     }
 };

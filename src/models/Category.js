@@ -120,5 +120,11 @@ categorySchema.pre('save', async function(next) {
     next();
 });
 
+// Create indexes
+categorySchema.index({ name: 1 }, { unique: true });
+categorySchema.index({ parent: 1 });
+categorySchema.index({ isRewardCategory: 1 });
+categorySchema.index({ createdBy: 1 });
+
 const Category = mongoose.model('Category', categorySchema);
 module.exports = Category;

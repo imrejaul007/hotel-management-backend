@@ -1,0 +1,260 @@
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/admin/bookings">Bookings</a></li>
+        <li class="breadcrumb-item active" aria-current="page">New Booking</li>
+    </ol>
+</nav>
+
+<!-- Page Content -->
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Create New Booking</h6>
+        </div>
+        <div class="card-body">
+            <form id="newBookingForm" action="/admin/bookings" method="POST">
+                <!-- Guest Information -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-dark">Guest Information</h5>
+                        <hr>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="guestName">Guest Name *</label>
+                            <input type="text" class="form-control" id="guestName" name="guestName" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="guestEmail">Email *</label>
+                            <input type="email" class="form-control" id="guestEmail" name="guestEmail" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="guestPhone">Phone *</label>
+                            <input type="tel" class="form-control" id="guestPhone" name="guestPhone" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="guestAddress">Address</label>
+                            <input type="text" class="form-control" id="guestAddress" name="guestAddress">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Booking Details -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-dark">Booking Details</h5>
+                        <hr>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="hotelId">Hotel *</label>
+                            <select class="form-control" id="hotelId" name="hotelId" required>
+                                <option value="">Select Hotel</option>
+                                {{#each hotels}}
+                                <option value="{{this._id}}">{{this.name}} - {{this.location}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="roomId">Room *</label>
+                            <select class="form-control" id="roomId" name="roomId" required>
+                                <option value="">Select Room</option>
+                                {{#each rooms}}
+                                <option value="{{this._id}}" data-price="{{this.price}}">
+                                    Room {{this.number}} - {{this.type}} (Capacity: {{this.capacity}})
+                                </option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="checkIn">Check-in Date *</label>
+                            <input type="date" class="form-control" id="checkIn" name="checkIn" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="checkOut">Check-out Date *</label>
+                            <input type="date" class="form-control" id="checkOut" name="checkOut" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="adults">Number of Adults *</label>
+                            <input type="number" class="form-control" id="adults" name="adults" min="1" value="1" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="children">Number of Children</label>
+                            <input type="number" class="form-control" id="children" name="children" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-dark">Additional Information</h5>
+                        <hr>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="bookingSource">Booking Source *</label>
+                            <select class="form-control" id="bookingSource" name="bookingSource" required>
+                                {{#each bookingSources}}
+                                <option value="{{this.value}}">{{this.label}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="corporateAccountId">Corporate Account</label>
+                            <select class="form-control" id="corporateAccountId" name="corporateAccountId">
+                                <option value="">None</option>
+                                {{#each corporateAccounts}}
+                                <option value="{{this._id}}">{{this.companyName}}</option>
+                                {{/each}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="specialRequests">Special Requests</label>
+                            <textarea class="form-control" id="specialRequests" name="specialRequests" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Summary -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="text-dark">Price Summary</h5>
+                        <hr>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Room Rate (per night)</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">$</span>
+                                </div>
+                                <input type="text" class="form-control" id="roomRate" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Number of Nights</label>
+                            <input type="text" class="form-control" id="numberOfNights" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Total Amount</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">$</span>
+                                </div>
+                                <input type="text" class="form-control" id="totalAmount" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="row">
+                    <div class="col-12 text-right">
+                        <button type="button" class="btn btn-secondary mr-2" onclick="window.history.back()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Booking</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Price Calculation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('newBookingForm');
+    const roomSelect = document.getElementById('roomId');
+    const checkInInput = document.getElementById('checkIn');
+    const checkOutInput = document.getElementById('checkOut');
+    const roomRateInput = document.getElementById('roomRate');
+    const numberOfNightsInput = document.getElementById('numberOfNights');
+    const totalAmountInput = document.getElementById('totalAmount');
+
+    // Set minimum dates
+    const today = new Date().toISOString().split('T')[0];
+    checkInInput.min = today;
+    checkOutInput.min = today;
+
+    // Calculate price whenever inputs change
+    function calculatePrice() {
+        const selectedRoom = roomSelect.options[roomSelect.selectedIndex];
+        if (!selectedRoom || !checkInInput.value || !checkOutInput.value) return;
+
+        const roomPrice = parseFloat(selectedRoom.dataset.price);
+        const checkIn = new Date(checkInInput.value);
+        const checkOut = new Date(checkOutInput.value);
+        const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+
+        if (nights > 0) {
+            roomRateInput.value = roomPrice.toFixed(2);
+            numberOfNightsInput.value = nights;
+            totalAmountInput.value = (roomPrice * nights).toFixed(2);
+        }
+    }
+
+    // Update check-out min date when check-in changes
+    checkInInput.addEventListener('change', function() {
+        checkOutInput.min = this.value;
+        if (checkOutInput.value && checkOutInput.value < this.value) {
+            checkOutInput.value = this.value;
+        }
+        calculatePrice();
+    });
+
+    roomSelect.addEventListener('change', calculatePrice);
+    checkOutInput.addEventListener('change', calculatePrice);
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Add your validation logic here
+        const formData = new FormData(form);
+        fetch('/admin/bookings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(Object.fromEntries(formData))
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = `/admin/bookings/${data.data._id}`;
+            } else {
+                alert(data.message || 'Error creating booking');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error creating booking');
+        });
+    });
+});</script>

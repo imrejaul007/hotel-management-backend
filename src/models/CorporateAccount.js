@@ -4,19 +4,22 @@ const corporateAccountSchema = new mongoose.Schema({
     companyName: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        index: true
     },
     registrationNumber: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        index: true
     },
     contactPerson: {
         name: String,
         email: {
             type: String,
             required: true,
-            unique: true
+            unique: true,
+            index: true
         },
         phone: String,
         position: String
@@ -34,7 +37,8 @@ const corporateAccountSchema = new mongoose.Schema({
         status: {
             type: String,
             enum: ['active', 'pending', 'expired', 'terminated'],
-            default: 'pending'
+            default: 'pending',
+            index: true
         }
     },
     rateContract: {
@@ -71,7 +75,8 @@ const corporateAccountSchema = new mongoose.Schema({
     paymentTerms: {
         type: String,
         enum: ['immediate', 'net15', 'net30', 'net45', 'net60'],
-        default: 'net30'
+        default: 'net30',
+        index: true
     },
     documents: [{
         type: {
@@ -88,17 +93,15 @@ const corporateAccountSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['active', 'inactive', 'suspended'],
-        default: 'active'
+        default: 'active',
+        index: true
     }
 }, {
     timestamps: true
 });
 
-// Add indexes for frequently queried fields
-corporateAccountSchema.index({ companyName: 1 });
-corporateAccountSchema.index({ 'contactPerson.email': 1 });
-corporateAccountSchema.index({ status: 1 });
-corporateAccountSchema.index({ 'contractDetails.status': 1 });
+// Create indexes for frequently queried fields
+corporateAccountSchema.index({ 'contractDetails.endDate': 1 });
 
 // Method to check if contract is valid
 corporateAccountSchema.methods.isContractValid = function() {

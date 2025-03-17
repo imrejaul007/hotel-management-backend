@@ -1,322 +1,119 @@
-{{> admin/header title="Admin Dashboard"}}
-
-<div class="container-fluid">
-    <!-- Real-time Alerts -->
-    <div id="alertsContainer"></div>
-
-    <!-- Welcome Card with Real-time Status -->
-    <div class="card shadow mb-4">
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h4 class="font-weight-bold">Welcome back, {{user.name}}!</h4>
-                    <p class="mb-0">Here's an overview of your hotel's performance</p>
-                </div>
-                <div class="col-auto">
-                    <div class="badge badge-success" id="connectionStatus">
-                        <i class="fas fa-signal"></i> Connected
+<!-- Overview & Real-Time Insights -->
+<div class="row mb-4">
+    <!-- Occupancy Rate -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Occupancy Rate</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{occupancyRate}}%</div>
+                        <div class="text-xs text-muted">
+                            <span class="text-success">{{occupiedRooms}} occupied</span> • 
+                            <span class="text-primary">{{availableRooms}} available</span> • 
+                            <span class="text-warning">{{maintenanceRooms}} maintenance</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-hotel fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Quick Stats Row with Real-time Updates -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Today's Revenue
-                                <i class="fas fa-info-circle" data-toggle="tooltip" title="Updated in real-time"></i>
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="todayRevenue">
-                                ${{formatNumber todayRevenue}}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
-                        </div>
+    <!-- Today's Bookings -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Today's Bookings</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{todayBookings}}</div>
+                        <div class="text-xs text-muted">{{todayCheckIns.length}} check-ins, {{todayCheckOuts.length}} check-outs</div>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Occupancy Rate
-                                <i class="fas fa-info-circle" data-toggle="tooltip" title="Live occupancy status"></i>
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="occupancyRate">
-                                {{occupancyRate}}%
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-bed fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Today's Check-ins
-                                <i class="fas fa-info-circle" data-toggle="tooltip" title="Live check-in updates"></i>
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="todayCheckins">
-                                {{todayCheckins}}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-sign-in-alt fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Pending Tasks
-                                <i class="fas fa-info-circle" data-toggle="tooltip" title="Real-time task updates"></i>
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingTasks">
-                                {{pendingTasks}}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-tasks fa-2x text-gray-300"></i>
-                        </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Feature Navigation Grid -->
-    <div class="row">
-        <!-- Booking Management -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-calendar-check"></i> Booking Management
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="/admin/bookings" class="list-group-item list-group-item-action">
-                            <i class="fas fa-list"></i> All Bookings
-                        </a>
-                        <a href="/admin/bookings/upcoming" class="list-group-item list-group-item-action">
-                            <i class="fas fa-calendar-alt"></i> Upcoming Bookings
-                        </a>
-                        <a href="/admin/bookings/current" class="list-group-item list-group-item-action">
-                            <i class="fas fa-clock"></i> Current Bookings
-                        </a>
-                        <a href="/admin/group-bookings" class="list-group-item list-group-item-action">
-                            <i class="fas fa-users"></i> Group Bookings
-                        </a>
+    <!-- Revenue -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Today's Revenue</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{todayRevenue}}</div>
+                        <div class="text-xs text-muted">
+                            {{#if (gt revenueChange 0)}}
+                            <span class="text-success">+${{revenueChange}} vs yesterday</span>
+                            {{else}}
+                            <span class="text-danger">-${{abs revenueChange}} vs yesterday</span>
+                            {{/if}}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Guest Management -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-user-friends"></i> Guest Management
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="/admin/guests" class="list-group-item list-group-item-action">
-                            <i class="fas fa-users"></i> Guest Directory
-                        </a>
-                        <a href="/admin/loyalty/members" class="list-group-item list-group-item-action">
-                            <i class="fas fa-star"></i> Loyalty Program
-                        </a>
-                        <a href="/admin/corporate-accounts" class="list-group-item list-group-item-action">
-                            <i class="fas fa-building"></i> Corporate Accounts
-                        </a>
-                        <a href="/admin/guest-requests" class="list-group-item list-group-item-action">
-                            <i class="fas fa-concierge-bell"></i> Special Requests
-                        </a>
+    <!-- Active Guests -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Active Guests</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{activeGuests}}</div>
+                        <div class="text-xs text-muted">including {{vipGuests}} VIP guests</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <!-- Room Management -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-door-closed"></i> Room Management
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="/admin/rooms/status" class="list-group-item list-group-item-action">
-                            <i class="fas fa-th"></i> Room Status
-                        </a>
-                        <a href="/admin/housekeeping" class="list-group-item list-group-item-action">
-                            <i class="fas fa-broom"></i> Housekeeping
-                        </a>
-                        <a href="/admin/maintenance" class="list-group-item list-group-item-action">
-                            <i class="fas fa-tools"></i> Maintenance
-                        </a>
-                        <a href="/admin/room-types" class="list-group-item list-group-item-action">
-                            <i class="fas fa-bed"></i> Room Types & Rates
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="/admin/bookings/new" class="btn btn-primary btn-block">
+                            <i class="fas fa-plus-circle me-2"></i>New Booking
                         </a>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Inventory Management -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-boxes"></i> Inventory Management
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="/admin/inventory" class="list-group-item list-group-item-action">
-                            <i class="fas fa-box"></i> Stock Overview
-                        </a>
-                        <a href="/admin/inventory/orders" class="list-group-item list-group-item-action">
-                            <i class="fas fa-shopping-cart"></i> Purchase Orders
-                        </a>
-                        <a href="/admin/inventory/suppliers" class="list-group-item list-group-item-action">
-                            <i class="fas fa-truck"></i> Suppliers
-                        </a>
-                        <a href="/admin/inventory/alerts" class="list-group-item list-group-item-action">
-                            <i class="fas fa-exclamation-triangle"></i> Low Stock Alerts
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="/admin/housekeeping" class="btn btn-success btn-block">
+                            <i class="fas fa-broom me-2"></i>Housekeeping
                         </a>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Channel Management -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-network-wired"></i> Channel Management
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="/admin/channel-manager" class="list-group-item list-group-item-action">
-                            <i class="fas fa-sync"></i> Channel Manager
-                        </a>
-                        <a href="/admin/ota/rates" class="list-group-item list-group-item-action">
-                            <i class="fas fa-tags"></i> OTA Rates
-                        </a>
-                        <a href="/admin/ota/analytics" class="list-group-item list-group-item-action">
-                            <i class="fas fa-chart-line"></i> Channel Analytics
-                        </a>
-                        <a href="/admin/ota/settings" class="list-group-item list-group-item-action">
-                            <i class="fas fa-cog"></i> Channel Settings
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="/admin/maintenance" class="btn btn-warning btn-block">
+                            <i class="fas fa-tools me-2"></i>Maintenance
                         </a>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Reports & Analytics -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-bar"></i> Reports & Analytics
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="/admin/reports/financial" class="list-group-item list-group-item-action">
-                            <i class="fas fa-dollar-sign"></i> Financial Reports
-                        </a>
-                        <a href="/admin/reports/occupancy" class="list-group-item list-group-item-action">
-                            <i class="fas fa-hotel"></i> Occupancy Reports
-                        </a>
-                        <a href="/admin/reports/guest" class="list-group-item list-group-item-action">
-                            <i class="fas fa-user-chart"></i> Guest Analytics
-                        </a>
-                        <a href="/admin/reports/staff" class="list-group-item list-group-item-action">
-                            <i class="fas fa-user-tie"></i> Staff Performance
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Settings -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-cogs"></i> Settings & Configuration
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="/admin/settings/hotel" class="list-group-item list-group-item-action">
-                            <i class="fas fa-hotel"></i> Hotel Settings
-                        </a>
-                        <a href="/admin/settings/users" class="list-group-item list-group-item-action">
-                            <i class="fas fa-users-cog"></i> User Management
-                        </a>
-                        <a href="/admin/settings/roles" class="list-group-item list-group-item-action">
-                            <i class="fas fa-user-shield"></i> Role Management
-                        </a>
-                        <a href="/admin/settings/system" class="list-group-item list-group-item-action">
-                            <i class="fas fa-wrench"></i> System Settings
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Payment & Billing -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card shadow h-100">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-money-bill"></i> Payment & Billing
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group">
-                        <a href="/admin/payments" class="list-group-item list-group-item-action">
-                            <i class="fas fa-credit-card"></i> Payment Transactions
-                        </a>
-                        <a href="/admin/invoices" class="list-group-item list-group-item-action">
-                            <i class="fas fa-file-invoice-dollar"></i> Invoices
-                        </a>
-                        <a href="/admin/refunds" class="list-group-item list-group-item-action">
-                            <i class="fas fa-undo"></i> Refunds
-                        </a>
-                        <a href="/admin/payment-settings" class="list-group-item list-group-item-action">
-                            <i class="fas fa-cog"></i> Payment Settings
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <a href="/admin/reports" class="btn btn-info btn-block">
+                            <i class="fas fa-chart-bar me-2"></i>Reports
                         </a>
                     </div>
                 </div>
@@ -325,48 +122,254 @@
     </div>
 </div>
 
-<!-- WebSocket Integration -->
-<script src="/js/websocket.js"></script>
+<!-- Revenue Chart -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Revenue Trends</h6>
+                <div class="btn-group">
+                    <a href="?period=daily" class="btn btn-sm btn-outline-primary {{#if (eq period 'daily')}}active{{/if}}">Daily</a>
+                    <a href="?period=weekly" class="btn btn-sm btn-outline-primary {{#if (eq period 'weekly')}}active{{/if}}">Weekly</a>
+                    <a href="?period=monthly" class="btn btn-sm btn-outline-primary {{#if (eq period 'monthly')}}active{{/if}}">Monthly</a>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Operations -->
+<div class="row mb-4">
+    <!-- Check-ins -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Today's Check-ins</h6>
+                <a href="/admin/bookings?filter=check-in" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {{#if todayCheckIns}}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Guest</th>
+                                <th>Room</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each todayCheckIns}}
+                            <tr>
+                                <td>{{this.guestName}}</td>
+                                <td>{{this.roomNumber}}</td>
+                                <td>{{this.checkInTime}}</td>
+                                <td>{{{this.statusBadge}}}</td>
+                                <td>
+                                    <a href="/admin/bookings/{{this._id}}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <p class="text-center text-muted my-3">No check-ins scheduled for today</p>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Check-outs -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Today's Check-outs</h6>
+                <a href="/admin/bookings?filter=check-out" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {{#if todayCheckOuts}}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Guest</th>
+                                <th>Room</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each todayCheckOuts}}
+                            <tr>
+                                <td>{{this.guestName}}</td>
+                                <td>{{this.roomNumber}}</td>
+                                <td>{{this.checkOutTime}}</td>
+                                <td>{{{this.statusBadge}}}</td>
+                                <td>
+                                    <a href="/admin/bookings/{{this._id}}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <p class="text-center text-muted my-3">No check-outs scheduled for today</p>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Housekeeping and Maintenance -->
+<div class="row">
+    <!-- Housekeeping Tasks -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Housekeeping Tasks</h6>
+                <a href="/admin/housekeeping" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {{#if housekeepingTasks}}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Room</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each housekeepingTasks}}
+                            <tr>
+                                <td>{{this.roomNumber}}</td>
+                                <td>{{this.type}}</td>
+                                <td>{{{this.statusBadge}}}</td>
+                                <td>
+                                    <a href="/admin/housekeeping/{{this._id}}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <p class="text-center text-muted my-3">No pending housekeeping tasks</p>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Requests -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Maintenance Requests</h6>
+                <a href="/admin/maintenance" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {{#if maintenanceRequests}}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Room</th>
+                                <th>Issue</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each maintenanceRequests}}
+                            <tr>
+                                <td>{{this.roomNumber}}</td>
+                                <td>{{this.issue}}</td>
+                                <td>{{{this.priorityBadge}}}</td>
+                                <td>{{{this.statusBadge}}}</td>
+                                <td>
+                                    <a href="/admin/maintenance/{{this._id}}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+                {{else}}
+                <p class="text-center text-muted my-3">No pending maintenance requests</p>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Initialization -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
-    $('[data-toggle="tooltip"]').tooltip();
-
-    // WebSocket event listeners
-    hotelWS.on('connection', function(data) {
-        const statusBadge = document.getElementById('connectionStatus');
-        if (data.status === 'connected') {
-            statusBadge.className = 'badge badge-success';
-            statusBadge.innerHTML = '<i class="fas fa-signal"></i> Connected';
-        } else {
-            statusBadge.className = 'badge badge-danger';
-            statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Disconnected';
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: {{{json revenueData.labels}}},
+            datasets: [{
+                label: 'Revenue',
+                data: {{{json revenueData.values}}},
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Revenue: $' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            }
         }
-    });
-
-    // Update revenue
-    hotelWS.on('REVENUE_UPDATE', function(data) {
-        document.getElementById('todayRevenue').textContent = '$' + data.amount.toLocaleString();
-    });
-
-    // Update occupancy
-    hotelWS.on('OCCUPANCY_UPDATE', function(data) {
-        document.getElementById('occupancyRate').textContent = data.rate + '%';
-    });
-
-    // Update check-ins
-    hotelWS.on('CHECK_IN_OUT', function(data) {
-        if (data.type === 'CHECK_IN') {
-            const checkins = document.getElementById('todayCheckins');
-            checkins.textContent = (parseInt(checkins.textContent) + 1).toString();
-        }
-    });
-
-    // Update tasks
-    hotelWS.on('TASK_UPDATE', function(data) {
-        document.getElementById('pendingTasks').textContent = data.pendingCount;
     });
 });
-</script>
-
-{{> admin/footer}}

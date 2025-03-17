@@ -44,9 +44,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session({
-    secret: config.sessionSecret,
+    secret: config.sessionSecret || 'your-secret-key-123',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
 }));
 app.use(flash());
 
@@ -58,18 +63,30 @@ app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpecs));
 
 // Routes
 app.use('/', homeRouter);
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/guests', guestRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({
-        message: 'Something went wrong!',
-        error: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    
+    // Check if it's an API route
+    const isApiRoute = req.originalUrl.startsWith('/api/');
+    
+    if (isApiRoute) {
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong!',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    } else {
+        res.status(500).render('error', {
+            message: 'Something went wrong!',
+            error: process.env.NODE_ENV === 'development' ? err : {}
+        });
+    }
 });
 
 // Connect to MongoDB

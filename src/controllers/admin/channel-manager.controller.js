@@ -198,61 +198,46 @@ exports.getBookings = async (req, res) => {
         if (req.query.channel) {
             query.source = req.query.channel;
         }
-
-        if (req.query.startDate) {
-            query.checkIn = { $gte: new Date(req.query.startDate) };
-        }
-
-        if (req.query.endDate) {
-            query.checkOut = { $lte: new Date(req.query.endDate) };
-        }
-
         if (req.query.status) {
             query.status = req.query.status;
         }
+        if (req.query.startDate && req.query.endDate) {
+            query.checkIn = {
+                $gte: new Date(req.query.startDate),
+                $lte: new Date(req.query.endDate)
+            };
+        }
 
-        // Get bookings with pagination
         const [bookings, total] = await Promise.all([
             Booking.find(query)
                 .populate('user', 'name email phone')
-                .populate('room', 'type number price')
+                .populate('room', 'type number')
                 .sort('-createdAt')
                 .skip(skip)
-                .limit(limit)
-                .lean(),
+                .limit(limit),
             Booking.countDocuments(query)
         ]);
 
-        // Calculate metrics for filtered bookings
-        const metrics = {
-            totalBookings: total,
-            totalRevenue: bookings.reduce((sum, b) => sum + b.totalAmount, 0),
-            avgNightlyRate: bookings.length ? 
-                bookings.reduce((sum, b) => sum + b.totalAmount / b.nights, 0) / bookings.length : 0,
-            channelDistribution: await Booking.aggregate([
-                { $match: query },
-                { $group: { _id: '$source', count: { $sum: 1 } } }
-            ])
-        };
-
-        res.json({
-            bookings: bookings.map(b => ({
-                ...b,
-                checkIn: b.checkIn.toISOString().split('T')[0],
-                checkOut: b.checkOut.toISOString().split('T')[0],
-                nights: Math.ceil((b.checkOut - b.checkIn) / (1000 * 60 * 60 * 24))
-            })),
-            metrics,
+        res.render('admin/channel-manager/bookings', {
+            title: 'Channel Bookings',
+            bookings,
             pagination: {
                 page,
-                limit,
-                total,
-                pages: Math.ceil(total / limit)
+                pageCount: Math.ceil(total / limit),
+                limit
+            },
+            filters: {
+                channel: req.query.channel,
+                status: req.query.status,
+                startDate: req.query.startDate,
+                endDate: req.query.endDate
             }
         });
     } catch (error) {
-        console.error('Error getting channel bookings:', error);
-        res.status(500).json({ message: 'Error getting channel bookings' });
+        console.error('Error fetching channel bookings:', error);
+        res.status(500).render('error', {
+            message: 'Error fetching channel bookings'
+        });
     }
 };
 
@@ -260,135 +245,128 @@ exports.getBookings = async (req, res) => {
 exports.getRates = async (req, res) => {
     try {
         const hotelId = req.query.hotelId;
-        const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date();
-        const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const roomType = req.query.roomType;
+        const startDate = new Date(req.query.startDate || Date.now());
+        const endDate = new Date(req.query.endDate || Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-        // Get all room types
-        const rooms = await Room.find({ hotel: hotelId }).select('type baseRate').lean();
-
-        // Get rate managers for each channel
-        const rateManagers = await RateManager.find({ 
-            hotel: hotelId,
-            effectiveDate: { $lte: endDate },
-            expiryDate: { $gte: startDate }
-        }).populate('channel').lean();
-
-        // Calculate rates for each room type across channels
-        const rates = rooms.map(room => {
-            const channelRates = rateManagers.map(rm => {
-                const adjustments = rm.adjustments.find(a => a.roomType === room.type) || { percentage: 0 };
-                return {
-                    channel: rm.channel.name,
-                    rate: calculateChannelRates(room.baseRate, adjustments),
-                    adjustment: adjustments.percentage
-                };
+        // Get rate manager for the hotel
+        const rateManager = await RateManager.findOne({ hotel: hotelId });
+        if (!rateManager) {
+            return res.status(404).json({
+                success: false,
+                message: 'Rate manager not found'
             });
+        }
 
-            return {
-                roomType: room.type,
-                baseRate: room.baseRate,
-                channelRates
-            };
+        // Get rates from connected channels
+        const channels = await OTAChannel.find({
+            hotel: hotelId,
+            status: 'active'
         });
 
-        // Get rate trends
-        const trends = await RateManager.aggregate([
-            {
-                $match: {
-                    hotel: hotelId,
-                    effectiveDate: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
-                }
-            },
-            {
-                $group: {
-                    _id: {
-                        channel: '$channel',
-                        date: { $dateToString: { format: '%Y-%m-%d', date: '$effectiveDate' } }
-                    },
-                    avgAdjustment: { $avg: '$adjustments.percentage' }
-                }
-            },
-            { $sort: { '_id.date': 1 } }
-        ]);
+        const rates = [];
+        for (const channel of channels) {
+            try {
+                const channelRates = await channel.getRates({
+                    roomType,
+                    startDate,
+                    endDate
+                });
+                rates.push({
+                    channel: channel.name,
+                    rates: channelRates
+                });
+            } catch (error) {
+                console.error(`Error getting rates from ${channel.name}:`, error);
+                rates.push({
+                    channel: channel.name,
+                    error: error.message
+                });
+            }
+        }
 
-        res.json({
+        res.render('admin/channel-manager/rates', {
+            title: 'Channel Rates',
             rates,
-            trends,
-            dateRange: {
-                start: startDate.toISOString().split('T')[0],
-                end: endDate.toISOString().split('T')[0]
+            filters: {
+                roomType,
+                startDate: startDate.toISOString().split('T')[0],
+                endDate: endDate.toISOString().split('T')[0]
             }
         });
     } catch (error) {
         console.error('Error getting channel rates:', error);
-        res.status(500).json({ message: 'Error getting channel rates' });
+        res.status(500).render('error', {
+            message: 'Error getting channel rates'
+        });
     }
 };
 
 // Update rates for channels
 exports.updateRates = async (req, res) => {
     try {
-        const hotelId = req.body.hotelId;
         const {
-            channel,
+            hotelId,
             roomType,
-            adjustment,
-            effectiveDate,
-            expiryDate
+            baseRate,
+            adjustments,
+            dateRange
         } = req.body;
 
-        // Validate dates
-        if (new Date(effectiveDate) >= new Date(expiryDate)) {
-            return res.status(400).json({
-                message: 'Effective date must be before expiry date'
-            });
-        }
-
-        // Find or create rate manager
-        let rateManager = await RateManager.findOne({
-            hotel: hotelId,
-            channel,
-            effectiveDate: { $lte: new Date(effectiveDate) },
-            expiryDate: { $gte: new Date(expiryDate) }
-        });
-
+        // Get rate manager for the hotel
+        const rateManager = await RateManager.findOne({ hotel: hotelId });
         if (!rateManager) {
-            rateManager = new RateManager({
-                hotel: hotelId,
-                channel,
-                effectiveDate: new Date(effectiveDate),
-                expiryDate: new Date(expiryDate),
-                adjustments: []
+            return res.status(404).json({
+                success: false,
+                message: 'Rate manager not found'
             });
         }
 
-        // Update adjustments
-        const existingAdjustment = rateManager.adjustments.find(a => a.roomType === roomType);
-        if (existingAdjustment) {
-            existingAdjustment.percentage = adjustment;
-        } else {
-            rateManager.adjustments.push({
-                roomType,
-                percentage: adjustment
-            });
-        }
+        // Calculate rates for each channel based on adjustments
+        const channelRates = calculateChannelRates(baseRate, adjustments);
 
-        await rateManager.save();
-
-        // Sync rates with OTA channels
-        await updateOTAPricing(hotelId, channel, roomType, {
-            startDate: effectiveDate,
-            endDate: expiryDate,
-            adjustment
+        // Update rates in connected channels
+        const channels = await OTAChannel.find({
+            hotel: hotelId,
+            status: 'active'
         });
+
+        const updateResults = [];
+        for (const channel of channels) {
+            try {
+                const rate = channelRates[channel.name.toLowerCase()];
+                if (rate) {
+                    const result = await updateOTAPricing(channel, {
+                        roomType,
+                        rate,
+                        dateRange
+                    });
+                    updateResults.push({
+                        channel: channel.name,
+                        success: true,
+                        message: result.message
+                    });
+                }
+            } catch (error) {
+                console.error(`Error updating rates for ${channel.name}:`, error);
+                updateResults.push({
+                    channel: channel.name,
+                    success: false,
+                    message: error.message
+                });
+            }
+        }
 
         res.json({
-            message: 'Rates updated successfully',
-            rateManager
+            success: true,
+            data: updateResults
         });
     } catch (error) {
         console.error('Error updating channel rates:', error);
-        res.status(500).json({ message: 'Error updating channel rates' });
+        res.status(500).json({
+            success: false,
+            message: 'Error updating channel rates'
+        });
     }
 };
 
@@ -396,193 +374,138 @@ exports.updateRates = async (req, res) => {
 exports.getInventory = async (req, res) => {
     try {
         const hotelId = req.query.hotelId;
-        const startDate = req.query.startDate ? new Date(req.query.startDate) : new Date();
-        const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const startDate = new Date(req.query.startDate || Date.now());
+        const endDate = new Date(req.query.endDate || Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-        // Get all rooms
-        const rooms = await Room.find({ hotel: hotelId })
-            .select('type number status baseRate')
-            .lean();
-
-        // Get bookings for the date range
-        const bookings = await Booking.find({
+        // Get inventory from all channels
+        const channels = await OTAChannel.find({
             hotel: hotelId,
-            $or: [
-                { checkIn: { $gte: startDate, $lte: endDate } },
-                { checkOut: { $gte: startDate, $lte: endDate } }
-            ]
-        }).lean();
-
-        // Get channel connections
-        const channels = await OTAChannel.find({ hotel: hotelId })
-            .select('name status lastSync')
-            .lean();
-
-        // Calculate availability for each room type
-        const roomTypes = [...new Set(rooms.map(r => r.type))];
-        const inventory = roomTypes.map(type => {
-            const roomsOfType = rooms.filter(r => r.type === type);
-            const totalRooms = roomsOfType.length;
-            const availableRooms = roomsOfType.filter(r => r.status === 'AVAILABLE').length;
-            const bookingsForType = bookings.filter(b => 
-                roomsOfType.some(r => r._id.equals(b.room))
-            );
-
-            return {
-                roomType: type,
-                totalRooms,
-                availableRooms,
-                baseRate: roomsOfType[0].baseRate,
-                bookings: bookingsForType.length,
-                occupancyRate: (bookingsForType.length / totalRooms) * 100,
-                channelDistribution: channels.map(channel => ({
-                    channel: channel.name,
-                    status: channel.status,
-                    lastSync: channel.lastSync,
-                    bookings: bookingsForType.filter(b => b.source === channel.name).length
-                }))
-            };
+            status: 'active'
         });
 
-        res.json({
+        const inventory = [];
+        for (const channel of channels) {
+            try {
+                const channelInventory = await channel.getInventory({
+                    startDate,
+                    endDate
+                });
+                inventory.push({
+                    channel: channel.name,
+                    inventory: channelInventory
+                });
+            } catch (error) {
+                console.error(`Error getting inventory from ${channel.name}:`, error);
+                inventory.push({
+                    channel: channel.name,
+                    error: error.message
+                });
+            }
+        }
+
+        res.render('admin/channel-manager/inventory', {
+            title: 'Channel Inventory',
             inventory,
-            dateRange: {
-                start: startDate.toISOString().split('T')[0],
-                end: endDate.toISOString().split('T')[0]
-            },
-            channels: channels.map(c => ({
-                name: c.name,
-                status: c.status,
-                lastSync: c.lastSync
-            }))
+            filters: {
+                startDate: startDate.toISOString().split('T')[0],
+                endDate: endDate.toISOString().split('T')[0]
+            }
         });
     } catch (error) {
         console.error('Error getting channel inventory:', error);
-        res.status(500).json({ message: 'Error getting channel inventory' });
+        res.status(500).render('error', {
+            message: 'Error getting channel inventory'
+        });
     }
 };
 
 // Update inventory across channels
 exports.updateInventory = async (req, res) => {
     try {
-        const hotelId = req.body.hotelId;
         const {
+            hotelId,
             roomType,
-            availability,
-            startDate,
-            endDate,
-            channels
+            inventory,
+            dateRange
         } = req.body;
 
-        // Validate dates
-        if (new Date(startDate) >= new Date(endDate)) {
-            return res.status(400).json({
-                message: 'Start date must be before end date'
-            });
-        }
-
-        // Get rooms of specified type
-        const rooms = await Room.find({
+        // Get channels to update
+        const channels = await OTAChannel.find({
             hotel: hotelId,
-            type: roomType
+            status: 'active'
         });
 
-        if (!rooms.length) {
-            return res.status(404).json({
-                message: 'No rooms found for the specified type'
-            });
+        const updateResults = [];
+        for (const channel of channels) {
+            try {
+                const result = await channel.updateInventory({
+                    roomType,
+                    inventory,
+                    dateRange
+                });
+                updateResults.push({
+                    channel: channel.name,
+                    success: true,
+                    message: result.message
+                });
+            } catch (error) {
+                console.error(`Error updating inventory for ${channel.name}:`, error);
+                updateResults.push({
+                    channel: channel.name,
+                    success: false,
+                    message: error.message
+                });
+            }
         }
 
-        // Update room availability
-        await Room.updateMany(
-            {
-                hotel: hotelId,
-                type: roomType
-            },
-            {
-                $set: {
-                    status: availability ? 'AVAILABLE' : 'BLOCKED',
-                    lastModifiedBy: req.user._id,
-                    lastModifiedAt: new Date()
-                }
-            }
-        );
-
-        // Sync availability with specified channels
-        await Promise.all(channels.map(channel => 
-            syncAvailability(hotelId, channel, roomType, {
-                startDate,
-                endDate,
-                availability
-            })
-        ));
-
         res.json({
-            message: 'Inventory updated successfully',
-            details: {
-                roomType,
-                availability,
-                startDate,
-                endDate,
-                channels,
-                roomsAffected: rooms.length
-            }
+            success: true,
+            data: updateResults
         });
     } catch (error) {
         console.error('Error updating channel inventory:', error);
-        res.status(500).json({ message: 'Error updating channel inventory' });
+        res.status(500).json({
+            success: false,
+            message: 'Error updating channel inventory'
+        });
     }
 };
 
 // Helper function to calculate channel metrics
-async function calculateChannelMetrics(hotelId, startDate = new Date(0), endDate = new Date()) {
+const calculateChannelMetrics = async (hotelId, startDate = new Date(0), endDate = new Date()) => {
     const bookings = await Booking.find({
         hotel: hotelId,
         source: { $in: ['booking.com', 'expedia', 'airbnb'] },
         createdAt: { $gte: startDate, $lte: endDate }
     });
 
-    const metrics = {};
-    const channels = ['booking.com', 'expedia', 'airbnb'];
+    const metrics = {
+        totalBookings: bookings.length,
+        revenue: bookings.reduce((sum, booking) => sum + booking.totalAmount, 0),
+        byChannel: {}
+    };
 
-    for (const channel of channels) {
-        const channelBookings = bookings.filter(b => b.source === channel);
-        const totalRevenue = channelBookings.reduce((acc, booking) => 
-            acc + booking.totalAmount, 0);
-        const commission = channelBookings.reduce((acc, booking) => 
-            acc + (booking.commission || 0), 0);
-
-        metrics[channel] = {
-            totalBookings: channelBookings.length,
-            revenue: totalRevenue,
-            commission,
-            netRevenue: totalRevenue - commission,
-            averageRate: totalRevenue / channelBookings.length || 0
-        };
-    }
+    bookings.forEach(booking => {
+        if (!metrics.byChannel[booking.source]) {
+            metrics.byChannel[booking.source] = {
+                bookings: 0,
+                revenue: 0
+            };
+        }
+        metrics.byChannel[booking.source].bookings++;
+        metrics.byChannel[booking.source].revenue += booking.totalAmount;
+    });
 
     return metrics;
-}
+};
 
 // Helper function to calculate channel-specific rates
-function calculateChannelRates(baseRate, adjustments) {
+const calculateChannelRates = (baseRate, adjustments) => {
     const rates = {};
     
     for (const [channel, adjustment] of Object.entries(adjustments)) {
-        let rate = baseRate;
-        
-        // Apply markup/markdown
-        if (adjustment.type === 'percentage') {
-            rate *= (1 + adjustment.value / 100);
-        } else if (adjustment.type === 'fixed') {
-            rate += adjustment.value;
-        }
-        
-        // Round to appropriate decimal places
-        rate = Math.round(rate * 100) / 100;
-        
-        rates[channel] = rate;
+        rates[channel] = baseRate * (1 + adjustment);
     }
-    
+
     return rates;
-}
+};

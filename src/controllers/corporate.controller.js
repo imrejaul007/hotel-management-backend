@@ -1,5 +1,5 @@
 const CorporateAccount = require('../models/CorporateAccount');
-const asyncHandler = require('../middleware/async');
+const asyncHandler = require('../middleware/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
 
 // @desc    Create corporate account

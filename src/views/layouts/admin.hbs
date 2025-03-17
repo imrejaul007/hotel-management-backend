@@ -20,52 +20,14 @@
             align-items: stretch;
         }
 
-        /* Sidebar Styles */
-        .sidebar {
-            min-width: 250px;
-            max-width: 250px;
-            min-height: 100vh;
-            background: #2c3e50;
-            color: #fff;
-            transition: all 0.3s;
-        }
-
-        .sidebar.active {
-            margin-left: -250px;
-        }
-
-        .sidebar .sidebar-header {
-            padding: 20px;
-            background: #1a2634;
-        }
-
-        .sidebar ul.components {
-            padding: 20px 0;
-            border-bottom: 1px solid #47748b;
-        }
-
-        .sidebar ul li a {
-            padding: 10px 20px;
-            font-size: 1.1em;
-            display: block;
-            color: #fff;
-            text-decoration: none;
-        }
-
-        .sidebar ul li a:hover {
-            background: #34495e;
-        }
-
-        .sidebar ul li.active > a {
-            background: #3498db;
-        }
-
         /* Main Content Styles */
         .main-content {
-            width: 100%;
+            width: calc(100% - 250px);
             min-height: 100vh;
+            margin-left: 250px;
             transition: all 0.3s;
             background: #f8f9fa;
+            padding: 20px;
         }
 
         /* Card Styles */
@@ -150,21 +112,38 @@
             background: #555;
         }
 
-        /* Responsive Sidebar */
+        /* Responsive Styles */
         @media (max-width: 768px) {
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+            }
             .sidebar {
                 margin-left: -250px;
             }
             .sidebar.active {
                 margin-left: 0;
             }
+            .main-content.active {
+                margin-left: 250px;
+                width: calc(100% - 250px);
+            }
         }
     </style>
 </head>
 <body class="bg-light">
     <div class="wrapper">
+        <!-- Sidebar -->
+        {{> admin/sidebar}}
+
         <!-- Main Content -->
-        {{{body}}}
+        <div class="main-content">
+            <!-- Header -->
+            {{> admin/header}}
+
+            <!-- Page Content -->
+            {{{body}}}
+        </div>
     </div>
 
     <!-- Bootstrap Bundle with Popper -->
@@ -184,6 +163,7 @@
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
                     document.getElementById('sidebar').classList.toggle('active');
+                    document.querySelector('.main-content').classList.toggle('active');
                 });
             }
 

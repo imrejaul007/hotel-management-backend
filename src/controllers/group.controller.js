@@ -1,6 +1,6 @@
 const GroupBooking = require('../models/GroupBooking');
 const Room = require('../models/Room');
-const asyncHandler = require('../middleware/async');
+const asyncHandler = require('../middleware/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
 
 // @desc    Create group booking

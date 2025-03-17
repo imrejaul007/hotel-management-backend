@@ -17,7 +17,9 @@
                 </div>
                 {{/if}}
                 
-                <form action="/auth/register" method="POST" class="needs-validation" novalidate>
+                <div class="alert alert-danger d-none" id="errorAlert" role="alert"></div>
+                
+                <form id="registerForm" method="POST" action="/auth/register" class="needs-validation" novalidate>
                     <div class="mb-3">
                         <label for="name" class="form-label">Full Name</label>
                         <input type="text" class="form-control" id="name" name="name" required>
@@ -63,27 +65,52 @@
 </div>
 
 <script>
-// Form validation
-(function () {
-    'use strict'
-    var forms = document.querySelectorAll('.needs-validation')
-    Array.prototype.slice.call(forms).forEach(function (form) {
-        form.addEventListener('submit', function (event) {
-            const password = form.querySelector('#password')
-            const confirmPassword = form.querySelector('#confirmPassword')
-            
-            if (password.value !== confirmPassword.value) {
-                confirmPassword.setCustomValidity('Passwords do not match')
-            } else {
-                confirmPassword.setCustomValidity('')
-            }
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const name = formData.get('name');
+    const email = formData.get('email');
+    const password = formData.get('password');
+    const confirmPassword = formData.get('confirmPassword');
+    const role = formData.get('role');
+    const errorAlert = document.getElementById('errorAlert');
 
-            if (!form.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
-            }
-            form.classList.add('was-validated')
-        }, false)
-    })
-})()
+    // Validate passwords match
+    if (password !== confirmPassword) {
+        errorAlert.textContent = 'Passwords do not match';
+        errorAlert.classList.remove('d-none');
+        return;
+    }
+
+    try {
+        const response = await fetch('/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name,
+                email,
+                password,
+                role
+            })
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.message || 'Registration failed');
+        }
+
+        // Registration successful
+        window.location.href = '/auth/login?success=Account created successfully! Please log in.';
+    } catch (error) {
+        errorAlert.textContent = error.message;
+        errorAlert.classList.remove('d-none');
+        
+        setTimeout(() => {
+            errorAlert.classList.add('d-none');
+        }, 5000);
+    }
+});
 </script>

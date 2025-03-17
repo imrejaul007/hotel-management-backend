@@ -14,6 +14,14 @@ if (mongoose.models.Hotel) {
             type: String,
             required: true
         },
+        featured: {
+            type: Boolean,
+            default: false
+        },
+        startingPrice: {
+            type: Number,
+            required: true
+        },
         location: {
             address: {
                 type: String,

@@ -263,3 +263,156 @@ exports.getCheckOutDetails = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+// Get pending check-ins
+exports.getPendingCheckIns = async (req, res) => {
+    try {
+        const today = new Date();
+        const startDate = new Date(today.setHours(0, 0, 0, 0));
+        const endDate = new Date(today.setHours(23, 59, 59, 999));
+
+        const pendingCheckIns = await Booking.find({
+            checkIn: { $gte: startDate, $lte: endDate },
+            status: 'confirmed'
+        })
+        .populate('user room')
+        .sort('checkIn');
+
+        res.json({
+            success: true,
+            data: pendingCheckIns
+        });
+    } catch (error) {
+        console.error('Error getting pending check-ins:', error);
+        res.status(500).json({ message: 'Error getting pending check-ins' });
+    }
+};
+
+// Check-in guest
+exports.checkIn = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const { idType, idNumber, roomStatus, specialRequests } = req.body;
+
+        const booking = await Booking.findById(bookingId)
+            .populate('user room');
+
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found' });
+        }
+
+        if (booking.status !== 'confirmed') {
+            return res.status(400).json({ message: 'Invalid booking status for check-in' });
+        }
+
+        // Update room status
+        await Room.findByIdAndUpdate(booking.room._id, {
+            status: 'occupied',
+            currentBooking: booking._id,
+            needsCleaning: roomStatus === 'needs_cleaning'
+        });
+
+        // Update booking status
+        booking.status = 'checked_in';
+        booking.checkInTime = new Date();
+        booking.idType = idType;
+        booking.idNumber = idNumber;
+        booking.specialRequests = specialRequests;
+        await booking.save();
+
+        // Update guest's loyalty points if applicable
+        if (booking.user.loyaltyProgram) {
+            const points = calculateLoyaltyPoints(booking.totalAmount);
+            await LoyaltyProgram.findByIdAndUpdate(booking.user.loyaltyProgram, {
+                $inc: { points },
+                $push: {
+                    history: {
+                        type: 'earn',
+                        points,
+                        description: `Check-in points for booking #${booking._id}`,
+                        date: new Date()
+                    }
+                }
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Check-in successful',
+            data: booking
+        });
+    } catch (error) {
+        console.error('Error during check-in:', error);
+        res.status(500).json({ message: 'Error during check-in' });
+    }
+};
+
+// Check-out guest
+exports.checkOut = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const { roomCondition, additionalCharges, notes } = req.body;
+
+        const booking = await Booking.findById(bookingId)
+            .populate('user room');
+
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found' });
+        }
+
+        if (booking.status !== 'checked_in') {
+            return res.status(400).json({ message: 'Invalid booking status for check-out' });
+        }
+
+        // Calculate additional charges
+        let totalAdditionalCharges = 0;
+        if (additionalCharges && additionalCharges.length > 0) {
+            totalAdditionalCharges = additionalCharges.reduce((total, charge) => {
+                return total + parseFloat(charge.amount);
+            }, 0);
+            booking.additionalCharges = additionalCharges;
+            booking.totalAmount += totalAdditionalCharges;
+        }
+
+        // Update room status
+        await Room.findByIdAndUpdate(booking.room._id, {
+            status: 'needs_cleaning',
+            currentBooking: null,
+            needsCleaning: true,
+            lastCheckOut: new Date(),
+            notes: notes || ''
+        });
+
+        // Update booking status
+        booking.status = 'checked_out';
+        booking.checkOutTime = new Date();
+        booking.roomCondition = roomCondition;
+        booking.notes = notes;
+        await booking.save();
+
+        // Update guest's loyalty points for additional charges if applicable
+        if (booking.user.loyaltyProgram && totalAdditionalCharges > 0) {
+            const points = calculateLoyaltyPoints(totalAdditionalCharges);
+            await LoyaltyProgram.findByIdAndUpdate(booking.user.loyaltyProgram, {
+                $inc: { points },
+                $push: {
+                    history: {
+                        type: 'earn',
+                        points,
+                        description: `Additional charges points for booking #${booking._id}`,
+                        date: new Date()
+                    }
+                }
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Check-out successful',
+            data: booking
+        });
+    } catch (error) {
+        console.error('Error during check-out:', error);
+        res.status(500).json({ message: 'Error during check-out' });
+    }
+};

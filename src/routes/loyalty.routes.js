@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const LoyaltyProgram = require('../models/LoyaltyProgram');
-const { protect, authorize } = require('../middlewares/auth.middleware');
+const { protect, authorize } = require('../middleware/auth');
 
 // Get loyalty program status
 router.get('/status', protect, async (req, res) => {
