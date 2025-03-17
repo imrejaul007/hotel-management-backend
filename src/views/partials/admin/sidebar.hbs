@@ -5,53 +5,254 @@
     </div>
 
     <ul class="list-unstyled components">
+        <!-- Dashboard -->
         <li class="{{#if (eq active 'dashboard')}}active{{/if}}">
             <a href="/admin/dashboard" class="d-flex align-items-center">
                 <i class="fas fa-tachometer-alt me-3"></i>
                 <span>Dashboard</span>
             </a>
         </li>
-        <li class="{{#if (eq active 'hotels')}}active{{/if}}">
-            <a href="/admin/hotels" class="d-flex align-items-center">
-                <i class="fas fa-hotel me-3"></i>
-                <span>Hotels</span>
+
+        <!-- Bookings Section -->
+        <li class="{{#if (eq activeGroup 'bookings')}}active{{/if}}">
+            <a href="#bookingsSubmenu" data-bs-toggle="collapse" class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fas fa-calendar-check me-3"></i>
+                    <span>Bookings</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
             </a>
+            <ul class="collapse list-unstyled {{#if (eq activeGroup 'bookings')}}show{{/if}}" id="bookingsSubmenu">
+                <li class="{{#if (eq active 'bookings-list')}}active{{/if}}">
+                    <a href="/admin/bookings" class="d-flex align-items-center">
+                        <i class="fas fa-list me-3"></i>
+                        <span>All Bookings</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'bookings-calendar')}}active{{/if}}">
+                    <a href="/admin/bookings/calendar" class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt me-3"></i>
+                        <span>Calendar View</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'check-in-out')}}active{{/if}}">
+                    <a href="/admin/check-in-out" class="d-flex align-items-center">
+                        <i class="fas fa-exchange-alt me-3"></i>
+                        <span>Check-in/out</span>
+                    </a>
+                </li>
+            </ul>
         </li>
-        <li class="{{#if (eq active 'bookings')}}active{{/if}}">
-            <a href="/admin/bookings" class="d-flex align-items-center">
-                <i class="fas fa-calendar-check me-3"></i>
-                <span>Bookings</span>
+
+        <!-- Rooms & Inventory -->
+        <li class="{{#if (eq activeGroup 'rooms')}}active{{/if}}">
+            <a href="#roomsSubmenu" data-bs-toggle="collapse" class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fas fa-bed me-3"></i>
+                    <span>Rooms & Inventory</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
             </a>
+            <ul class="collapse list-unstyled {{#if (eq activeGroup 'rooms')}}show{{/if}}" id="roomsSubmenu">
+                <li class="{{#if (eq active 'rooms-list')}}active{{/if}}">
+                    <a href="/admin/rooms" class="d-flex align-items-center">
+                        <i class="fas fa-door-open me-3"></i>
+                        <span>Room List</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'room-types')}}active{{/if}}">
+                    <a href="/admin/rooms/types" class="d-flex align-items-center">
+                        <i class="fas fa-tags me-3"></i>
+                        <span>Room Types</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'inventory')}}active{{/if}}">
+                    <a href="/admin/inventory" class="d-flex align-items-center">
+                        <i class="fas fa-box me-3"></i>
+                        <span>Inventory</span>
+                    </a>
+                </li>
+            </ul>
         </li>
-        <li class="{{#if (eq active 'rooms')}}active{{/if}}">
-            <a href="/admin/rooms" class="d-flex align-items-center">
-                <i class="fas fa-bed me-3"></i>
-                <span>Rooms</span>
+
+        <!-- Guest Management -->
+        <li class="{{#if (eq activeGroup 'guests')}}active{{/if}}">
+            <a href="#guestsSubmenu" data-bs-toggle="collapse" class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fas fa-users me-3"></i>
+                    <span>Guests</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
             </a>
+            <ul class="collapse list-unstyled {{#if (eq activeGroup 'guests')}}show{{/if}}" id="guestsSubmenu">
+                <li class="{{#if (eq active 'guests-list')}}active{{/if}}">
+                    <a href="/admin/guests" class="d-flex align-items-center">
+                        <i class="fas fa-user-friends me-3"></i>
+                        <span>Guest List</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'guest-analytics')}}active{{/if}}">
+                    <a href="/admin/guests/analytics" class="d-flex align-items-center">
+                        <i class="fas fa-chart-pie me-3"></i>
+                        <span>Guest Analytics</span>
+                    </a>
+                </li>
+            </ul>
         </li>
-        <li class="{{#if (eq active 'users')}}active{{/if}}">
-            <a href="/admin/users" class="d-flex align-items-center">
-                <i class="fas fa-users me-3"></i>
-                <span>Users</span>
+
+        <!-- Loyalty Program -->
+        <li class="{{#if (eq activeGroup 'loyalty')}}active{{/if}}">
+            <a href="#loyaltySubmenu" data-bs-toggle="collapse" class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fas fa-gem me-3"></i>
+                    <span>Loyalty Program</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
             </a>
+            <ul class="collapse list-unstyled {{#if (eq activeGroup 'loyalty')}}show{{/if}}" id="loyaltySubmenu">
+                <li class="{{#if (eq active 'loyalty-members')}}active{{/if}}">
+                    <a href="/admin/loyalty/members" class="d-flex align-items-center">
+                        <i class="fas fa-user-tag me-3"></i>
+                        <span>Members</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'loyalty-tiers')}}active{{/if}}">
+                    <a href="/admin/loyalty/tiers" class="d-flex align-items-center">
+                        <i class="fas fa-layer-group me-3"></i>
+                        <span>Tiers</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'loyalty-rewards')}}active{{/if}}">
+                    <a href="/admin/loyalty/rewards" class="d-flex align-items-center">
+                        <i class="fas fa-gift me-3"></i>
+                        <span>Rewards</span>
+                    </a>
+                </li>
+            </ul>
         </li>
-        <li class="{{#if (eq active 'reviews')}}active{{/if}}">
-            <a href="/admin/reviews" class="d-flex align-items-center">
-                <i class="fas fa-star me-3"></i>
-                <span>Reviews</span>
+
+        <!-- Housekeeping & Maintenance -->
+        <li class="{{#if (eq activeGroup 'maintenance')}}active{{/if}}">
+            <a href="#maintenanceSubmenu" data-bs-toggle="collapse" class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fas fa-tools me-3"></i>
+                    <span>Operations</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
             </a>
+            <ul class="collapse list-unstyled {{#if (eq activeGroup 'maintenance')}}show{{/if}}" id="maintenanceSubmenu">
+                <li class="{{#if (eq active 'housekeeping')}}active{{/if}}">
+                    <a href="/admin/housekeeping" class="d-flex align-items-center">
+                        <i class="fas fa-broom me-3"></i>
+                        <span>Housekeeping</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'maintenance-requests')}}active{{/if}}">
+                    <a href="/admin/maintenance" class="d-flex align-items-center">
+                        <i class="fas fa-wrench me-3"></i>
+                        <span>Maintenance</span>
+                    </a>
+                </li>
+            </ul>
         </li>
-        <li class="{{#if (eq active 'maintenance')}}active{{/if}}">
-            <a href="/admin/maintenance" class="d-flex align-items-center">
-                <i class="fas fa-tools me-3"></i>
-                <span>Maintenance</span>
+
+        <!-- Channel Manager -->
+        <li class="{{#if (eq activeGroup 'channel')}}active{{/if}}">
+            <a href="#channelSubmenu" data-bs-toggle="collapse" class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fas fa-network-wired me-3"></i>
+                    <span>Channel Manager</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
             </a>
+            <ul class="collapse list-unstyled {{#if (eq activeGroup 'channel')}}show{{/if}}" id="channelSubmenu">
+                <li class="{{#if (eq active 'channel-dashboard')}}active{{/if}}">
+                    <a href="/admin/channel-manager" class="d-flex align-items-center">
+                        <i class="fas fa-th-large me-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'channel-rates')}}active{{/if}}">
+                    <a href="/admin/channel-manager/rates" class="d-flex align-items-center">
+                        <i class="fas fa-dollar-sign me-3"></i>
+                        <span>Rates</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'channel-inventory')}}active{{/if}}">
+                    <a href="/admin/channel-manager/inventory" class="d-flex align-items-center">
+                        <i class="fas fa-warehouse me-3"></i>
+                        <span>Inventory</span>
+                    </a>
+                </li>
+            </ul>
         </li>
-        <li class="{{#if (eq active 'settings')}}active{{/if}}">
-            <a href="/admin/settings" class="d-flex align-items-center">
-                <i class="fas fa-cog me-3"></i>
-                <span>Settings</span>
+
+        <!-- Analytics -->
+        <li class="{{#if (eq activeGroup 'analytics')}}active{{/if}}">
+            <a href="#analyticsSubmenu" data-bs-toggle="collapse" class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fas fa-chart-line me-3"></i>
+                    <span>Analytics</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
             </a>
+            <ul class="collapse list-unstyled {{#if (eq activeGroup 'analytics')}}show{{/if}}" id="analyticsSubmenu">
+                <li class="{{#if (eq active 'analytics-occupancy')}}active{{/if}}">
+                    <a href="/admin/analytics/occupancy" class="d-flex align-items-center">
+                        <i class="fas fa-bed me-3"></i>
+                        <span>Occupancy</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'analytics-revenue')}}active{{/if}}">
+                    <a href="/admin/analytics/revenue" class="d-flex align-items-center">
+                        <i class="fas fa-dollar-sign me-3"></i>
+                        <span>Revenue</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'analytics-guests')}}active{{/if}}">
+                    <a href="/admin/analytics/guests" class="d-flex align-items-center">
+                        <i class="fas fa-users me-3"></i>
+                        <span>Guests</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'analytics-staff')}}active{{/if}}">
+                    <a href="/admin/analytics/staff" class="d-flex align-items-center">
+                        <i class="fas fa-user-tie me-3"></i>
+                        <span>Staff</span>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Settings -->
+        <li class="{{#if (eq activeGroup 'settings')}}active{{/if}}">
+            <a href="#settingsSubmenu" data-bs-toggle="collapse" class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fas fa-cog me-3"></i>
+                    <span>Settings</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
+            </a>
+            <ul class="collapse list-unstyled {{#if (eq activeGroup 'settings')}}show{{/if}}" id="settingsSubmenu">
+                <li class="{{#if (eq active 'settings-hotel')}}active{{/if}}">
+                    <a href="/admin/settings/hotel" class="d-flex align-items-center">
+                        <i class="fas fa-hotel me-3"></i>
+                        <span>Hotel Settings</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'settings-roles')}}active{{/if}}">
+                    <a href="/admin/settings/roles" class="d-flex align-items-center">
+                        <i class="fas fa-user-shield me-3"></i>
+                        <span>Roles</span>
+                    </a>
+                </li>
+                <li class="{{#if (eq active 'settings-staff')}}active{{/if}}">
+                    <a href="/admin/settings/staff" class="d-flex align-items-center">
+                        <i class="fas fa-user-cog me-3"></i>
+                        <span>Staff</span>
+                    </a>
+                </li>
+            </ul>
         </li>
     </ul>
 
@@ -60,7 +261,7 @@
             <i class="fas fa-user-circle me-3"></i>
             <span>Profile</span>
         </a>
-        <a href="/auth/logout" class="d-flex align-items-center text-danger">
+        <a href="#" onclick="handleLogout(event)" class="d-flex align-items-center text-danger">
             <i class="fas fa-sign-out-alt me-3"></i>
             <span>Logout</span>
         </a>
@@ -97,16 +298,17 @@
 .sidebar .components {
     padding: 20px 0;
     flex-grow: 1;
+    overflow-y: auto;
 }
 
 .sidebar ul li a {
-    padding: 15px 20px;
+    padding: 12px 20px;
     display: flex;
     align-items: center;
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
     transition: all 0.3s;
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 
 .sidebar ul li a:hover,
@@ -114,6 +316,15 @@
     color: #fff;
     background: #3498db;
     text-decoration: none;
+}
+
+.sidebar ul.collapse {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.sidebar ul.collapse li a {
+    padding-left: 50px;
+    font-size: 0.9rem;
 }
 
 .sidebar ul li a i {
@@ -124,6 +335,7 @@
 .sidebar-footer {
     padding: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: auto;
 }
 
 .sidebar-footer a {
@@ -132,6 +344,7 @@
     text-decoration: none;
     transition: all 0.3s;
     border-radius: 5px;
+    font-size: 0.9rem;
 }
 
 .sidebar-footer a:hover,
@@ -149,31 +362,78 @@
         margin-left: 0;
     }
 }
+
+/* Custom Scrollbar for Sidebar */
+.sidebar ::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sidebar ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.sidebar ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Make entire li elements clickable
-    document.querySelectorAll('#sidebar .components li').forEach(li => {
-        li.style.cursor = 'pointer';
-        li.addEventListener('click', function(e) {
-            const link = this.querySelector('a');
-            if (link) {
-                window.location = link.href;
+    // Handle submenu state
+    const currentPath = window.location.pathname;
+    const submenus = document.querySelectorAll('.collapse');
+    
+    submenus.forEach(submenu => {
+        const links = submenu.querySelectorAll('a');
+        links.forEach(link => {
+            if (currentPath === link.getAttribute('href')) {
+                submenu.classList.add('show');
             }
         });
     });
 
-    // Add hover effect to entire li
-    document.querySelectorAll('#sidebar .components li').forEach(li => {
-        li.addEventListener('mouseenter', function() {
-            this.querySelector('a').style.backgroundColor = '#3498db';
+    // Add hover effect to submenu items
+    document.querySelectorAll('#sidebar .components li a').forEach(link => {
+        link.addEventListener('mouseenter', function() {
+            if (!this.parentElement.classList.contains('active')) {
+                this.style.backgroundColor = 'rgba(52, 152, 219, 0.7)';
+            }
         });
-        li.addEventListener('mouseleave', function() {
-            if (!this.classList.contains('active')) {
-                this.querySelector('a').style.backgroundColor = '';
+        link.addEventListener('mouseleave', function() {
+            if (!this.parentElement.classList.contains('active')) {
+                this.style.backgroundColor = '';
             }
         });
     });
+
+    // Handle logout
+    async function handleLogout(e) {
+        e.preventDefault();
+        try {
+            const response = await fetch('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                window.location.href = '/login';
+            } else {
+                throw new Error('Logout failed');
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            alert('Failed to logout. Please try again.');
+        }
+    }
+
+    // Attach logout handler
+    document.querySelector('[onclick="handleLogout(event)"]').onclick = handleLogout;
 });
 </script>

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Hotel = require('../models/Hotel');
+const { protect } = require('../middleware/auth');
 
 // Home page
 router.get('/', async (req, res) => {
@@ -12,7 +13,8 @@ router.get('/', async (req, res) => {
 
         res.render('index', {
             title: 'Welcome to Hotel Management System',
-            featuredHotels
+            featuredHotels,
+            user: req.user
         });
     } catch (error) {
         console.error('Home page error:', error);
@@ -41,11 +43,14 @@ router.get('/search', async (req, res) => {
         res.render('search', {
             title: 'Search Hotels',
             hotels,
-            searchParams: req.query
+            searchParams: req.query,
+            user: req.user
         });
     } catch (error) {
         console.error('Error searching hotels:', error);
-        res.status(500).send('Error searching hotels');
+        res.status(500).render('error', {
+            message: 'Error searching hotels'
+        });
     }
 });
 
@@ -63,12 +68,25 @@ router.get('/hotels/:id', async (req, res) => {
 
         res.render('hotel-details', {
             title: hotel.name,
-            hotel
+            hotel,
+            user: req.user
         });
     } catch (error) {
         console.error('Error loading hotel details:', error);
-        res.status(500).send('Error loading hotel details');
+        res.status(500).render('error', {
+            message: 'Error loading hotel details'
+        });
     }
+});
+
+// Redirect to login
+router.get('/login', (req, res) => {
+    res.redirect('/auth/login');
+});
+
+// Redirect to admin dashboard
+router.get('/admin', protect, (req, res) => {
+    res.redirect('/admin/dashboard');
 });
 
 module.exports = router;

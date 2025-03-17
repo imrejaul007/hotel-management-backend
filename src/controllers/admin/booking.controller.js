@@ -78,86 +78,6 @@ const getBookingStats = async () => {
     };
 };
 
-// Get new booking form
-exports.getNewBookingForm = async (req, res) => {
-    try {
-        const [hotels, rooms] = await Promise.all([
-            Hotel.find().select('name location').lean(),
-            Room.find().select('type number capacity price status').lean()
-        ]);
-
-        // Get available rooms (not under maintenance and not booked for the selected dates)
-        const availableRooms = rooms.filter(room => room.status === 'available');
-
-        res.render('admin/bookings/new', {
-            title: 'New Booking',
-            hotels,
-            rooms: availableRooms,
-            bookingSources: [
-                { value: 'direct', label: 'Direct Booking' },
-                { value: 'website', label: 'Website' },
-                { value: 'phone', label: 'Phone' },
-                { value: 'email', label: 'Email' },
-                { value: 'ota', label: 'Online Travel Agency' },
-                { value: 'corporate', label: 'Corporate Account' },
-                { value: 'walk_in', label: 'Walk-in' }
-            ]
-        });
-    } catch (error) {
-        console.error('Error loading new booking form:', error);
-        res.status(500).render('error', {
-            message: 'Error loading booking form'
-        });
-    }
-};
-
-// Create new booking
-exports.createBooking = async (req, res) => {
-    try {
-        const {
-            userId,
-            hotelId,
-            roomId,
-            checkIn,
-            checkOut,
-            guests,
-            specialRequests,
-            bookingSource,
-            corporateAccountId,
-            status
-        } = req.body;
-
-        // Validate required fields
-        if (!userId || !hotelId || !roomId || !checkIn || !checkOut) {
-            return res.status(400).json({
-                message: 'Missing required fields'
-            });
-        }
-
-        // Create booking
-        const booking = await Booking.create({
-            user: userId,
-            hotel: hotelId,
-            room: roomId,
-            checkIn: new Date(checkIn),
-            checkOut: new Date(checkOut),
-            guests,
-            specialRequests,
-            bookingSource: bookingSource || 'direct',
-            corporateAccount: corporateAccountId,
-            status: status || 'confirmed',
-            createdBy: req.user._id
-        });
-
-        res.redirect(`/admin/bookings/${booking._id}`);
-    } catch (error) {
-        console.error('Error creating booking:', error);
-        res.status(500).render('error', {
-            message: 'Error creating booking'
-        });
-    }
-};
-
 // Get all bookings with filters
 exports.getAllBookings = async (req, res) => {
     try {
@@ -186,54 +106,61 @@ exports.getAllBookings = async (req, res) => {
             query.status = req.query.status;
         }
 
-        // Get bookings with pagination
-        const [bookings, total] = await Promise.all([
+        // Get bookings with pagination and stats
+        const [bookings, total, stats] = await Promise.all([
             getBaseQuery()
                 .find(query)
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
                 .lean(),
-            Booking.countDocuments(query)
+            Booking.countDocuments(query),
+            getBookingStats()
         ]);
 
-        const totalPages = Math.ceil(total / limit);
-
-        // Calculate additional booking information
-        const enhancedBookings = bookings.map(booking => ({
+        // Process bookings to add display values
+        const processedBookings = bookings.map(booking => ({
             ...booking,
-            nights: Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24)),
             bookingSourceDisplay: formatBookingSource(booking.bookingSource),
+            nights: Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24)),
             totalAmount: calculateTotalAmount(booking)
         }));
 
-        // Get booking statistics
-        const stats = await getBookingStats();
+        // Prepare pagination data
+        const totalPages = Math.ceil(total / limit);
+        const pagination = {
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            nextPage: page < totalPages ? page + 1 : null,
+            prevPage: page > 1 ? page - 1 : null,
+            pages: Array.from({ length: totalPages }, (_, i) => ({
+                number: i + 1,
+                isCurrent: i + 1 === page
+            }))
+        };
 
+        // Render the bookings list page
         res.render('admin/bookings/list', {
-            title: 'All Bookings',
-            currentUrl: req.originalUrl,
-            bookings: enhancedBookings,
+            title: 'Booking Management',
+            active: 'bookings',
+            bookings: processedBookings,
             stats,
             filters: {
                 source: req.query.source,
+                status: req.query.status,
                 startDate: req.query.startDate,
-                endDate: req.query.endDate,
-                status: req.query.status
+                endDate: req.query.endDate
             },
-            pagination: {
-                page,
-                totalPages,
-                hasNext: page < totalPages,
-                hasPrev: page > 1,
-                nextPage: page + 1,
-                prevPage: page - 1
-            }
+            pagination
         });
     } catch (error) {
-        console.error('Error fetching all bookings:', error);
+        console.error('Error getting bookings:', error);
         res.status(500).render('error', {
-            message: 'Error fetching bookings'
+            message: 'Error loading bookings'
         });
     }
 };
@@ -247,7 +174,8 @@ exports.getUpcomingBookings = async (req, res) => {
 
         const now = new Date();
         const query = {
-            checkIn: { $gt: now }
+            checkIn: { $gt: now },
+            status: { $in: ['confirmed', 'pending'] }
         };
 
         const [bookings, total] = await Promise.all([
@@ -260,33 +188,40 @@ exports.getUpcomingBookings = async (req, res) => {
             Booking.countDocuments(query)
         ]);
 
-        const totalPages = Math.ceil(total / limit);
-
-        const enhancedBookings = bookings.map(booking => ({
+        const processedBookings = bookings.map(booking => ({
             ...booking,
-            nights: Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24)),
-            daysUntilCheckIn: Math.ceil((booking.checkIn - now) / (1000 * 60 * 60 * 24)),
             bookingSourceDisplay: formatBookingSource(booking.bookingSource),
+            nights: Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24)),
             totalAmount: calculateTotalAmount(booking)
         }));
 
-        res.render('admin/bookings/upcoming', {
+        const totalPages = Math.ceil(total / limit);
+        const pagination = {
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            nextPage: page < totalPages ? page + 1 : null,
+            prevPage: page > 1 ? page - 1 : null,
+            pages: Array.from({ length: totalPages }, (_, i) => ({
+                number: i + 1,
+                isCurrent: i + 1 === page
+            }))
+        };
+
+        res.render('admin/bookings/list', {
             title: 'Upcoming Bookings',
-            currentUrl: req.originalUrl,
-            bookings: enhancedBookings,
-            pagination: {
-                page,
-                totalPages,
-                hasNext: page < totalPages,
-                hasPrev: page > 1,
-                nextPage: page + 1,
-                prevPage: page - 1
-            }
+            active: 'bookings',
+            bookings: processedBookings,
+            pagination,
+            filters: {}
         });
     } catch (error) {
-        console.error('Error fetching upcoming bookings:', error);
+        console.error('Error getting upcoming bookings:', error);
         res.status(500).render('error', {
-            message: 'Error fetching upcoming bookings'
+            message: 'Error loading upcoming bookings'
         });
     }
 };
@@ -301,46 +236,54 @@ exports.getCurrentBookings = async (req, res) => {
         const now = new Date();
         const query = {
             checkIn: { $lte: now },
-            checkOut: { $gte: now }
+            checkOut: { $gte: now },
+            status: 'checked_in'
         };
 
         const [bookings, total] = await Promise.all([
             getBaseQuery()
                 .find(query)
-                .sort({ checkOut: 1 })
+                .sort({ checkIn: 1 })
                 .skip(skip)
                 .limit(limit)
                 .lean(),
             Booking.countDocuments(query)
         ]);
 
-        const totalPages = Math.ceil(total / limit);
-
-        const enhancedBookings = bookings.map(booking => ({
+        const processedBookings = bookings.map(booking => ({
             ...booking,
-            nights: Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24)),
-            daysUntilCheckOut: Math.ceil((booking.checkOut - now) / (1000 * 60 * 60 * 24)),
             bookingSourceDisplay: formatBookingSource(booking.bookingSource),
+            nights: Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24)),
             totalAmount: calculateTotalAmount(booking)
         }));
 
-        res.render('admin/bookings/current', {
+        const totalPages = Math.ceil(total / limit);
+        const pagination = {
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            nextPage: page < totalPages ? page + 1 : null,
+            prevPage: page > 1 ? page - 1 : null,
+            pages: Array.from({ length: totalPages }, (_, i) => ({
+                number: i + 1,
+                isCurrent: i + 1 === page
+            }))
+        };
+
+        res.render('admin/bookings/list', {
             title: 'Current Bookings',
-            currentUrl: req.originalUrl,
-            bookings: enhancedBookings,
-            pagination: {
-                page,
-                totalPages,
-                hasNext: page < totalPages,
-                hasPrev: page > 1,
-                nextPage: page + 1,
-                prevPage: page - 1
-            }
+            active: 'bookings',
+            bookings: processedBookings,
+            pagination,
+            filters: {}
         });
     } catch (error) {
-        console.error('Error fetching current bookings:', error);
+        console.error('Error getting current bookings:', error);
         res.status(500).render('error', {
-            message: 'Error fetching current bookings'
+            message: 'Error loading current bookings'
         });
     }
 };
@@ -354,7 +297,8 @@ exports.getPastBookings = async (req, res) => {
 
         const now = new Date();
         const query = {
-            checkOut: { $lt: now }
+            checkOut: { $lt: now },
+            status: { $in: ['checked_out', 'cancelled'] }
         };
 
         const [bookings, total] = await Promise.all([
@@ -367,33 +311,40 @@ exports.getPastBookings = async (req, res) => {
             Booking.countDocuments(query)
         ]);
 
-        const totalPages = Math.ceil(total / limit);
-
-        const enhancedBookings = bookings.map(booking => ({
+        const processedBookings = bookings.map(booking => ({
             ...booking,
-            nights: Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24)),
-            daysAgo: Math.ceil((now - booking.checkOut) / (1000 * 60 * 60 * 24)),
             bookingSourceDisplay: formatBookingSource(booking.bookingSource),
+            nights: Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24)),
             totalAmount: calculateTotalAmount(booking)
         }));
 
-        res.render('admin/bookings/past', {
+        const totalPages = Math.ceil(total / limit);
+        const pagination = {
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
+            nextPage: page < totalPages ? page + 1 : null,
+            prevPage: page > 1 ? page - 1 : null,
+            pages: Array.from({ length: totalPages }, (_, i) => ({
+                number: i + 1,
+                isCurrent: i + 1 === page
+            }))
+        };
+
+        res.render('admin/bookings/list', {
             title: 'Past Bookings',
-            currentUrl: req.originalUrl,
-            bookings: enhancedBookings,
-            pagination: {
-                page,
-                totalPages,
-                hasNext: page < totalPages,
-                hasPrev: page > 1,
-                nextPage: page + 1,
-                prevPage: page - 1
-            }
+            active: 'bookings',
+            bookings: processedBookings,
+            pagination,
+            filters: {}
         });
     } catch (error) {
-        console.error('Error fetching past bookings:', error);
+        console.error('Error getting past bookings:', error);
         res.status(500).render('error', {
-            message: 'Error fetching past bookings'
+            message: 'Error loading past bookings'
         });
     }
 };
@@ -411,21 +362,19 @@ exports.getBookingDetails = async (req, res) => {
             });
         }
 
-        const enhancedBooking = {
-            ...booking,
-            nights: Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24)),
-            bookingSourceDisplay: formatBookingSource(booking.bookingSource),
-            totalAmount: calculateTotalAmount(booking)
-        };
+        booking.bookingSourceDisplay = formatBookingSource(booking.bookingSource);
+        booking.nights = Math.ceil((booking.checkOut - booking.checkIn) / (1000 * 60 * 60 * 24));
+        booking.totalAmount = calculateTotalAmount(booking);
 
         res.render('admin/bookings/details', {
             title: 'Booking Details',
-            booking: enhancedBooking
+            active: 'bookings',
+            booking
         });
     } catch (error) {
-        console.error('Error fetching booking details:', error);
+        console.error('Error getting booking details:', error);
         res.status(500).render('error', {
-            message: 'Error fetching booking details'
+            message: 'Error loading booking details'
         });
     }
 };
@@ -434,31 +383,34 @@ exports.getBookingDetails = async (req, res) => {
 exports.updateBooking = async (req, res) => {
     try {
         const {
-            roomId,
             checkIn,
             checkOut,
             guests,
             specialRequests,
+            bookingSource,
+            corporateAccountId,
             status
         } = req.body;
 
         const booking = await Booking.findById(req.params.id);
-
         if (!booking) {
-            return res.status(404).render('error', {
+            return res.status(404).json({
                 message: 'Booking not found'
             });
         }
 
         // Update fields
-        if (roomId) booking.room = roomId;
         if (checkIn) booking.checkIn = new Date(checkIn);
         if (checkOut) booking.checkOut = new Date(checkOut);
         if (guests) booking.guests = guests;
         if (specialRequests) booking.specialRequests = specialRequests;
+        if (bookingSource) booking.bookingSource = bookingSource;
+        if (corporateAccountId) booking.corporateAccount = corporateAccountId;
         if (status) booking.status = status;
 
+        booking.updatedAt = new Date();
         booking.updatedBy = req.user._id;
+
         await booking.save();
 
         res.redirect(`/admin/bookings/${booking._id}`);
@@ -473,19 +425,19 @@ exports.updateBooking = async (req, res) => {
 // Delete booking
 exports.deleteBooking = async (req, res) => {
     try {
-        const booking = await Booking.findById(req.params.id);
-
+        const booking = await Booking.findByIdAndDelete(req.params.id);
         if (!booking) {
-            return res.status(404).render('error', {
+            return res.status(404).json({
                 message: 'Booking not found'
             });
         }
 
-        await booking.remove();
-        res.redirect('/admin/bookings');
+        res.json({
+            message: 'Booking deleted successfully'
+        });
     } catch (error) {
         console.error('Error deleting booking:', error);
-        res.status(500).render('error', {
+        res.status(500).json({
             message: 'Error deleting booking'
         });
     }

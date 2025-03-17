@@ -5,7 +5,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const passport = require('./src/config/passport');
+const passport = require('passport');
 
 // Load env vars
 dotenv.config();
@@ -35,6 +35,9 @@ app.use(passport.session());
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Store for layout blocks
+const blocks = {};
 
 // Set up handlebars
 const hbs = exphbs.create({
@@ -130,9 +133,6 @@ const hbs = exphbs.create({
     partialsDir: path.join(__dirname, 'src/views/partials')
 });
 
-// Store for layout blocks
-const blocks = {};
-
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'src/views'));
@@ -141,7 +141,6 @@ app.set('views', path.join(__dirname, 'src/views'));
 const authRoutes = require('./src/routes/auth.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 const loyaltyRoutes = require('./src/routes/loyalty.routes');
-const adminRewardsRoutes = require('./src/routes/admin/rewards.routes');
 const maintenanceRoutes = require('./src/routes/maintenance.routes');
 const otaRoutes = require('./src/routes/ota.routes');
 const indexRoutes = require('./src/routes/index.routes');
@@ -154,7 +153,6 @@ app.get('/login', (req, res) => res.redirect('/auth/login'));
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
-app.use('/api/admin/rewards', adminRewardsRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/ota', otaRoutes);
 app.use('/', indexRoutes);

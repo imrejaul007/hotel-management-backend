@@ -1,0 +1,250 @@
+<!-- Footer -->
+<footer class="sticky-footer bg-white border-top">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <!-- Quick Links -->
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <h6 class="text-uppercase mb-3">Quick Links</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <a href="/admin/dashboard" class="text-muted">Dashboard</a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/admin/bookings/calendar" class="text-muted">Calendar</a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/admin/reports" class="text-muted">Reports</a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/admin/settings/hotel" class="text-muted">Settings</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Support -->
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <h6 class="text-uppercase mb-3">Support</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <a href="/admin/help" class="text-muted">Help Center</a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/admin/documentation" class="text-muted">Documentation</a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/admin/contact-support" class="text-muted">Contact Support</a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/admin/updates" class="text-muted">System Updates</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="col-lg-3 col-md-6 mb-4 mb-lg-0">
+                <h6 class="text-uppercase mb-3">Today's Summary</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2 text-muted">
+                        <i class="fas fa-users me-2"></i>Active Guests: {{stats.activeGuests}}
+                    </li>
+                    <li class="mb-2 text-muted">
+                        <i class="fas fa-calendar-check me-2"></i>Check-ins: {{stats.checkIns}}
+                    </li>
+                    <li class="mb-2 text-muted">
+                        <i class="fas fa-calendar-times me-2"></i>Check-outs: {{stats.checkOuts}}
+                    </li>
+                    <li class="mb-2 text-muted">
+                        <i class="fas fa-bed me-2"></i>Available Rooms: {{stats.availableRooms}}
+                    </li>
+                </ul>
+            </div>
+
+            <!-- System Info -->
+            <div class="col-lg-3 col-md-6">
+                <h6 class="text-uppercase mb-3">System Info</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2 text-muted">
+                        <i class="fas fa-code-branch me-2"></i>Version: {{systemInfo.version}}
+                    </li>
+                    <li class="mb-2 text-muted">
+                        <i class="fas fa-clock me-2"></i>Last Update: {{formatDate systemInfo.lastUpdate}}
+                    </li>
+                    <li class="mb-2 text-muted">
+                        <i class="fas fa-server me-2"></i>Server Status: 
+                        <span class="badge bg-success">Online</span>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/admin/system-status" class="text-primary">
+                            <i class="fas fa-info-circle me-2"></i>View System Status
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Bottom Footer -->
+        <div class="row align-items-center">
+            <div class="col-md-6 small">
+                <span class="text-muted">Copyright &copy; Hotel Management System {{formatDate now 'YYYY'}}</span>
+            </div>
+            <div class="col-md-6 text-md-end small">
+                <a href="/privacy-policy" class="text-muted me-3">Privacy Policy</a>
+                <a href="/terms-of-service" class="text-muted">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Scroll to Top Button-->
+<a class="scroll-to-top rounded" href="#page-top">
+    <i class="fas fa-angle-up"></i>
+</a>
+
+<!-- Logout Modal-->
+<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="handleLogout(event)">Logout</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Footer Styles */
+.sticky-footer {
+    padding: 0;
+    flex-shrink: 0;
+    margin-top: auto;
+    background-color: #fff;
+}
+
+.sticky-footer h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.sticky-footer a {
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.sticky-footer a:hover {
+    color: #3498db !important;
+}
+
+/* Scroll to Top Button */
+.scroll-to-top {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    text-align: center;
+    color: #fff;
+    background: rgba(52, 152, 219, 0.5);
+    line-height: 46px;
+    border-radius: 0.35rem;
+    transition: all 0.3s ease-in-out;
+    z-index: 1000;
+}
+
+.scroll-to-top:hover {
+    background: rgba(52, 152, 219, 0.8);
+    color: #fff;
+    text-decoration: none;
+}
+
+.scroll-to-top i {
+    font-weight: 800;
+}
+
+/* Stats Summary */
+.stats-summary i {
+    width: 20px;
+    text-align: center;
+}
+
+/* System Info Badge */
+.badge {
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .sticky-footer {
+        text-align: center;
+    }
+    
+    .text-md-end {
+        text-align: center !important;
+        margin-top: 1rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Initialize popovers
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+
+    // Scroll to top button visibility
+    window.addEventListener('scroll', function() {
+        var scrollToTop = document.querySelector('.scroll-to-top');
+        if (window.pageYOffset > 100) {
+            scrollToTop.style.display = 'block';
+        } else {
+            scrollToTop.style.display = 'none';
+        }
+    });
+
+    // Smooth scroll to top
+    document.querySelector('.scroll-to-top').addEventListener('click', function(e) {
+        e.preventDefault();
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+
+    // Update real-time stats
+    function updateStats() {
+        fetch('/api/admin/stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update stats in the footer
+                Object.keys(data).forEach(key => {
+                    const element = document.querySelector(`[data-stat="${key}"]`);
+                    if (element) {
+                        element.textContent = data[key];
+                    }
+                });
+            })
+            .catch(error => console.error('Error updating stats:', error));
+    }
+
+    // Update stats every 5 minutes
+    setInterval(updateStats, 300000);
+});
+</script>

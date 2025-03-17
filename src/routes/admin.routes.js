@@ -5,6 +5,7 @@ const { protect, authorize } = require('../middleware/auth');
 // Import controllers
 const adminController = require('../controllers/admin.controller');
 const bookingController = require('../controllers/admin/booking.controller');
+const calendarController = require('../controllers/admin/calendar.controller');
 const guestController = require('../controllers/admin/guest.controller');
 const housekeepingController = require('../controllers/admin/housekeeping.controller');
 const inventoryController = require('../controllers/admin/inventory.controller');
@@ -20,6 +21,7 @@ router.get('/dashboard', protect, authorize('admin'), adminController.getDashboa
 
 // Booking Routes
 router.get('/bookings', protect, authorize('admin'), bookingController.getAllBookings);
+router.get('/bookings/calendar', protect, authorize('admin'), calendarController.getCalendarView);
 router.get('/bookings/new', protect, authorize('admin'), bookingController.getNewBookingForm);
 router.post('/bookings', protect, authorize('admin'), bookingController.createBooking);
 router.get('/bookings/current', protect, authorize('admin'), bookingController.getCurrentBookings);
@@ -28,6 +30,11 @@ router.get('/bookings/past', protect, authorize('admin'), bookingController.getP
 router.get('/bookings/:id', protect, authorize('admin'), bookingController.getBookingDetails);
 router.put('/bookings/:id', protect, authorize('admin'), bookingController.updateBooking);
 router.delete('/bookings/:id', protect, authorize('admin'), bookingController.deleteBooking);
+
+// Calendar API Routes
+router.get('/api/rooms', protect, authorize('admin'), calendarController.getRooms);
+router.get('/api/bookings/calendar', protect, authorize('admin'), calendarController.getBookings);
+router.put('/api/bookings/:id', protect, authorize('admin'), calendarController.updateBooking);
 
 // Guest Routes
 router.get('/guests', protect, authorize('admin'), guestController.getAllGuests);

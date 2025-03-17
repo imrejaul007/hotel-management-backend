@@ -7,7 +7,7 @@ const cookieParser = require('cookie-parser');
 const { engine } = require('express-handlebars');
 const swaggerUI = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
-const handlebarsHelpers = require('./helpers/handlebars-helpers');
+const handlebarsHelpers = require('./utils/handlebars-helpers');
 const config = require('./config/env');
 const http = require('http');
 const notificationService = require('./services/notification.service');
@@ -31,7 +31,7 @@ notificationService.initialize(server);
 app.engine('hbs', engine({
     extname: '.hbs',
     helpers: handlebarsHelpers,
-    defaultLayout: 'main',
+    defaultLayout: 'admin',
     layoutsDir: path.join(__dirname, 'views/layouts'),
     partialsDir: path.join(__dirname, 'views/partials')
 }));

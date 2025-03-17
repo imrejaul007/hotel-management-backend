@@ -14,10 +14,17 @@
     <!-- Custom CSS -->
     <style>
         /* Admin Layout Styles */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
         .wrapper {
             display: flex;
             width: 100%;
             align-items: stretch;
+            flex: 1;
         }
 
         /* Main Content Styles */
@@ -28,6 +35,8 @@
             transition: all 0.3s;
             background: #f8f9fa;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Card Styles */
@@ -143,6 +152,9 @@
 
             <!-- Page Content -->
             {{{body}}}
+
+            <!-- Footer -->
+            {{> admin/footer}}
         </div>
     </div>
 

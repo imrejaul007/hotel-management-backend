@@ -2,7 +2,7 @@ const User = require('../models/User');
 const Room = require('../models/Room');
 const Booking = require('../models/Booking');
 const HousekeepingTask = require('../models/HousekeepingTask');
-const MaintenanceRequest = require('../models/MaintenanceRequest');
+const MaintenanceRequest = require('../models/Maintenance');
 const LoyaltyProgram = require('../models/LoyaltyProgram');
 const Payment = require('../models/Payment');
 
@@ -201,48 +201,52 @@ exports.getDashboard = async (req, res) => {
         const formattedHousekeepingTasks = housekeepingTasks.map(task => ({
             _id: task._id,
             roomNumber: task.room.number,
-            type: task.type,
-            statusBadge: getStatusBadge(task.status)
+            assignedTo: task.assignedTo.name,
+            description: task.description,
+            statusBadge: getStatusBadge(task.status),
+            priorityBadge: getPriorityBadge(task.priority)
         }));
 
         const formattedMaintenanceRequests = maintenanceRequests.map(request => ({
             _id: request._id,
-            roomNumber: request.room.number,
-            issue: request.issue,
-            priorityBadge: getPriorityBadge(request.priority),
-            statusBadge: getStatusBadge(request.status)
+            roomNumber: request.location.room.number,
+            description: request.description,
+            statusBadge: getStatusBadge(request.status),
+            priorityBadge: getPriorityBadge(request.priority)
         }));
 
-        // Format chart data
-        const chartData = {
-            labels: revenueData.map(item => item._id),
-            values: revenueData.map(item => item.total)
-        };
-
+        // Render dashboard
         res.render('admin/dashboard', {
-            layout: 'admin',
             title: 'Admin Dashboard',
-            occupancyRate,
-            occupiedRooms,
-            availableRooms,
-            maintenanceRooms,
-            outOfOrderRooms,
-            todayBookings,
-            todayRevenue: todayRevenue[0]?.total || 0,
-            revenueChange: (todayRevenue[0]?.total || 0) - (yesterdayRevenue[0]?.total || 0),
-            activeGuests,
-            vipGuests,
-            todayCheckIns: formattedCheckIns,
-            todayCheckOuts: formattedCheckOuts,
+            occupancyData: {
+                totalRooms,
+                occupiedRooms,
+                availableRooms,
+                maintenanceRooms,
+                outOfOrderRooms,
+                occupancyRate
+            },
+            bookingData: {
+                todayBookings,
+                checkIns: formattedCheckIns,
+                checkOuts: formattedCheckOuts
+            },
+            revenueData: {
+                today: todayRevenue[0]?.total || 0,
+                yesterday: yesterdayRevenue[0]?.total || 0,
+                chartData: revenueData
+            },
+            guestData: {
+                activeGuests,
+                vipGuests
+            },
             housekeepingTasks: formattedHousekeepingTasks,
-            maintenanceRequests: formattedMaintenanceRequests,
-            revenueData: chartData,
-            period: req.query.period || 'daily'
+            maintenanceRequests: formattedMaintenanceRequests
         });
     } catch (error) {
-        console.error('Error in getDashboard:', error);
+        console.error('Error loading admin dashboard:', error);
         res.status(500).render('error', {
-            message: 'Error loading dashboard',
+            message: 'Error loading admin dashboard',
             error: process.env.NODE_ENV === 'development' ? error : {}
         });
     }

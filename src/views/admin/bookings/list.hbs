@@ -1,15 +1,16 @@
 {{> admin/header title="Booking Management"}}
 
+<!-- Booking Management Dashboard -->
 <div class="container-fluid">
-    <!-- Booking Statistics -->
+    <!-- Statistics Cards -->
     <div class="row mb-4">
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card border-left-primary shadow h-100 py-2">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-primary h-100">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Bookings</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.totalBookings}}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.total}}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-calendar fa-2x text-gray-300"></i>
@@ -18,58 +19,28 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card border-left-success shadow h-100 py-2">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-success h-100">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Today's Check-ins</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.todayCheckIns}}</div>
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Current Guests</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.current}}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-sign-in-alt fa-2x text-gray-300"></i>
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card border-left-info shadow h-100 py-2">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-info h-100">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Today's Check-outs</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.todayCheckOuts}}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-sign-out-alt fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Occupied Rooms</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.occupiedRooms}}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-bed fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card border-left-danger shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Upcoming Bookings</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.upcomingBookings}}</div>
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Upcoming Bookings</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.upcoming}}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-clock fa-2x text-gray-300"></i>
@@ -78,13 +49,13 @@
                 </div>
             </div>
         </div>
-        <div class="col-xl-2 col-md-4 mb-3">
-            <div class="card border-left-primary shadow h-100 py-2">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-warning h-100">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Revenue</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{formatNumber stats.revenue.totalRevenue}}</div>
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Revenue This Month</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{formatCurrency stats.monthlyRevenue}}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -95,70 +66,117 @@
         </div>
     </div>
 
-    <!-- Booking List Card -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">All Bookings</h6>
-            <div class="btn-group">
-                <a href="/admin/bookings/current" class="btn btn-info btn-sm">
-                    <i class="fas fa-clock"></i> Current
-                </a>
-                <a href="/admin/bookings/upcoming" class="btn btn-success btn-sm">
-                    <i class="fas fa-calendar-alt"></i> Upcoming
-                </a>
-                <a href="/admin/bookings/past" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-history"></i> Past
-                </a>
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Quick Actions</h5>
+                        <a href="/admin/bookings/new" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> New Booking
+                        </a>
+                    </div>
+                    <div class="btn-group">
+                        <a href="/admin/bookings/current" class="btn btn-outline-primary">
+                            <i class="fas fa-bed me-1"></i> Current Guests
+                        </a>
+                        <a href="/admin/bookings/upcoming" class="btn btn-outline-info">
+                            <i class="fas fa-clock me-1"></i> Upcoming
+                        </a>
+                        <a href="/admin/bookings/calendar" class="btn btn-outline-success">
+                            <i class="fas fa-calendar-alt me-1"></i> Calendar View
+                        </a>
+                        <a href="/admin/bookings/reports" class="btn btn-outline-warning">
+                            <i class="fas fa-chart-bar me-1"></i> Reports
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="card-body">
-            <!-- Filters -->
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <label class="form-label">Booking Source</label>
-                    <select class="form-select" id="sourceFilter">
-                        <option value="">All Sources</option>
-                        <option value="website" {{#if (eq filters.source 'website')}}selected{{/if}}>Website</option>
-                        <option value="walk_in" {{#if (eq filters.source 'walk_in')}}selected{{/if}}>Walk-in</option>
-                        <option value="ota" {{#if (eq filters.source 'ota')}}selected{{/if}}>OTA Platform</option>
-                        <option value="corporate" {{#if (eq filters.source 'corporate')}}selected{{/if}}>Corporate</option>
-                        <option value="phone" {{#if (eq filters.source 'phone')}}selected{{/if}}>Phone</option>
-                        <option value="email" {{#if (eq filters.source 'email')}}selected{{/if}}>Email</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Status</label>
-                    <select class="form-select" id="statusFilter">
-                        <option value="">All Statuses</option>
-                        <option value="confirmed" {{#if (eq filters.status 'confirmed')}}selected{{/if}}>Confirmed</option>
-                        <option value="pending" {{#if (eq filters.status 'pending')}}selected{{/if}}>Pending</option>
-                        <option value="checked_in" {{#if (eq filters.status 'checked_in')}}selected{{/if}}>Checked In</option>
-                        <option value="checked_out" {{#if (eq filters.status 'checked_out')}}selected{{/if}}>Checked Out</option>
-                        <option value="cancelled" {{#if (eq filters.status 'cancelled')}}selected{{/if}}>Cancelled</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Start Date</label>
-                    <input type="date" class="form-control" id="startDateFilter" value="{{filters.startDate}}">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">End Date</label>
-                    <input type="date" class="form-control" id="endDateFilter" value="{{filters.endDate}}">
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="bookingFilters" method="GET" class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label">Booking Source</label>
+                            <select name="source" class="form-select">
+                                <option value="">All Sources</option>
+                                <option value="website" {{#if (eq filters.source 'website')}}selected{{/if}}>Website</option>
+                                <option value="walk_in" {{#if (eq filters.source 'walk_in')}}selected{{/if}}>Walk-in</option>
+                                <option value="phone" {{#if (eq filters.source 'phone')}}selected{{/if}}>Phone</option>
+                                <option value="corporate" {{#if (eq filters.source 'corporate')}}selected{{/if}}>Corporate</option>
+                                <option value="ota" {{#if (eq filters.source 'ota')}}selected{{/if}}>OTA</option>
+                                <option value="agent" {{#if (eq filters.source 'agent')}}selected{{/if}}>Travel Agent</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="pending" {{#if (eq filters.status 'pending')}}selected{{/if}}>Pending</option>
+                                <option value="confirmed" {{#if (eq filters.status 'confirmed')}}selected{{/if}}>Confirmed</option>
+                                <option value="checked_in" {{#if (eq filters.status 'checked_in')}}selected{{/if}}>Checked In</option>
+                                <option value="checked_out" {{#if (eq filters.status 'checked_out')}}selected{{/if}}>Checked Out</option>
+                                <option value="cancelled" {{#if (eq filters.status 'cancelled')}}selected{{/if}}>Cancelled</option>
+                                <option value="no_show" {{#if (eq filters.status 'no_show')}}selected{{/if}}>No Show</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Check-in Date</label>
+                            <input type="date" name="startDate" class="form-control" value="{{filters.startDate}}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Check-out Date</label>
+                            <input type="date" name="endDate" class="form-control" value="{{filters.endDate}}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Payment Status</label>
+                            <select name="paymentStatus" class="form-select">
+                                <option value="">All Payments</option>
+                                <option value="pending" {{#if (eq filters.paymentStatus 'pending')}}selected{{/if}}>Pending</option>
+                                <option value="partially_paid" {{#if (eq filters.paymentStatus 'partially_paid')}}selected{{/if}}>Partially Paid</option>
+                                <option value="paid" {{#if (eq filters.paymentStatus 'paid')}}selected{{/if}}>Paid</option>
+                                <option value="refunded" {{#if (eq filters.paymentStatus 'refunded')}}selected{{/if}}>Refunded</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter me-1"></i> Filter
+                            </button>
+                            <a href="/admin/bookings" class="btn btn-secondary">
+                                <i class="fas fa-redo me-1"></i> Reset
+                            </a>
+                        </div>
+                    </form>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Bookings Table -->
+    <!-- Bookings Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Booking List</h5>
+        </div>
+        <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered" id="bookingsTable" width="100%" cellspacing="0">
+                <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Booking ID</th>
+                            <th>ID</th>
                             <th>Guest</th>
                             <th>Room</th>
-                            <th>Dates</th>
+                            <th>Check-in</th>
+                            <th>Check-out</th>
                             <th>Source</th>
                             <th>Status</th>
-                            <th>Amount</th>
+                            <th>Payment</th>
+                            <th>Total</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -166,54 +184,83 @@
                         {{#each bookings}}
                         <tr>
                             <td>
-                                <small class="text-muted">#{{_id}}</small><br>
-                                {{formatDate createdAt}}
-                            </td>
-                            <td>
-                                <strong>{{user.name}}</strong><br>
-                                <small>{{user.email}}</small><br>
-                                {{#if user.phone}}
-                                <small>{{formatPhone user.phone}}</small>
+                                <small class="text-muted">#{{this._id}}</small>
+                                {{#if this.flags.isVIP}}
+                                    <span class="badge bg-warning ms-1" title="VIP Guest">
+                                        <i class="fas fa-star"></i>
+                                    </span>
                                 {{/if}}
                             </td>
                             <td>
-                                <strong>{{room.type}} - {{room.number}}</strong><br>
-                                {{hotel.name}}<br>
-                                <small>{{hotel.location}}</small>
+                                <div>{{this.user.name}}</div>
+                                <small class="text-muted">{{this.user.email}}</small>
                             </td>
                             <td>
-                                <strong>Check-in:</strong> {{formatDate checkIn}}<br>
-                                <strong>Check-out:</strong> {{formatDate checkOut}}<br>
-                                <small>{{nights}} nights</small>
+                                <div>{{this.room.number}}</div>
+                                <small class="text-muted">{{this.room.type}}</small>
                             </td>
                             <td>
-                                <span class="badge bg-info">{{bookingSourceDisplay}}</span>
-                                {{#if corporateAccount}}
-                                <br><small>{{corporateAccount.companyName}}</small>
+                                <div>{{formatDate this.checkIn "DD MMM YYYY"}}</div>
+                                <small class="text-muted">{{formatDate this.checkIn "HH:mm"}}</small>
+                            </td>
+                            <td>
+                                <div>{{formatDate this.checkOut "DD MMM YYYY"}}</div>
+                                <small class="text-muted">{{formatDate this.checkOut "HH:mm"}}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{this.bookingSourceDisplay}}</span>
+                                {{#if this.otaDetails}}
+                                    <small class="d-block text-muted">{{this.otaDetails.platform}}</small>
                                 {{/if}}
                             </td>
                             <td>
-                                <span class="badge bg-{{statusColor status}}">{{formatBookingStatus status}}</span>
-                            </td>
-                            <td>
-                                ${{formatNumber totalAmount}}<br>
-                                {{#if payment}}
-                                <span class="badge bg-{{paymentStatusColor payment.status}}">
-                                    {{formatPaymentStatus payment.status}}
+                                <span class="badge bg-{{statusColor this.status}}">
+                                    {{formatBookingStatus this.status}}
                                 </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{paymentStatusColor this.paymentStatus}}">
+                                    {{formatPaymentStatus this.paymentStatus}}
+                                </span>
+                                {{#if this.paymentDetails.amountPaid}}
+                                    <small class="d-block text-muted">
+                                        Paid: {{formatCurrency this.paymentDetails.amountPaid}}
+                                    </small>
+                                {{/if}}
+                            </td>
+                            <td>
+                                <div>{{formatCurrency this.finalTotal}}</div>
+                                {{#if this.additionalCharges}}
+                                    <small class="text-muted">
+                                        +{{formatCurrency (sum this.additionalCharges 'amount')}} extra
+                                    </small>
                                 {{/if}}
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="/admin/bookings/{{_id}}" class="btn btn-info btn-sm">
+                                    <a href="/admin/bookings/{{this._id}}" class="btn btn-sm btn-info" title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="editBooking('{{_id}}')">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm" onclick="cancelBooking('{{_id}}')">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                    {{#if (eq this.status 'pending')}}
+                                        <button type="button" class="btn btn-sm btn-success" onclick="confirmBooking('{{this._id}}')" title="Confirm">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    {{/if}}
+                                    {{#if (eq this.status 'confirmed')}}
+                                        <button type="button" class="btn btn-sm btn-primary" onclick="checkIn('{{this._id}}')" title="Check-in">
+                                            <i class="fas fa-sign-in-alt"></i>
+                                        </button>
+                                    {{/if}}
+                                    {{#if (eq this.status 'checked_in')}}
+                                        <button type="button" class="btn btn-sm btn-warning" onclick="checkOut('{{this._id}}')" title="Check-out">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                        </button>
+                                    {{/if}}
+                                    {{#unless (or (eq this.status 'cancelled') (eq this.status 'completed'))}}
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="cancelBooking('{{this._id}}')" title="Cancel">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    {{/unless}}
                                 </div>
                             </td>
                         </tr>
@@ -221,64 +268,286 @@
                     </tbody>
                 </table>
             </div>
-
-            <!-- Pagination -->
+        </div>
+        <div class="card-footer">
             {{> admin/pagination}}
         </div>
     </div>
 </div>
 
+<!-- Action Modals -->
+<!-- Check-in Modal -->
+<div class="modal fade" id="checkInModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Check-in Guest</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="checkInForm">
+                    <input type="hidden" name="bookingId" id="checkInBookingId">
+                    <div class="mb-3">
+                        <label class="form-label">Key Card Number</label>
+                        <input type="text" class="form-control" name="keyCardNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="processCheckIn()">Complete Check-in</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Check-out Modal -->
+<div class="modal fade" id="checkOutModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Check-out Guest</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="checkOutForm">
+                    <input type="hidden" name="bookingId" id="checkOutBookingId">
+                    <div class="mb-3">
+                        <label class="form-label">Room Condition</label>
+                        <select class="form-select" name="condition" required>
+                            <option value="excellent">Excellent</option>
+                            <option value="good">Good</option>
+                            <option value="fair">Fair</option>
+                            <option value="poor">Poor</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Additional Charges</label>
+                        <div id="additionalCharges">
+                            <div class="row mb-2">
+                                <div class="col-8">
+                                    <input type="text" class="form-control" name="charges[0][description]" placeholder="Description">
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" class="form-control" name="charges[0][amount]" placeholder="Amount">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addChargeRow()">
+                            <i class="fas fa-plus me-1"></i> Add Charge
+                        </button>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="processCheckOut()">Complete Check-out</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Booking Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cancelForm">
+                    <input type="hidden" name="bookingId" id="cancelBookingId">
+                    <div class="mb-3">
+                        <label class="form-label">Cancellation Reason</label>
+                        <select class="form-select" name="reason" required>
+                            <option value="guest_request">Guest Request</option>
+                            <option value="no_show">No Show</option>
+                            <option value="payment_issue">Payment Issue</option>
+                            <option value="hotel_issue">Hotel Issue</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Refund Policy</label>
+                        <select class="form-select" name="policy" required>
+                            <option value="full_refund">Full Refund</option>
+                            <option value="partial_refund">Partial Refund</option>
+                            <option value="no_refund">No Refund</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Refund Amount</label>
+                        <input type="number" class="form-control" name="refundAmount" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="processCancellation()">Confirm Cancellation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page specific scripts -->
 <script>
-// Filter handling
-document.getElementById('sourceFilter').addEventListener('change', applyFilters);
-document.getElementById('statusFilter').addEventListener('change', applyFilters);
-document.getElementById('startDateFilter').addEventListener('change', applyFilters);
-document.getElementById('endDateFilter').addEventListener('change', applyFilters);
+// Initialize all tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+});
 
-function applyFilters() {
-    const source = document.getElementById('sourceFilter').value;
-    const status = document.getElementById('statusFilter').value;
-    const startDate = document.getElementById('startDateFilter').value;
-    const endDate = document.getElementById('endDateFilter').value;
-
-    let url = '/admin/bookings?';
-    if (source) url += `source=${source}&`;
-    if (status) url += `status=${status}&`;
-    if (startDate) url += `startDate=${startDate}&`;
-    if (endDate) url += `endDate=${endDate}&`;
-
-    window.location.href = url;
-}
+// Initialize all modals
+var checkInModal = new bootstrap.Modal(document.getElementById('checkInModal'));
+var checkOutModal = new bootstrap.Modal(document.getElementById('checkOutModal'));
+var cancelModal = new bootstrap.Modal(document.getElementById('cancelModal'));
 
 // Booking actions
-async function editBooking(id) {
-    window.location.href = `/admin/bookings/${id}/edit`;
-}
-
-async function cancelBooking(id) {
-    if (!confirm('Are you sure you want to cancel this booking?')) return;
-
-    try {
-        const response = await fetch(`/admin/bookings/${id}/status`, {
-            method: 'PUT',
+function confirmBooking(bookingId) {
+    if (confirm('Are you sure you want to confirm this booking?')) {
+        fetch(`/admin/bookings/${bookingId}/confirm`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ status: 'cancelled' })
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error confirming booking: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error confirming booking');
         });
-
-        const data = await response.json();
-        if (data.success) {
-            showAlert('success', 'Booking cancelled successfully');
-            setTimeout(() => window.location.reload(), 1500);
-        } else {
-            showAlert('error', data.message || 'Failed to cancel booking');
-        }
-    } catch (error) {
-        console.error('Error cancelling booking:', error);
-        showAlert('error', 'Failed to cancel booking');
     }
 }
+
+function checkIn(bookingId) {
+    document.getElementById('checkInBookingId').value = bookingId;
+    checkInModal.show();
+}
+
+function processCheckIn() {
+    const form = document.getElementById('checkInForm');
+    const formData = new FormData(form);
+    const bookingId = formData.get('bookingId');
+
+    fetch(`/admin/bookings/${bookingId}/check-in`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            checkInModal.hide();
+            location.reload();
+        } else {
+            alert('Error processing check-in: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error processing check-in');
+    });
+}
+
+function checkOut(bookingId) {
+    document.getElementById('checkOutBookingId').value = bookingId;
+    checkOutModal.show();
+}
+
+function addChargeRow() {
+    const container = document.getElementById('additionalCharges');
+    const index = container.children.length;
+    const row = document.createElement('div');
+    row.className = 'row mb-2';
+    row.innerHTML = `
+        <div class="col-8">
+            <input type="text" class="form-control" name="charges[${index}][description]" placeholder="Description">
+        </div>
+        <div class="col-4">
+            <input type="number" class="form-control" name="charges[${index}][amount]" placeholder="Amount">
+        </div>
+    `;
+    container.appendChild(row);
+}
+
+function processCheckOut() {
+    const form = document.getElementById('checkOutForm');
+    const formData = new FormData(form);
+    const bookingId = formData.get('bookingId');
+
+    fetch(`/admin/bookings/${bookingId}/check-out`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            checkOutModal.hide();
+            location.reload();
+        } else {
+            alert('Error processing check-out: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error processing check-out');
+    });
+}
+
+function cancelBooking(bookingId) {
+    document.getElementById('cancelBookingId').value = bookingId;
+    cancelModal.show();
+}
+
+function processCancellation() {
+    const form = document.getElementById('cancelForm');
+    const formData = new FormData(form);
+    const bookingId = formData.get('bookingId');
+
+    fetch(`/admin/bookings/${bookingId}/cancel`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            cancelModal.hide();
+            location.reload();
+        } else {
+            alert('Error cancelling booking: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error cancelling booking');
+    });
+}
+
+// Auto-submit form when filters change
+document.querySelectorAll('#bookingFilters select, #bookingFilters input[type="date"]').forEach(element => {
+    element.addEventListener('change', () => {
+        document.getElementById('bookingFilters').submit();
+    });
+});
 </script>
 
 {{> admin/footer}}

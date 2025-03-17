@@ -8,13 +8,15 @@ router.get('/login', (req, res) => {
     res.render('auth/login', {
         title: 'Login',
         error: req.query.error,
-        success: req.query.success
+        success: req.query.success,
+        layout: 'auth'
     });
 });
 
 router.get('/register', (req, res) => {
     res.render('auth/register', {
-        title: 'Register'
+        title: 'Register',
+        layout: 'auth'
     });
 });
 
@@ -67,7 +69,8 @@ router.post('/login', async (req, res) => {
         // For regular form submissions
         res.render('auth/login', {
             title: 'Login',
-            error: error.message
+            error: error.message,
+            layout: 'auth'
         });
     }
 });
@@ -110,7 +113,8 @@ router.post('/register', async (req, res) => {
         // For regular form submissions
         res.render('auth/register', {
             title: 'Register',
-            error: error.message
+            error: error.message,
+            layout: 'auth'
         });
     }
 });
@@ -167,7 +171,8 @@ router.post('/forgot-password', async (req, res) => {
         // For regular form submissions
         res.render('auth/forgot-password', {
             title: 'Forgot Password',
-            error: error.message
+            error: error.message,
+            layout: 'auth'
         });
     }
 });
@@ -203,7 +208,8 @@ router.post('/reset-password/:token', async (req, res) => {
         res.render('auth/reset-password', {
             title: 'Reset Password',
             error: error.message,
-            token: req.params.token
+            token,
+            layout: 'auth'
         });
     }
 });
