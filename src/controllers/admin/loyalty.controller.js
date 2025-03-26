@@ -640,3 +640,84 @@ exports.deleteReward = async (req, res) => {
         res.status(500).json({ message: 'Error deleting reward' });
     }
 };
+
+// Create member
+exports.createMember = async (req, res) => {
+    try {
+        const { userId, hotelId, tier } = req.body;
+
+        // Check if user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if user is already enrolled
+        if (user.loyalty && user.loyalty.isEnrolled) {
+            return res.status(400).json({ message: 'User is already enrolled in loyalty program' });
+        }
+
+        // Create loyalty program entry
+        const loyaltyProgram = await LoyaltyProgram.create({
+            user: userId,
+            hotel: hotelId,
+            tier: tier || null,
+            points: 0,
+            isActive: true
+        });
+
+        // Update user's loyalty status
+        user.loyalty = {
+            isEnrolled: true,
+            program: loyaltyProgram._id,
+            hotel: hotelId
+        };
+        await user.save();
+
+        // Send welcome email
+        await emailService.sendLoyaltyWelcomeEmail(user.email, {
+            name: user.name,
+            programId: loyaltyProgram._id
+        });
+
+        res.status(201).json({
+            message: 'Member enrolled successfully',
+            member: loyaltyProgram
+        });
+    } catch (error) {
+        console.error('Error creating loyalty member:', error);
+        res.status(500).json({ message: 'Error creating loyalty member' });
+    }
+};
+
+// Delete member
+exports.deleteMember = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find and delete loyalty program entry
+        const loyaltyProgram = await LoyaltyProgram.findById(id);
+        if (!loyaltyProgram) {
+            return res.status(404).json({ message: 'Member not found' });
+        }
+
+        // Update user's loyalty status
+        const user = await User.findById(loyaltyProgram.user);
+        if (user) {
+            user.loyalty = {
+                isEnrolled: false,
+                program: null,
+                hotel: null
+            };
+            await user.save();
+        }
+
+        // Delete loyalty program entry
+        await loyaltyProgram.remove();
+
+        res.json({ message: 'Member removed successfully' });
+    } catch (error) {
+        console.error('Error deleting loyalty member:', error);
+        res.status(500).json({ message: 'Error deleting loyalty member' });
+    }
+};

@@ -64,6 +64,8 @@ router.get('/channel-manager/rates', protect, authorize('admin'), channelManager
 router.put('/channel-manager/rates', protect, authorize('admin'), channelManagerController.updateRates);
 router.get('/channel-manager/inventory', protect, authorize('admin'), channelManagerController.getInventory);
 router.put('/channel-manager/inventory', protect, authorize('admin'), channelManagerController.updateInventory);
+router.get('/channel-manager/inventory/:id', protect, authorize('admin'), channelManagerController.getInventoryDetails);
+router.put('/channel-manager/inventory/:id', protect, authorize('admin'), channelManagerController.updateInventoryDetails);
 router.post('/channel-manager/sync', protect, authorize('admin'), channelManagerController.syncAvailability);
 router.put('/channel-manager/pricing', protect, authorize('admin'), channelManagerController.updatePricing);
 
@@ -98,14 +100,12 @@ router.delete('/settings/staff/:id', protect, authorize('admin'), settingsContro
 // Loyalty Routes
 router.get('/loyalty/members', protect, authorize('admin'), loyaltyController.getAllMembers);
 router.get('/loyalty/members/:id', protect, authorize('admin'), loyaltyController.getMemberDetails);
+router.post('/loyalty/members', protect, authorize('admin'), loyaltyController.createMember);
 router.put('/loyalty/members/:id', protect, authorize('admin'), loyaltyController.updateMember);
+router.delete('/loyalty/members/:id', protect, authorize('admin'), loyaltyController.deleteMember);
 router.get('/loyalty/tiers', protect, authorize('admin'), loyaltyController.getTiers);
 router.post('/loyalty/tiers', protect, authorize('admin'), loyaltyController.createTier);
 router.put('/loyalty/tiers/:id', protect, authorize('admin'), loyaltyController.updateTier);
 router.delete('/loyalty/tiers/:id', protect, authorize('admin'), loyaltyController.deleteTier);
-router.get('/loyalty/rewards', protect, authorize('admin'), loyaltyController.getRewards);
-router.post('/loyalty/rewards', protect, authorize('admin'), loyaltyController.createReward);
-router.put('/loyalty/rewards/:id', protect, authorize('admin'), loyaltyController.updateReward);
-router.delete('/loyalty/rewards/:id', protect, authorize('admin'), loyaltyController.deleteReward);
 
 module.exports = router;

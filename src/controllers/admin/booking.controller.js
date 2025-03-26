@@ -1,5 +1,7 @@
 const Booking = require('../../models/Booking');
 const moment = require('moment');
+const Room = require('../../models/Room');
+const CorporateAccount = require('../../models/CorporateAccount');
 
 // Helper function to get base query with common population
 const getBaseQuery = () => {
@@ -346,6 +348,90 @@ exports.getPastBookings = async (req, res) => {
         res.status(500).render('error', {
             message: 'Error loading past bookings'
         });
+    }
+};
+
+// Get new booking form
+exports.getNewBookingForm = async (req, res) => {
+    try {
+        // Get available rooms
+        const rooms = await Room.find({ status: 'available' })
+            .select('type number capacity price')
+            .sort('type number');
+
+        // Get room types
+        const roomTypes = [...new Set(rooms.map(room => room.type))];
+
+        // Get corporate accounts
+        const corporateAccounts = await CorporateAccount.find()
+            .select('companyName');
+
+        res.render('admin/bookings/new', {
+            title: 'New Booking',
+            rooms,
+            roomTypes,
+            corporateAccounts,
+            bookingSources: [
+                { value: 'direct', label: 'Direct Booking' },
+                { value: 'website', label: 'Website' },
+                { value: 'phone', label: 'Phone' },
+                { value: 'email', label: 'Email' },
+                { value: 'ota', label: 'Online Travel Agency' },
+                { value: 'corporate', label: 'Corporate Account' },
+                { value: 'walk_in', label: 'Walk-in' }
+            ]
+        });
+    } catch (error) {
+        console.error('Error loading new booking form:', error);
+        res.status(500).render('error', {
+            message: 'Error loading new booking form'
+        });
+    }
+};
+
+// Create booking
+exports.createBooking = async (req, res) => {
+    try {
+        const {
+            userId,
+            roomId,
+            checkIn,
+            checkOut,
+            source,
+            corporateAccountId,
+            specialRequests,
+            status = 'confirmed'
+        } = req.body;
+
+        // Create booking
+        const booking = await Booking.create({
+            user: userId,
+            room: roomId,
+            checkIn: new Date(checkIn),
+            checkOut: new Date(checkOut),
+            source,
+            corporateAccount: corporateAccountId,
+            specialRequests,
+            status
+        });
+
+        // Update room status
+        await Room.findByIdAndUpdate(roomId, { status: 'booked' });
+
+        // If it's a corporate booking, update corporate account
+        if (corporateAccountId) {
+            await CorporateAccount.findByIdAndUpdate(corporateAccountId, {
+                $push: { bookings: booking._id }
+            });
+        }
+
+        res.status(201).json({
+            message: 'Booking created successfully',
+            booking
+        });
+    } catch (error) {
+        console.error('Error creating booking:', error);
+        res.status(500).json({ message: 'Error creating booking' });
     }
 };
 

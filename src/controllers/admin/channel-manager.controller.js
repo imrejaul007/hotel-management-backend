@@ -471,6 +471,105 @@ exports.updateInventory = async (req, res) => {
     }
 };
 
+// Get inventory details for a specific room type
+exports.getInventoryDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { startDate, endDate } = req.query;
+
+        // Get room type details
+        const room = await Room.findById(id)
+            .populate('hotel')
+            .populate('inventoryBlocks');
+
+        if (!room) {
+            return res.status(404).json({ message: 'Room type not found' });
+        }
+
+        // Get inventory status for each channel
+        const channels = await OTAChannel.find({ hotel: room.hotel._id });
+        const inventoryStatus = await Promise.all(
+            channels.map(async channel => ({
+                channel: channel.name,
+                inventory: await channel.getInventoryForRoom(room._id, startDate, endDate)
+            }))
+        );
+
+        res.json({
+            roomType: {
+                id: room._id,
+                name: room.type,
+                baseInventory: room.totalRooms,
+                blocks: room.inventoryBlocks
+            },
+            channels: inventoryStatus
+        });
+    } catch (error) {
+        console.error('Error getting inventory details:', error);
+        res.status(500).json({ message: 'Error getting inventory details' });
+    }
+};
+
+// Update inventory details for a specific room type
+exports.updateInventoryDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { channelUpdates, dateRange } = req.body;
+
+        // Get room type
+        const room = await Room.findById(id).populate('hotel');
+        if (!room) {
+            return res.status(404).json({ message: 'Room type not found' });
+        }
+
+        // Update inventory for each channel
+        const updateResults = await Promise.all(
+            channelUpdates.map(async update => {
+                const channel = await OTAChannel.findOne({
+                    hotel: room.hotel._id,
+                    name: update.channel
+                });
+
+                if (!channel) {
+                    return {
+                        channel: update.channel,
+                        status: 'error',
+                        message: 'Channel not found'
+                    };
+                }
+
+                try {
+                    await channel.updateInventory({
+                        roomId: room._id,
+                        startDate: dateRange.start,
+                        endDate: dateRange.end,
+                        inventory: update.inventory
+                    });
+
+                    return {
+                        channel: update.channel,
+                        status: 'success'
+                    };
+                } catch (error) {
+                    return {
+                        channel: update.channel,
+                        status: 'error',
+                        message: error.message
+                    };
+                }
+            })
+        );
+
+        res.json({
+            message: 'Inventory updates processed',
+            results: updateResults
+        });
+    } catch (error) {
+        console.error('Error updating inventory details:', error);
+        res.status(500).json({ message: 'Error updating inventory details' });
+    }
+};
+
 // Helper function to calculate channel metrics
 const calculateChannelMetrics = async (hotelId, startDate = new Date(0), endDate = new Date()) => {
     const bookings = await Booking.find({
