@@ -1,31 +1,21 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card border-danger">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        Error Occurred
-                    </h4>
+        <div class="col-md-6 text-center">
+            <div class="error-template">
+                <h1>{{title}}</h1>
+                <div class="error-details">
+                    {{message}}
                 </div>
-                <div class="card-body">
-                    <h5 class="card-title">{{message}}</h5>
-                    {{#if error}}
-                    <div class="alert alert-danger mt-3">
-                        <pre class="mb-0">{{error.message}}</pre>
-                    </div>
+                {{#if error}}
+                    {{#if (eq error.status 404)}}
+                        <div class="error-actions mt-4">
+                            <a href="/" class="btn btn-primary">
+                                <i class="fas fa-home me-1"></i>
+                                Back to Home
+                            </a>
+                        </div>
                     {{/if}}
-                    <div class="mt-4">
-                        <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">
-                            <i class="fas fa-arrow-left me-1"></i>
-                            Go Back
-                        </a>
-                        <a href="/" class="btn btn-primary">
-                            <i class="fas fa-home me-1"></i>
-                            Go to Home
-                        </a>
-                    </div>
-                </div>
+                {{/if}}
             </div>
         </div>
     </div>

@@ -1,0 +1,562 @@
+{{> admin/header title="Payment Settings"}}
+
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Payment Settings</h1>
+    </div>
+
+    <form action="/admin/payments/settings" method="POST" class="needs-validation" novalidate>
+        <!-- Settings Tabs -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#general">General</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#payment-gateways">Payment Gateways</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#invoice">Invoice</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#loyalty">Loyalty Program</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#refunds">Refunds</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#notifications">Notifications</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- General Settings -->
+                    <div class="tab-pane fade show active" id="general">
+                        <h5 class="mb-4">General Settings</h5>
+                        
+                        <!-- Currency Settings -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Default Currency</label>
+                                <select class="form-select" name="currency" required>
+                                    <option value="usd" {{#if (eq settings.currency 'usd')}}selected{{/if}}>USD</option>
+                                    <option value="eur" {{#if (eq settings.currency 'eur')}}selected{{/if}}>EUR</option>
+                                    <option value="gbp" {{#if (eq settings.currency 'gbp')}}selected{{/if}}>GBP</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tax Rate (%)</label>
+                                <input type="number" class="form-control" name="taxRate" 
+                                       value="{{settings.taxRate}}" min="0" max="100" step="0.01" required>
+                            </div>
+                        </div>
+
+                        <!-- Payment Methods -->
+                        <div class="mb-4">
+                            <label class="form-label">Accepted Payment Methods</label>
+                            <div class="row">
+                                {{#each settings.paymentMethods}}
+                                <div class="col-md-4">
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="paymentMethods[{{@index}}].isActive"
+                                                       {{#if this.isActive}}checked{{/if}}>
+                                                <label class="form-check-label">{{this.name}}</label>
+                                            </div>
+                                            <input type="hidden" name="paymentMethods[{{@index}}].type" value="{{this.type}}">
+                                            <input type="text" class="form-control mt-2" 
+                                                   name="paymentMethods[{{@index}}].name"
+                                                   value="{{this.name}}" placeholder="Display Name">
+                                            <div class="input-group mt-2">
+                                                <span class="input-group-text">Fee</span>
+                                                <input type="number" class="form-control"
+                                                       name="paymentMethods[{{@index}}].fees"
+                                                       value="{{this.fees}}" min="0" step="0.01">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{/each}}
+                            </div>
+                        </div>
+
+                        <!-- Hotel Information -->
+                        <h5 class="mb-3">Hotel Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Hotel Name</label>
+                                    <input type="text" class="form-control" name="hotelInfo.name" 
+                                           value="{{settings.hotelInfo.name}}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Tax ID</label>
+                                    <input type="text" class="form-control" name="hotelInfo.taxId" 
+                                           value="{{settings.hotelInfo.taxId}}">
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Address</label>
+                                    <input type="text" class="form-control" name="hotelInfo.address" 
+                                           value="{{settings.hotelInfo.address}}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">City</label>
+                                    <input type="text" class="form-control" name="hotelInfo.city" 
+                                           value="{{settings.hotelInfo.city}}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">State</label>
+                                    <input type="text" class="form-control" name="hotelInfo.state" 
+                                           value="{{settings.hotelInfo.state}}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">ZIP Code</label>
+                                    <input type="text" class="form-control" name="hotelInfo.zipCode" 
+                                           value="{{settings.hotelInfo.zipCode}}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Phone</label>
+                                    <input type="tel" class="form-control" name="hotelInfo.phone" 
+                                           value="{{settings.hotelInfo.phone}}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" name="hotelInfo.email" 
+                                           value="{{settings.hotelInfo.email}}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Website</label>
+                                    <input type="url" class="form-control" name="hotelInfo.website" 
+                                           value="{{settings.hotelInfo.website}}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Gateways -->
+                    <div class="tab-pane fade" id="payment-gateways">
+                        <h5 class="mb-4">Payment Gateway Settings</h5>
+
+                        <!-- Stripe -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="stripe.isActive"
+                                           {{#if settings.stripe.isActive}}checked{{/if}}>
+                                    <label class="form-check-label">Stripe</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Public Key</label>
+                                            <input type="text" class="form-control" name="stripe.publicKey" 
+                                                   value="{{settings.stripe.publicKey}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Secret Key</label>
+                                            <input type="password" class="form-control" name="stripe.secretKey" 
+                                                   value="{{settings.stripe.secretKey}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Webhook Secret</label>
+                                            <input type="password" class="form-control" name="stripe.webhookSecret" 
+                                                   value="{{settings.stripe.webhookSecret}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mt-4">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="stripe.testMode"
+                                                   {{#if settings.stripe.testMode}}checked{{/if}}>
+                                            <label class="form-check-label">Test Mode</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PayPal -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="paypal.isActive"
+                                           {{#if settings.paypal.isActive}}checked{{/if}}>
+                                    <label class="form-check-label">PayPal</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Client ID</label>
+                                            <input type="text" class="form-control" name="paypal.clientId" 
+                                                   value="{{settings.paypal.clientId}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Client Secret</label>
+                                            <input type="password" class="form-control" name="paypal.clientSecret" 
+                                                   value="{{settings.paypal.clientSecret}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Webhook ID</label>
+                                            <input type="text" class="form-control" name="paypal.webhookId" 
+                                                   value="{{settings.paypal.webhookId}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mt-4">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="paypal.testMode"
+                                                   {{#if settings.paypal.testMode}}checked{{/if}}>
+                                            <label class="form-check-label">Sandbox Mode</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Razorpay -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="razorpay.isActive"
+                                           {{#if settings.razorpay.isActive}}checked{{/if}}>
+                                    <label class="form-check-label">Razorpay</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Key ID</label>
+                                            <input type="text" class="form-control" name="razorpay.keyId" 
+                                                   value="{{settings.razorpay.keyId}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Key Secret</label>
+                                            <input type="password" class="form-control" name="razorpay.keySecret" 
+                                                   value="{{settings.razorpay.keySecret}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Webhook Secret</label>
+                                            <input type="password" class="form-control" name="razorpay.webhookSecret" 
+                                                   value="{{settings.razorpay.webhookSecret}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mt-4">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="razorpay.testMode"
+                                                   {{#if settings.razorpay.testMode}}checked{{/if}}>
+                                            <label class="form-check-label">Test Mode</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Settings -->
+                    <div class="tab-pane fade" id="invoice">
+                        <h5 class="mb-4">Invoice Settings</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Invoice Prefix</label>
+                                    <input type="text" class="form-control" name="invoice.prefix" 
+                                           value="{{settings.invoice.prefix}}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Next Invoice Number</label>
+                                    <input type="number" class="form-control" name="invoice.nextNumber" 
+                                           value="{{settings.invoice.nextNumber}}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Due Days</label>
+                                    <input type="number" class="form-control" name="invoice.dueDays" 
+                                           value="{{settings.invoice.dueDays}}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Invoice Template</label>
+                                    <select class="form-select" name="invoice.template">
+                                        <option value="default" {{#if (eq settings.invoice.template 'default')}}selected{{/if}}>Default</option>
+                                        <option value="modern" {{#if (eq settings.invoice.template 'modern')}}selected{{/if}}>Modern</option>
+                                        <option value="classic" {{#if (eq settings.invoice.template 'classic')}}selected{{/if}}>Classic</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Terms and Conditions</label>
+                                    <textarea class="form-control" name="invoice.termsAndConditions" 
+                                              rows="4">{{settings.invoice.termsAndConditions}}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Notes</label>
+                                    <textarea class="form-control" name="invoice.notes" 
+                                              rows="4">{{settings.invoice.notes}}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loyalty Program Settings -->
+                    <div class="tab-pane fade" id="loyalty">
+                        <h5 class="mb-4">Loyalty Program Settings</h5>
+                        <div class="form-check form-switch mb-4">
+                            <input class="form-check-input" type="checkbox" 
+                                   name="loyaltyProgram.isActive"
+                                   {{#if settings.loyaltyProgram.isActive}}checked{{/if}}>
+                            <label class="form-check-label">Enable Loyalty Program</label>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Points per Currency Unit</label>
+                                    <input type="number" class="form-control" name="loyaltyProgram.pointsPerCurrency" 
+                                           value="{{settings.loyaltyProgram.pointsPerCurrency}}" min="0" step="0.1" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Point Value in Currency</label>
+                                    <input type="number" class="form-control" name="loyaltyProgram.pointValueInCurrency" 
+                                           value="{{settings.loyaltyProgram.pointValueInCurrency}}" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Minimum Points for Redemption</label>
+                                    <input type="number" class="form-control" name="loyaltyProgram.minimumPointsRedemption" 
+                                           value="{{settings.loyaltyProgram.minimumPointsRedemption}}" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Points Expiry (Months)</label>
+                                    <input type="number" class="form-control" name="loyaltyProgram.expiryMonths" 
+                                           value="{{settings.loyaltyProgram.expiryMonths}}" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Refund Settings -->
+                    <div class="tab-pane fade" id="refunds">
+                        <h5 class="mb-4">Refund Settings</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="refund.allowPartialRefunds"
+                                           {{#if settings.refund.allowPartialRefunds}}checked{{/if}}>
+                                    <label class="form-check-label">Allow Partial Refunds</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="refund.requireReason"
+                                           {{#if settings.refund.requireReason}}checked{{/if}}>
+                                    <label class="form-check-label">Require Refund Reason</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Maximum Refund Period (Days)</label>
+                                    <input type="number" class="form-control" name="refund.maxRefundDays" 
+                                           value="{{settings.refund.maxRefundDays}}" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Auto-Approval Limit</label>
+                                    <input type="number" class="form-control" name="refund.autoApprovalLimit" 
+                                           value="{{settings.refund.autoApprovalLimit}}" min="0" required>
+                                    <div class="form-text">Amount below which refunds are automatically approved</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email Notification Settings -->
+                    <div class="tab-pane fade" id="notifications">
+                        <h5 class="mb-4">Email Notification Settings</h5>
+
+                        <!-- Payment Received -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="emailNotifications.paymentReceived.isActive"
+                                           {{#if settings.emailNotifications.paymentReceived.isActive}}checked{{/if}}>
+                                    <label class="form-check-label">Payment Received</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Template</label>
+                                    <select class="form-select" name="emailNotifications.paymentReceived.template">
+                                        <option value="default" {{#if (eq settings.emailNotifications.paymentReceived.template 'default')}}selected{{/if}}>Default Template</option>
+                                        <option value="minimal" {{#if (eq settings.emailNotifications.paymentReceived.template 'minimal')}}selected{{/if}}>Minimal Template</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">CC Emails</label>
+                                    <input type="text" class="form-control" name="emailNotifications.paymentReceived.ccEmails" 
+                                           value="{{join settings.emailNotifications.paymentReceived.ccEmails ', '}}"
+                                           placeholder="Enter comma-separated email addresses">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Failed -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="emailNotifications.paymentFailed.isActive"
+                                           {{#if settings.emailNotifications.paymentFailed.isActive}}checked{{/if}}>
+                                    <label class="form-check-label">Payment Failed</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Template</label>
+                                    <select class="form-select" name="emailNotifications.paymentFailed.template">
+                                        <option value="default" {{#if (eq settings.emailNotifications.paymentFailed.template 'default')}}selected{{/if}}>Default Template</option>
+                                        <option value="minimal" {{#if (eq settings.emailNotifications.paymentFailed.template 'minimal')}}selected{{/if}}>Minimal Template</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">CC Emails</label>
+                                    <input type="text" class="form-control" name="emailNotifications.paymentFailed.ccEmails" 
+                                           value="{{join settings.emailNotifications.paymentFailed.ccEmails ', '}}"
+                                           placeholder="Enter comma-separated email addresses">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Refund Processed -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="emailNotifications.refundProcessed.isActive"
+                                           {{#if settings.emailNotifications.refundProcessed.isActive}}checked{{/if}}>
+                                    <label class="form-check-label">Refund Processed</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Template</label>
+                                    <select class="form-select" name="emailNotifications.refundProcessed.template">
+                                        <option value="default" {{#if (eq settings.emailNotifications.refundProcessed.template 'default')}}selected{{/if}}>Default Template</option>
+                                        <option value="minimal" {{#if (eq settings.emailNotifications.refundProcessed.template 'minimal')}}selected{{/if}}>Minimal Template</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">CC Emails</label>
+                                    <input type="text" class="form-control" name="emailNotifications.refundProcessed.ccEmails" 
+                                           value="{{join settings.emailNotifications.refundProcessed.ccEmails ', '}}"
+                                           placeholder="Enter comma-separated email addresses">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+
+// Handle tab state persistence
+document.addEventListener('DOMContentLoaded', function() {
+    // Get active tab from localStorage
+    const activeTab = localStorage.getItem('paymentSettingsActiveTab');
+    if (activeTab) {
+        const tab = document.querySelector(`a[href="${activeTab}"]`);
+        if (tab) {
+            new bootstrap.Tab(tab).show();
+        }
+    }
+
+    // Store active tab in localStorage
+    const tabEls = document.querySelectorAll('a[data-bs-toggle="tab"]');
+    tabEls.forEach(tabEl => {
+        tabEl.addEventListener('shown.bs.tab', function(e) {
+            localStorage.setItem('paymentSettingsActiveTab', e.target.getAttribute('href'));
+        });
+    });
+});
+</script>
+
+{{> admin/footer}}

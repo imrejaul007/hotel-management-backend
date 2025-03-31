@@ -11,6 +11,11 @@
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
+    <!-- Page Specific Styles -->
+    {{#if _sections.pageStyles}}
+        {{{_sections.pageStyles}}}
+    {{/if}}
+    
     <!-- Custom CSS -->
     <style>
         /* Admin Layout Styles */
@@ -147,10 +152,10 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Header -->
-            {{> admin/header}}
+            <!-- Navbar -->
+            {{> admin/navbar}}
 
-            <!-- Page Content -->
+            <!-- Content -->
             {{{body}}}
 
             <!-- Footer -->
@@ -166,6 +171,11 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Page Specific Scripts -->
+    {{#if _sections.pageScripts}}
+        {{{_sections.pageScripts}}}
+    {{/if}}
     
     <!-- Custom JavaScript -->
     <script>

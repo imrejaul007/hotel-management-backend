@@ -93,34 +93,6 @@ const { protect, authorize } = require('../middleware/auth');
 
 /**
  * @swagger
- * /api/admin/hotels:
- *   post:
- *     summary: Create a new hotel (Admin only)
- *     tags: [Hotels]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Hotel'
- *     responses:
- *       201:
- *         description: Hotel created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Hotel'
- *       401:
- *         description: Not authorized
- *       403:
- *         description: Not admin
- */
-router.post('/admin/hotels', protect, authorize('admin'), hotelController.createHotel);
-
-/**
- * @swagger
  * /api/hotels:
  *   get:
  *     summary: Get all hotels
@@ -166,6 +138,34 @@ router.get('/hotels', hotelController.getAllHotels);
  *         description: Hotel not found
  */
 router.get('/hotels/:id', hotelController.getHotelById);
+
+/**
+ * @swagger
+ * /api/admin/hotels:
+ *   post:
+ *     summary: Create a new hotel (Admin only)
+ *     tags: [Hotels]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Hotel'
+ *     responses:
+ *       201:
+ *         description: Hotel created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Hotel'
+ *       401:
+ *         description: Not authorized
+ *       403:
+ *         description: Not admin
+ */
+router.post('/admin/hotels', protect, authorize('admin'), hotelController.createHotel);
 
 /**
  * @swagger

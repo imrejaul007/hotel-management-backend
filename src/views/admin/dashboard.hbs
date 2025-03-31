@@ -1,380 +1,198 @@
-<!-- Overview & Real-Time Insights -->
-<div class="row mb-4">
-    <!-- Occupancy Rate -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Occupancy Rate</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{occupancyRate}}%</div>
-                        <div class="text-xs text-muted">
-                            <span class="text-success">{{occupiedRooms}} occupied</span> • 
-                            <span class="text-primary">{{availableRooms}} available</span> • 
-                            <span class="text-warning">{{maintenanceRooms}} maintenance</span>
+{{> admin/header title="Admin Dashboard"}}
+
+<div class="container-fluid">
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Bookings</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.totalBookings}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
                         </div>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-hotel fa-2x text-gray-300"></i>
-                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Today's Bookings -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Today's Bookings</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{todayBookings}}</div>
-                        <div class="text-xs text-muted">{{todayCheckIns.length}} check-ins, {{todayCheckOuts.length}} check-outs</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-calendar-check fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Revenue -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            Today's Revenue</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">${{todayRevenue}}</div>
-                        <div class="text-xs text-muted">
-                            {{#if (gt revenueChange 0)}}
-                            <span class="text-success">+${{revenueChange}} vs yesterday</span>
-                            {{else}}
-                            <span class="text-danger">-${{abs revenueChange}} vs yesterday</span>
-                            {{/if}}
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Revenue (Monthly)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{stats.monthlyRevenue}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
                         </div>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Room Occupancy</div>
+                            <div class="row no-gutters align-items-center">
+                                <div class="col-auto">
+                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">{{stats.occupancyRate}}%</div>
+                                </div>
+                                <div class="col">
+                                    <div class="progress progress-sm mr-2">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: {{stats.occupancyRate}}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bed fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Requests</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{stats.pendingRequests}}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Active Guests -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Active Guests</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{activeGuests}}</div>
-                        <div class="text-xs text-muted">including {{vipGuests}} VIP guests</div>
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="/admin/bookings/new" class="btn btn-primary btn-block mb-3">
+                                <i class="fas fa-plus-circle me-2"></i>New Booking
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/guests/new" class="btn btn-success btn-block mb-3">
+                                <i class="fas fa-user-plus me-2"></i>New Guest
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/housekeeping" class="btn btn-info btn-block mb-3">
+                                <i class="fas fa-broom me-2"></i>Housekeeping
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/admin/reports" class="btn btn-warning btn-block mb-3">
+                                <i class="fas fa-chart-bar me-2"></i>Reports
+                            </a>
+                        </div>
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-users fa-2x text-gray-300"></i>
-                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings & Upcoming Check-ins -->
+    <div class="row">
+        <!-- Recent Bookings -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Bookings</h6>
+                    <a href="/admin/bookings" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {{#if recentBookings.length}}
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Guest</th>
+                                        <th>Room</th>
+                                        <th>Check-in</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each recentBookings}}
+                                    <tr>
+                                        <td>{{this.guest.name}}</td>
+                                        <td>{{this.room.number}}</td>
+                                        <td>{{formatDate this.checkIn}}</td>
+                                        <td>
+                                            <span class="badge bg-{{this.statusColor}}">{{this.status}}</span>
+                                        </td>
+                                    </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                    {{else}}
+                        <p class="text-center text-muted my-3">No recent bookings</p>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Check-ins -->
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Upcoming Check-ins</h6>
+                    <a href="/admin/check-in-out" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {{#if upcomingCheckins.length}}
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Guest</th>
+                                        <th>Room</th>
+                                        <th>Check-in Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each upcomingCheckins}}
+                                    <tr>
+                                        <td>{{this.guest.name}}</td>
+                                        <td>{{this.room.number}}</td>
+                                        <td>{{formatDateTime this.checkIn}}</td>
+                                        <td>
+                                            <a href="/admin/check-in/{{this._id}}" class="btn btn-sm btn-success">
+                                                <i class="fas fa-check-circle me-1"></i>Check-in
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+                        </div>
+                    {{else}}
+                        <p class="text-center text-muted my-3">No upcoming check-ins</p>
+                    {{/if}}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Quick Actions -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="/admin/bookings/new" class="btn btn-primary btn-block">
-                            <i class="fas fa-plus-circle me-2"></i>New Booking
-                        </a>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="/admin/bookings/calendar" class="btn btn-info btn-block">
-                            <i class="fas fa-calendar-alt me-2"></i>Calendar View
-                        </a>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="/admin/housekeeping" class="btn btn-success btn-block">
-                            <i class="fas fa-broom me-2"></i>Housekeeping
-                        </a>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="/admin/maintenance" class="btn btn-warning btn-block">
-                            <i class="fas fa-tools me-2"></i>Maintenance
-                        </a>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <a href="/admin/reports" class="btn btn-info btn-block">
-                            <i class="fas fa-chart-bar me-2"></i>Reports
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Revenue Chart -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Revenue Trends</h6>
-                <div class="btn-group">
-                    <a href="?period=daily" class="btn btn-sm btn-outline-primary {{#if (eq period 'daily')}}active{{/if}}">Daily</a>
-                    <a href="?period=weekly" class="btn btn-sm btn-outline-primary {{#if (eq period 'weekly')}}active{{/if}}">Weekly</a>
-                    <a href="?period=monthly" class="btn btn-sm btn-outline-primary {{#if (eq period 'monthly')}}active{{/if}}">Monthly</a>
-                </div>
-            </div>
-            <div class="card-body">
-                <canvas id="revenueChart" height="300"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Today's Operations -->
-<div class="row mb-4">
-    <!-- Check-ins -->
-    <div class="col-xl-6 col-lg-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Today's Check-ins</h6>
-                <a href="/admin/bookings?filter=check-in" class="btn btn-sm btn-primary">View All</a>
-            </div>
-            <div class="card-body">
-                {{#if todayCheckIns}}
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Guest</th>
-                                <th>Room</th>
-                                <th>Time</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{#each todayCheckIns}}
-                            <tr>
-                                <td>{{this.guestName}}</td>
-                                <td>{{this.roomNumber}}</td>
-                                <td>{{this.checkInTime}}</td>
-                                <td>{{{this.statusBadge}}}</td>
-                                <td>
-                                    <a href="/admin/bookings/{{this._id}}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {{/each}}
-                        </tbody>
-                    </table>
-                </div>
-                {{else}}
-                <p class="text-center text-muted my-3">No check-ins scheduled for today</p>
-                {{/if}}
-            </div>
-        </div>
-    </div>
-
-    <!-- Check-outs -->
-    <div class="col-xl-6 col-lg-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Today's Check-outs</h6>
-                <a href="/admin/bookings?filter=check-out" class="btn btn-sm btn-primary">View All</a>
-            </div>
-            <div class="card-body">
-                {{#if todayCheckOuts}}
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Guest</th>
-                                <th>Room</th>
-                                <th>Time</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{#each todayCheckOuts}}
-                            <tr>
-                                <td>{{this.guestName}}</td>
-                                <td>{{this.roomNumber}}</td>
-                                <td>{{this.checkOutTime}}</td>
-                                <td>{{{this.statusBadge}}}</td>
-                                <td>
-                                    <a href="/admin/bookings/{{this._id}}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {{/each}}
-                        </tbody>
-                    </table>
-                </div>
-                {{else}}
-                <p class="text-center text-muted my-3">No check-outs scheduled for today</p>
-                {{/if}}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Housekeeping and Maintenance -->
-<div class="row">
-    <!-- Housekeeping Tasks -->
-    <div class="col-xl-6 col-lg-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Housekeeping Tasks</h6>
-                <a href="/admin/housekeeping" class="btn btn-sm btn-primary">View All</a>
-            </div>
-            <div class="card-body">
-                {{#if housekeepingTasks}}
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Room</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{#each housekeepingTasks}}
-                            <tr>
-                                <td>{{this.roomNumber}}</td>
-                                <td>{{this.type}}</td>
-                                <td>{{{this.statusBadge}}}</td>
-                                <td>
-                                    <a href="/admin/housekeeping/{{this._id}}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {{/each}}
-                        </tbody>
-                    </table>
-                </div>
-                {{else}}
-                <p class="text-center text-muted my-3">No pending housekeeping tasks</p>
-                {{/if}}
-            </div>
-        </div>
-    </div>
-
-    <!-- Maintenance Requests -->
-    <div class="col-xl-6 col-lg-6">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Maintenance Requests</h6>
-                <a href="/admin/maintenance" class="btn btn-sm btn-primary">View All</a>
-            </div>
-            <div class="card-body">
-                {{#if maintenanceRequests}}
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Room</th>
-                                <th>Issue</th>
-                                <th>Priority</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{#each maintenanceRequests}}
-                            <tr>
-                                <td>{{this.roomNumber}}</td>
-                                <td>{{this.issue}}</td>
-                                <td>{{{this.priorityBadge}}}</td>
-                                <td>{{{this.statusBadge}}}</td>
-                                <td>
-                                    <a href="/admin/maintenance/{{this._id}}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {{/each}}
-                        </tbody>
-                    </table>
-                </div>
-                {{else}}
-                <p class="text-center text-muted my-3">No pending maintenance requests</p>
-                {{/if}}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Chart Initialization -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Revenue Chart
-    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-    new Chart(revenueCtx, {
-        type: 'line',
-        data: {
-            labels: {{{json revenueData.labels}}},
-            datasets: [{
-                label: 'Revenue',
-                data: {{{json revenueData.values}}},
-                backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                borderColor: 'rgba(52, 152, 219, 1)',
-                borderWidth: 2,
-                pointBackgroundColor: 'rgba(52, 152, 219, 1)',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '$' + value.toLocaleString();
-                        }
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return 'Revenue: $' + context.parsed.y.toLocaleString();
-                        }
-                    }
-                }
-            }
-        }
-    });
-});
+{{> admin/footer}}

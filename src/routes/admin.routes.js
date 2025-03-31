@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize } = require('../middlewares/auth.middleware');
 
 // Import controllers
 const adminController = require('../controllers/admin.controller');
@@ -14,19 +14,32 @@ const settingsController = require('../controllers/admin/settings.controller');
 const channelManagerController = require('../controllers/admin/channel-manager.controller');
 const checkInOutController = require('../controllers/admin/check-in-out.controller');
 const analyticsController = require('../controllers/admin/analytics.controller');
+const reportsController = require('../controllers/admin/reports.controller');
 
 // Dashboard Routes
-router.get('/', protect, authorize('admin'), adminController.getDashboard);
-router.get('/dashboard', protect, authorize('admin'), adminController.getDashboard);
+router.get('/', protect, authorize('admin'), (req, res) => {
+    res.render('admin/dashboard', {
+        title: 'Admin Dashboard',
+        user: req.user,
+        layout: 'admin'
+    });
+});
 
-// Booking Routes
+router.get('/dashboard', protect, authorize('admin'), (req, res) => {
+    res.render('admin/dashboard', {
+        title: 'Admin Dashboard',
+        user: req.user,
+        layout: 'admin'
+    });
+});
+
+// Booking Management Routes
 router.get('/bookings', protect, authorize('admin'), bookingController.getAllBookings);
-router.get('/bookings/calendar', protect, authorize('admin'), calendarController.getCalendarView);
-router.get('/bookings/new', protect, authorize('admin'), bookingController.getNewBookingForm);
-router.post('/bookings', protect, authorize('admin'), bookingController.createBooking);
 router.get('/bookings/current', protect, authorize('admin'), bookingController.getCurrentBookings);
 router.get('/bookings/upcoming', protect, authorize('admin'), bookingController.getUpcomingBookings);
 router.get('/bookings/past', protect, authorize('admin'), bookingController.getPastBookings);
+router.get('/bookings/new', protect, authorize('admin'), bookingController.getNewBookingForm);
+router.post('/bookings', protect, authorize('admin'), bookingController.createBooking);
 router.get('/bookings/:id', protect, authorize('admin'), bookingController.getBookingDetails);
 router.put('/bookings/:id', protect, authorize('admin'), bookingController.updateBooking);
 router.delete('/bookings/:id', protect, authorize('admin'), bookingController.deleteBooking);
@@ -80,6 +93,9 @@ router.get('/analytics/occupancy', protect, authorize('admin'), analyticsControl
 router.get('/analytics/revenue', protect, authorize('admin'), analyticsController.getRevenueAnalytics);
 router.get('/analytics/guests', protect, authorize('admin'), analyticsController.getGuestAnalytics);
 router.get('/analytics/staff', protect, authorize('admin'), analyticsController.getStaffAnalytics);
+
+// Reports Routes
+router.get('/reports', protect, authorize('admin'), reportsController.getReports);
 
 // Settings Routes
 router.get('/settings/hotel', protect, authorize('admin'), settingsController.getHotelSettings);

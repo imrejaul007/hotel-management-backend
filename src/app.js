@@ -1,45 +1,39 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const path = require('path');
+const { engine } = require('express-handlebars');
+const config = require('./config/env');
+const viewRoutes = require('./routes/view.routes');
+const adminRoutes = require('./routes/admin.routes');
+const authRoutes = require('./routes/auth.routes');
+const apiRoutes = require('./routes/api.routes');
 const cors = require('cors');
 const session = require('express-session');
 const flash = require('connect-flash');
-const cookieParser = require('cookie-parser');
-const { engine } = require('express-handlebars');
-const swaggerUI = require('swagger-ui-express');
-const swaggerSpecs = require('./config/swagger');
-const handlebarsHelpers = require('./utils/handlebars-helpers');
-const config = require('./config/env');
-const http = require('http');
-const notificationService = require('./services/notification.service');
-const recommendationService = require('./services/recommendation.service');
-const integrationService = require('./services/integration.service');
-
-// Import routes
-const homeRouter = require('./routes/home.routes');
-const authRoutes = require('./routes/auth.routes');
-const adminRoutes = require('./routes/admin.routes');
-const bookingRoutes = require('./routes/booking.routes');
-const guestRoutes = require('./routes/guest.routes');
 
 const app = express();
-const server = http.createServer(app);
 
-// Initialize WebSocket service
-notificationService.initialize(server);
+// Connect to MongoDB
+mongoose.connect(config.mongoURI)
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
-// Configure handlebars
+// View engine setup
 app.engine('hbs', engine({
     extname: '.hbs',
-    helpers: handlebarsHelpers,
-    defaultLayout: 'admin',
+    defaultLayout: 'main',
     layoutsDir: path.join(__dirname, 'views/layouts'),
-    partialsDir: path.join(__dirname, 'views/partials')
+    partialsDir: path.join(__dirname, 'views/partials'),
+    helpers: require('./utils/handlebars-helpers')
 }));
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Middleware
 app.use(cors());
+app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -54,55 +48,46 @@ app.use(session({
     }
 }));
 app.use(flash());
-
-// Static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API documentation
-app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpecs));
+// Request logging middleware
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
+});
 
 // Routes
-app.use('/', homeRouter);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/guests', guestRoutes);
+app.use('/api', apiRoutes);
+app.use('/', viewRoutes);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error(err.stack);
+// Error handling
+app.use((req, res, next) => {
+    const error = new Error('Not Found');
+    error.status = 404;
+    next(error);
+});
+
+app.use((error, req, res, next) => {
+    res.status(error.status || 500);
     
-    // Check if it's an API route
-    const isApiRoute = req.originalUrl.startsWith('/api/');
-    
-    if (isApiRoute) {
-        res.status(500).json({
+    // API error response
+    if (req.path.startsWith('/api')) {
+        return res.json({
             success: false,
-            message: 'Something went wrong!',
-            error: process.env.NODE_ENV === 'development' ? err.message : undefined
-        });
-    } else {
-        res.status(500).render('error', {
-            message: 'Something went wrong!',
-            error: process.env.NODE_ENV === 'development' ? err : {}
+            message: error.message,
+            stack: config.nodeEnv === 'development' ? error.stack : undefined
         });
     }
-});
-
-// Connect to MongoDB
-const mongoose = require('mongoose');
-mongoose.connect(config.mongoURI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
-
-// Start server
-const PORT = config.port;
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
     
-    // Start background tasks
-    setInterval(() => {
-        integrationService.syncBookings();
-        integrationService.syncReviews();
-    }, 30 * 60 * 1000); // Every 30 minutes
+    // Web error response
+    res.render('error', {
+        title: 'Error',
+        message: error.message,
+        error: config.nodeEnv === 'development' ? error : {},
+        layout: 'main'
+    });
 });
+
+module.exports = app;

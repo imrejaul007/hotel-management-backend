@@ -3,6 +3,28 @@ const Invoice = require('../../models/Invoice');
 const Refund = require('../../models/Refund');
 const PaymentSettings = require('../../models/PaymentSettings');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const QRCode = require('qrcode');
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const path = require('path');
+
+// Helper function to generate QR code
+const generateQRCode = async (data) => {
+    try {
+        return await QRCode.toDataURL(JSON.stringify(data));
+    } catch (error) {
+        console.error('Error generating QR code:', error);
+        return null;
+    }
+};
+
+// Helper function to format currency
+const formatCurrency = (amount, currency = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency
+    }).format(amount);
+};
 
 // Get all payments
 exports.getAllPayments = async (req, res) => {
@@ -20,6 +42,15 @@ exports.getAllPayments = async (req, res) => {
         
         if (req.query.method) {
             query.paymentMethod = req.query.method;
+        }
+
+        // Date range filter
+        if (req.query.startDate) {
+            query.createdAt = { $gte: new Date(req.query.startDate) };
+        }
+        if (req.query.endDate) {
+            if (!query.createdAt) query.createdAt = {};
+            query.createdAt.$lte = new Date(req.query.endDate);
         }
 
         // Get payments with pagination
@@ -40,7 +71,9 @@ exports.getAllPayments = async (req, res) => {
             payments,
             filters: {
                 status: req.query.status,
-                method: req.query.method
+                method: req.query.method,
+                startDate: req.query.startDate,
+                endDate: req.query.endDate
             },
             pagination: {
                 page,
@@ -76,9 +109,20 @@ exports.getPaymentDetails = async (req, res) => {
         // Get related invoice if exists
         const invoice = await Invoice.findOne({ payment: payment._id });
 
+        // Generate QR code for payment details
+        const qrCode = await generateQRCode({
+            id: payment._id,
+            amount: payment.amount,
+            status: payment.status,
+            transactionId: payment.transactionId
+        });
+
         res.render('admin/payments/details', {
             title: 'Payment Details',
-            payment,
+            payment: {
+                ...payment.toObject(),
+                qrCode
+            },
             invoice
         });
     } catch (error) {
@@ -138,108 +182,162 @@ exports.createPayment = async (req, res) => {
     }
 };
 
-// Update payment
-exports.updatePayment = async (req, res) => {
-    try {
-        const { status, notes } = req.body;
-
-        const payment = await Payment.findById(req.params.id);
-        if (!payment) {
-            return res.status(404).render('error', {
-                message: 'Payment not found'
-            });
-        }
-
-        // Update payment
-        payment.status = status;
-        if (notes) {
-            payment.notes = notes;
-        }
-        payment.lastModifiedBy = req.user._id;
-        payment.lastModifiedAt = new Date();
-
-        await payment.save();
-        res.redirect(`/admin/payments/${payment._id}`);
-    } catch (error) {
-        console.error('Error updating payment:', error);
-        res.status(500).render('error', {
-            message: 'Error updating payment'
-        });
-    }
-};
-
-// Delete payment
-exports.deletePayment = async (req, res) => {
-    try {
-        const payment = await Payment.findById(req.params.id);
-        if (!payment) {
-            return res.status(404).render('error', {
-                message: 'Payment not found'
-            });
-        }
-
-        // Check if payment can be deleted
-        if (payment.status !== 'pending') {
-            return res.status(400).render('error', {
-                message: 'Only pending payments can be deleted'
-            });
-        }
-
-        // Delete related invoice if exists
-        await Invoice.deleteOne({ payment: payment._id });
-
-        // Delete payment
-        await payment.remove();
-        res.redirect('/admin/payments');
-    } catch (error) {
-        console.error('Error deleting payment:', error);
-        res.status(500).render('error', {
-            message: 'Error deleting payment'
-        });
-    }
-};
-
 // Process refund
 exports.processRefund = async (req, res) => {
     try {
         const payment = await Payment.findById(req.params.id);
         if (!payment) {
-            return res.status(404).render('error', {
+            return res.status(404).json({
+                success: false,
                 message: 'Payment not found'
             });
         }
 
-        // Process refund through Stripe
+        const { amount, reason } = req.body;
+
+        // Validate refund amount
+        if (amount > payment.amount) {
+            return res.status(400).json({
+                success: false,
+                message: 'Refund amount cannot exceed payment amount'
+            });
+        }
+
+        // Process refund with Stripe
         const refund = await stripe.refunds.create({
             payment_intent: payment.stripePaymentIntentId,
-            amount: req.body.amount * 100 // Convert to cents
+            amount: amount * 100 // Convert to cents
         });
 
         // Create refund record
         const refundRecord = await Refund.create({
             payment: payment._id,
-            amount: req.body.amount,
-            reason: req.body.reason,
+            amount,
+            reason,
+            status: 'completed',
             stripeRefundId: refund.id,
             processedBy: req.user._id
         });
 
         // Update payment status
-        payment.status = 'refunded';
+        payment.status = amount === payment.amount ? 'refunded' : 'partially_refunded';
         payment.refund = refundRecord._id;
         await payment.save();
 
-        // Update invoice status
-        await Invoice.findOneAndUpdate(
-            { payment: payment._id },
-            { status: 'refunded' }
-        );
-
-        res.redirect(`/admin/payments/${payment._id}`);
+        res.json({
+            success: true,
+            message: 'Refund processed successfully'
+        });
     } catch (error) {
         console.error('Error processing refund:', error);
-        res.status(500).render('error', {
+        res.status(500).json({
+            success: false,
             message: 'Error processing refund'
+        });
+    }
+};
+
+// Generate invoice
+exports.generateInvoice = async (req, res) => {
+    try {
+        const payment = await Payment.findById(req.params.id)
+            .populate('booking')
+            .populate('guest');
+
+        if (!payment) {
+            return res.status(404).render('error', {
+                message: 'Payment not found'
+            });
+        }
+
+        // Get or create invoice
+        let invoice = await Invoice.findOne({ payment: payment._id });
+        if (!invoice) {
+            invoice = await Invoice.create({
+                payment: payment._id,
+                booking: payment.booking,
+                amount: payment.amount,
+                currency: payment.currency,
+                status: payment.status === 'completed' ? 'paid' : 'pending',
+                generatedBy: req.user._id
+            });
+        }
+
+        // Generate QR code
+        const qrCode = await generateQRCode({
+            invoiceId: invoice._id,
+            amount: payment.amount,
+            status: payment.status,
+            transactionId: payment.transactionId
+        });
+
+        // Get hotel info from settings
+        const settings = await PaymentSettings.findOne();
+        const hotelInfo = settings ? settings.hotelInfo : {};
+
+        res.render('admin/payments/invoice', {
+            payment: {
+                ...payment.toObject(),
+                qrCode,
+                invoiceNumber: invoice.invoiceNumber
+            },
+            hotelInfo
+        });
+    } catch (error) {
+        console.error('Error generating invoice:', error);
+        res.status(500).render('error', {
+            message: 'Error generating invoice'
+        });
+    }
+};
+
+// Download invoice as PDF
+exports.downloadInvoice = async (req, res) => {
+    try {
+        const payment = await Payment.findById(req.params.id)
+            .populate('booking')
+            .populate('guest');
+
+        if (!payment) {
+            return res.status(404).render('error', {
+                message: 'Payment not found'
+            });
+        }
+
+        const invoice = await Invoice.findOne({ payment: payment._id });
+        if (!invoice) {
+            return res.status(404).render('error', {
+                message: 'Invoice not found'
+            });
+        }
+
+        // Create PDF document
+        const doc = new PDFDocument();
+        const filename = `invoice-${invoice.invoiceNumber}.pdf`;
+
+        // Set response headers
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+        // Pipe PDF to response
+        doc.pipe(res);
+
+        // Add content to PDF
+        doc.fontSize(25)
+           .text('INVOICE', { align: 'center' })
+           .moveDown();
+
+        doc.fontSize(12)
+           .text(`Invoice #: ${invoice.invoiceNumber}`)
+           .text(`Date: ${payment.createdAt.toLocaleDateString()}`)
+           .moveDown();
+
+        // Add more invoice content...
+        doc.end();
+    } catch (error) {
+        console.error('Error downloading invoice:', error);
+        res.status(500).render('error', {
+            message: 'Error downloading invoice'
         });
     }
 };
@@ -251,14 +349,10 @@ exports.getAllRefunds = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Get refunds with pagination
         const [refunds, total] = await Promise.all([
             Refund.find()
-                .populate({
-                    path: 'payment',
-                    populate: ['booking', 'guest']
-                })
-                .populate('processedBy')
+                .populate('payment')
+                .populate('processedBy', 'name')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
@@ -274,9 +368,7 @@ exports.getAllRefunds = async (req, res) => {
                 page,
                 totalPages,
                 hasNext: page < totalPages,
-                hasPrev: page > 1,
-                nextPage: page + 1,
-                prevPage: page - 1
+                hasPrev: page > 1
             }
         });
     } catch (error) {
@@ -294,23 +386,15 @@ exports.getAllInvoices = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Build filter query
-        const query = {};
-        
-        if (req.query.status) {
-            query.status = req.query.status;
-        }
-
-        // Get invoices with pagination
         const [invoices, total] = await Promise.all([
-            Invoice.find(query)
-                .populate('booking')
-                .populate('guest')
+            Invoice.find()
                 .populate('payment')
+                .populate('booking')
+                .populate('generatedBy', 'name')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
-            Invoice.countDocuments(query)
+            Invoice.countDocuments()
         ]);
 
         const totalPages = Math.ceil(total / limit);
@@ -318,16 +402,11 @@ exports.getAllInvoices = async (req, res) => {
         res.render('admin/payments/invoices', {
             title: 'Invoices',
             invoices,
-            filters: {
-                status: req.query.status
-            },
             pagination: {
                 page,
                 totalPages,
                 hasNext: page < totalPages,
-                hasPrev: page > 1,
-                nextPage: page + 1,
-                prevPage: page - 1
+                hasPrev: page > 1
             }
         });
     } catch (error) {
@@ -341,12 +420,11 @@ exports.getAllInvoices = async (req, res) => {
 // Get payment settings
 exports.getPaymentSettings = async (req, res) => {
     try {
-        // Fetch payment gateway settings, tax rates, etc.
         const settings = await PaymentSettings.findOne();
-        
+
         res.render('admin/payments/settings', {
             title: 'Payment Settings',
-            settings
+            settings: settings || {}
         });
     } catch (error) {
         console.error('Error fetching payment settings:', error);
@@ -360,30 +438,35 @@ exports.getPaymentSettings = async (req, res) => {
 exports.updatePaymentSettings = async (req, res) => {
     try {
         const {
-            taxRate,
             currency,
-            paymentMethods,
+            taxRate,
             stripePublicKey,
-            stripeSecretKey
+            stripeSecretKey,
+            paypalClientId,
+            paypalClientSecret,
+            hotelInfo
         } = req.body;
 
-        const updatedSettings = await PaymentSettings.findOneAndUpdate(
+        await PaymentSettings.findOneAndUpdate(
             {},
             {
-                taxRate,
                 currency,
-                paymentMethods,
+                taxRate,
                 stripePublicKey,
-                stripeSecretKey
+                stripeSecretKey,
+                paypalClientId,
+                paypalClientSecret,
+                hotelInfo,
+                lastModifiedBy: req.user._id
             },
-            { new: true, upsert: true }
+            { upsert: true, new: true }
         );
 
+        req.flash('success', 'Payment settings updated successfully');
         res.redirect('/admin/payments/settings');
     } catch (error) {
         console.error('Error updating payment settings:', error);
-        res.status(500).render('error', {
-            message: 'Error updating payment settings'
-        });
+        req.flash('error', 'Error updating payment settings');
+        res.redirect('/admin/payments/settings');
     }
 };

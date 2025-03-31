@@ -1,88 +1,70 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const exphbs = require('express-handlebars');
+const { create } = require('express-handlebars');
 const path = require('path');
-const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const passport = require('passport');
-
-// Load env vars
-dotenv.config();
+const flash = require('connect-flash');
+const config = require('./src/config/env');
 
 const app = express();
 
-// Body parser
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+// Import routes
+const viewRoutes = require('./src/routes/view.routes');
+const authRoutes = require('./src/routes/auth.routes');
+const adminRoutes = require('./src/routes/admin.routes');
+const bookingRoutes = require('./src/routes/booking.routes');
+const guestRoutes = require('./src/routes/guest.routes');
+const hotelRoutes = require('./src/routes/hotel.routes');
+const loyaltyRoutes = require('./src/routes/loyalty.routes');
+const maintenanceRoutes = require('./src/routes/maintenance.routes');
+const otaRoutes = require('./src/routes/ota.routes');
+const indexRoutes = require('./src/routes/index.routes');
+const checkInOutRoutes = require('./src/routes/checkInOut.routes');
+const corporateRoutes = require('./src/routes/corporate.routes');
+const groupRoutes = require('./src/routes/group.routes');
+const housekeepingRoutes = require('./src/routes/housekeeping.routes');
+const inventoryRoutes = require('./src/routes/inventory.routes');
+const marketingRoutes = require('./src/routes/marketing.routes');
+const notificationsRoutes = require('./src/routes/notifications.routes');
+const reviewsRoutes = require('./src/routes/reviews.routes');
+const userRoutes = require('./src/routes/user.routes');
+const billingRoutes = require('./src/routes/billing.routes');
+const paymentWebhookRoutes = require('./src/routes/webhooks/payment.routes');
 
-// Session middleware
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key-123',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-}));
+// Connect to MongoDB
+mongoose.connect(config.mongoURI)
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
-// Initialize Passport
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Set static folder
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Store for layout blocks
-const blocks = {};
-
-// Set up handlebars
-const hbs = exphbs.create({
+// Configure handlebars
+const hbs = create({
     extname: '.hbs',
+    defaultLayout: 'main',
+    layoutsDir: path.join(__dirname, 'src/views/layouts'),
+    partialsDir: path.join(__dirname, 'src/views/partials'),
     helpers: {
-        extend: function(name, context) {
-            let block = blocks[name];
-            if (!block) {
-                block = blocks[name] = [];
-            }
-            block.push(context.fn(this));
+        eq: function (a, b) {
+            return a === b;
         },
-        block: function(name) {
-            let val = (blocks[name] || []).join('\n');
-            // clear the block
-            blocks[name] = [];
-            return val;
+        formatDate: function (date) {
+            return new Date(date).toLocaleDateString();
         },
-        eq: (a, b) => a === b,
-        gt: (a, b) => a > b,
-        lt: (a, b) => a < b,
-        gte: (a, b) => a >= b,
-        lte: (a, b) => a <= b,
-        and: (a, b) => a && b,
-        or: (a, b) => a || b,
-        not: (a) => !a,
-        add: (a, b) => a + b,
-        subtract: (a, b) => a - b,
-        multiply: (a, b) => a * b,
-        divide: (a, b) => a / b,
-        abs: (a) => Math.abs(a),
-        json: (context) => JSON.stringify(context),
+        formatCurrency: function (amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        },
+        json: function(context) {
+            return JSON.stringify(context);
+        },
         formatNumber: (number) => {
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'USD'
             }).format(number);
-        },
-        formatDate: (date) => {
-            if (!date) return '';
-            return new Date(date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
         },
         formatDateInput: (date) => {
             if (!date) return '';
@@ -127,31 +109,46 @@ const hbs = exphbs.create({
             currentUrl.searchParams.set('page', page);
             return `${currentUrl.pathname}${currentUrl.search}`;
         }
-    },
-    defaultLayout: 'main',
-    layoutsDir: path.join(__dirname, 'src/views/layouts'),
-    partialsDir: path.join(__dirname, 'src/views/partials')
+    }
 });
 
+// View engine setup
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'src/views'));
 
-// Import routes
-const authRoutes = require('./src/routes/auth.routes');
-const adminRoutes = require('./src/routes/admin.routes');
-const loyaltyRoutes = require('./src/routes/loyalty.routes');
-const maintenanceRoutes = require('./src/routes/maintenance.routes');
-const otaRoutes = require('./src/routes/ota.routes');
-const indexRoutes = require('./src/routes/index.routes');
-const checkInOutRoutes = require('./src/routes/checkInOut.routes');
-const corporateRoutes = require('./src/routes/corporate.routes');
-const groupRoutes = require('./src/routes/group.routes');
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(session({
+    secret: config.sessionSecret || 'your-secret-key-123',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+app.use(flash());
 
-// Mount routes
-app.get('/login', (req, res) => res.redirect('/auth/login'));
+// Static files
+app.use(express.static(path.join(__dirname, 'src/public')));
+
+// Request logging middleware
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
+});
+
+// Routes
+app.use('/', viewRoutes);
+app.use('/api', hotelRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/guests', guestRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/ota', otaRoutes);
@@ -159,36 +156,58 @@ app.use('/', indexRoutes);
 app.use('/api/check-in-out', checkInOutRoutes);
 app.use('/api/corporate', corporateRoutes);
 app.use('/api/group-bookings', groupRoutes);
+app.use('/api/housekeeping', housekeepingRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/marketing', marketingRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/reviews', reviewsRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/billing', billingRoutes);
+app.use('/webhooks/payments', paymentWebhookRoutes);
+
+// Make flash messages available to all views
+app.use((req, res, next) => {
+    res.locals.success = req.flash('success');
+    res.locals.error = req.flash('error');
+    res.locals.user = req.user;
+    next();
+});
+
+// 404 handler
+app.use((req, res, next) => {
+    console.log('404 - Not Found:', req.path);
+    res.status(404).render('error', {
+        title: 'Page Not Found',
+        message: 'The page you are looking for does not exist.',
+        error: { status: 404 },
+        layout: 'main'
+    });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Error:', err);
-    res.status(500).render('error', {
-        message: 'Internal Server Error',
-        error: process.env.NODE_ENV === 'development' ? err : {}
-    });
-});
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).render('error', {
-        message: 'Page Not Found',
-        error: { status: 404 }
-    });
-});
-
-const PORT = process.env.PORT || 3000;
-
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hotel-management')
-    .then(() => {
-        console.log('MongoDB Connected');
-        app.listen(PORT, () => {
-            console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    
+    // Check if it's an API route
+    const isApiRoute = req.originalUrl.startsWith('/api/');
+    
+    if (isApiRoute) {
+        res.status(500).json({
+            success: false,
+            message: 'Something went wrong!',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
         });
-    })
-    .catch(err => {
-        console.error('MongoDB Connection Error:', err);
-    });
+    } else {
+        res.status(err.status || 500).render('error', {
+            title: 'Error',
+            message: err.message || 'Something went wrong!',
+            error: process.env.NODE_ENV === 'development' ? err : {},
+            layout: 'main'
+        });
+    }
+});
 
-module.exports = app;
+const PORT = config.port;
+app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+});

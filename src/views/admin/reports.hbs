@@ -1,0 +1,361 @@
+<div class="container-fluid px-4 py-4 bg-light">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-primary mb-1">Reports & Analytics</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="/admin" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Reports</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-2">
+                <form id="periodForm" class="d-flex align-items-center gap-2">
+                    <label class="text-muted mb-0">Time Period:</label>
+                    <select name="period" class="form-select form-select-sm" style="width: 150px" onchange="this.form.submit()">
+                        <option value="daily" {{#if (eq period 'daily')}}selected{{/if}}>Last 7 Days</option>
+                        <option value="weekly" {{#if (eq period 'weekly')}}selected{{/if}}>Last 30 Days</option>
+                        <option value="monthly" {{#if (eq period 'monthly')}}selected{{/if}}>Last Year</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 bg-gradient" style="background: linear-gradient(45deg, #4158D0, #C850C0);">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-dollar-sign fa-2x text-white-50"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-white text-uppercase mb-0">Total Revenue</h6>
+                        </div>
+                    </div>
+                    <h3 class="text-white mb-0">${{metrics.totalRevenue}}</h3>
+                    <div class="text-white-50 small mt-2">
+                        <i class="fas fa-chart-line me-1"></i>
+                        <span>This period</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 bg-gradient" style="background: linear-gradient(45deg, #00B4DB, #0083B0);">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-calendar-check fa-2x text-white-50"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-white text-uppercase mb-0">Total Bookings</h6>
+                        </div>
+                    </div>
+                    <h3 class="text-white mb-0">{{metrics.totalBookings}}</h3>
+                    <div class="text-white-50 small mt-2">
+                        <i class="fas fa-clock me-1"></i>
+                        <span>Active reservations</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 bg-gradient" style="background: linear-gradient(45deg, #FF512F, #DD2476);">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-bed fa-2x text-white-50"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-white text-uppercase mb-0">Occupancy Rate</h6>
+                        </div>
+                    </div>
+                    <h3 class="text-white mb-0">{{metrics.occupancyRate}}%</h3>
+                    <div class="text-white-50 small mt-2">
+                        <i class="fas fa-percentage me-1"></i>
+                        <span>Room utilization</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 bg-gradient" style="background: linear-gradient(45deg, #11998e, #38ef7d);">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-chart-pie fa-2x text-white-50"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-white text-uppercase mb-0">Avg. Booking Value</h6>
+                        </div>
+                    </div>
+                    <h3 class="text-white mb-0">${{metrics.averageBookingValue}}</h3>
+                    <div class="text-white-50 small mt-2">
+                        <i class="fas fa-calculator me-1"></i>
+                        <span>Per reservation</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-chart-line text-primary me-2"></i>
+                        <h5 class="card-title mb-0 fw-bold">Revenue Trend</h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-chart-bar text-success me-2"></i>
+                        <h5 class="card-title mb-0 fw-bold">Room Occupancy</h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="occupancyChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performing Rooms -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-star text-warning me-2"></i>
+                <h5 class="card-title mb-0 fw-bold">Top Performing Rooms</h5>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0">Room Number</th>
+                            <th class="border-0">Type</th>
+                            <th class="border-0">Total Bookings</th>
+                            <th class="border-0">Revenue Generated</th>
+                            <th class="border-0">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each roomStats}}
+                        <tr>
+                            <td class="align-middle">
+                                <span class="fw-medium">#{{this._id.number}}</span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge bg-info bg-opacity-10 text-info">{{this._id.type}}</span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar-check text-success me-2"></i>
+                                    {{this.bookings}}
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-dollar-sign text-primary me-2"></i>
+                                    <span class="fw-medium">${{this.revenue}}</span>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <button class="btn btn-sm btn-light" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-calendar text-info me-2"></i>
+                    <h5 class="card-title mb-0 fw-bold">Recent Bookings</h5>
+                </div>
+                <button class="btn btn-primary btn-sm">
+                    <i class="fas fa-download me-2"></i>Export
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0">Booking ID</th>
+                            <th class="border-0">Guest</th>
+                            <th class="border-0">Room</th>
+                            <th class="border-0">Check-in</th>
+                            <th class="border-0">Check-out</th>
+                            <th class="border-0">Status</th>
+                            <th class="border-0">Amount</th>
+                            <th class="border-0">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each bookings}}
+                        <tr>
+                            <td class="align-middle">
+                                <span class="fw-medium">#{{this._id}}</span>
+                            </td>
+                            <td class="align-middle">{{this.guest.name}}</td>
+                            <td class="align-middle">
+                                <span class="badge bg-info bg-opacity-10 text-info">#{{this.room.number}}</span>
+                            </td>
+                            <td class="align-middle">{{formatDate this.checkIn}}</td>
+                            <td class="align-middle">{{formatDate this.checkOut}}</td>
+                            <td class="align-middle">{{{getStatusBadge this.status}}}</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-dollar-sign text-success me-2"></i>
+                                    <span class="fw-medium">{{this.totalAmount}}</span>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-light" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-light" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Revenue Chart
+    new Chart(document.getElementById("revenueChart"), {
+        type: "line",
+        data: {
+            labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+            datasets: [{
+                label: "Revenue",
+                data: [15000, 21000, 18000, 24000],
+                fill: true,
+                backgroundColor: "rgba(65, 88, 208, 0.1)",
+                borderColor: "rgba(65, 88, 208, 1)",
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: "rgba(65, 88, 208, 1)",
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        borderDash: [2, 2]
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Occupancy Chart
+    new Chart(document.getElementById("occupancyChart"), {
+        type: "bar",
+        data: {
+            labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+            datasets: [{
+                label: "Occupancy Rate",
+                data: [65, 75, 70, 85],
+                backgroundColor: "rgba(56, 239, 125, 0.6)",
+                borderColor: "rgba(17, 153, 142, 1)",
+                borderWidth: 2,
+                borderRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        borderDash: [2, 2]
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<style>
+    .bg-gradient {
+        transition: transform 0.3s ease;
+    }
+    .bg-gradient:hover {
+        transform: translateY(-5px);
+    }
+    .table > :not(caption) > * > * {
+        padding: 1rem 1.5rem;
+    }
+    .btn-light {
+        background-color: #f8f9fa;
+        border-color: #f0f0f0;
+    }
+    .btn-light:hover {
+        background-color: #e9ecef;
+        border-color: #e9ecef;
+    }
+</style>

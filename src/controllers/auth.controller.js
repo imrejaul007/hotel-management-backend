@@ -4,6 +4,7 @@ const emailService = require('../services/email.service');
 const User = require('../models/User');
 const LoyaltyProgram = require('../models/LoyaltyProgram');
 const crypto = require('crypto-js');
+const config = require('../config/env');
 
 // Cookie options
 const cookieOptions = {
@@ -28,8 +29,17 @@ exports.register = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
 
+        // Check if user exists
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({
+                success: false,
+                message: 'User already exists'
+            });
+        }
+
         // Register user through auth service
-        const { user, token } = await authService.register({
+        const user = await authService.register({
             name,
             email,
             password,
@@ -37,15 +47,21 @@ exports.register = async (req, res) => {
             joinLoyalty: true // Auto-enroll in loyalty program
         });
 
-        // Set JWT as HTTP-only cookie
-        res.cookie('token', token, cookieOptions);
+        // Generate token and send response
+        const token = user.generateAuthToken();
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
 
         // If it's an API request
         if (wantsJson(req)) {
             return res.status(201).json({
                 success: true,
-                message: 'Registration successful',
-                data: { user }
+                token,
+                user: user.toJSON()
             });
         }
 
@@ -83,18 +99,29 @@ exports.login = async (req, res) => {
             throw new Error('Please provide email and password');
         }
 
-        // Login through auth service
-        const { token, user } = await authService.login(email, password);
-        
-        // Set JWT as HTTP-only cookie
-        res.cookie('token', token, cookieOptions);
-        
+        // Find user and validate password
+        const user = await User.findByCredentials(email, password);
+
+        // Generate token
+        const token = user.generateAuthToken();
+
+        // Set cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
+
         // If it's an API request
         if (wantsJson(req)) {
             return res.status(200).json({
                 success: true,
-                message: 'Login successful',
-                data: { user }
+                token,
+                user: user.toJSON()
             });
         }
 
@@ -128,23 +155,12 @@ exports.login = async (req, res) => {
  * @route POST /auth/logout
  * @access Private
  */
-exports.logout = async (req, res) => {
-    // Clear the cookie
-    res.cookie('token', 'none', {
-        expires: new Date(Date.now() + 10 * 1000), // Expire in 10 seconds
-        httpOnly: true
+exports.logout = (req, res) => {
+    res.clearCookie('token');
+    res.json({
+        success: true,
+        message: 'Logged out successfully'
     });
-    
-    // If it's an API request
-    if (wantsJson(req)) {
-        return res.status(200).json({
-            success: true,
-            message: 'Logged out successfully'
-        });
-    }
-
-    // For web requests
-    res.redirect('/auth/login');
 };
 
 /**

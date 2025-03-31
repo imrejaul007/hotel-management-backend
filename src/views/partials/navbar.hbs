@@ -1,70 +1,45 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-        <a class="navbar-brand" href="/">Hotel Booking</a>
+        <a class="navbar-brand" href="/">Hotel Management</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/">Home</a>
+                    <a class="nav-link {{#if (eq active 'home')}}active{{/if}}" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/hotels">Hotels</a>
+                    <a class="nav-link {{#if (eq active 'hotels')}}active{{/if}}" href="/hotels">Hotels</a>
                 </li>
+            </ul>
+            <ul class="navbar-nav">
                 {{#if user}}
-                    {{#if user.isAdmin}}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/hotels">Manage Hotels</a>
-                        </li>
+                    {{#if (eq user.role 'admin')}}
                         <li class="nav-item">
                             <a class="nav-link" href="/admin/dashboard">Dashboard</a>
                         </li>
                     {{/if}}
-                {{/if}}
-            </ul>
-            <ul class="navbar-nav">
-                {{#if user}}
-                    <li class="nav-item">
-                        <span class="nav-link">Welcome, {{user.name}}</span>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="handleLogout(event)">Logout</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>{{user.name}}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                            <li><a class="dropdown-item" href="/bookings">My Bookings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
+                        </ul>
                     </li>
                 {{else}}
                     <li class="nav-item">
-                        <a class="nav-link" href="/login">Login</a>
+                        <a class="nav-link" href="/auth/login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/auth/register">Register</a>
                     </li>
                 {{/if}}
             </ul>
         </div>
     </div>
 </nav>
-
-<script>
-async function handleLogout(e) {
-    e.preventDefault();
-    try {
-        const response = await fetch('/auth/logout', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Logout failed');
-        }
-
-        // Clear local storage
-        localStorage.removeItem('token');
-        localStorage.removeItem('userEmail');
-
-        // Redirect to login page
-        window.location.href = '/login';
-    } catch (error) {
-        console.error('Logout error:', error);
-        alert('Failed to logout. Please try again.');
-    }
-}
-</script>

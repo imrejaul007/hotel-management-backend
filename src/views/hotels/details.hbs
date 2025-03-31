@@ -1,0 +1,103 @@
+<div class="container mt-5">
+    <div class="card shadow-sm">
+        <div class="row g-0">
+            <div class="col-md-6">
+                {{#if hotel.images.[0]}}
+                <img src="{{hotel.images.[0].url}}" class="img-fluid rounded-start" alt="{{hotel.name}}" style="height: 400px; width: 100%; object-fit: cover;">
+                {{else}}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                    <i class="fas fa-hotel fa-4x text-muted"></i>
+                </div>
+                {{/if}}
+            </div>
+            <div class="col-md-6">
+                <div class="card-body">
+                    <h1 class="card-title">{{hotel.name}}</h1>
+                    <p class="card-text text-muted mb-3">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        {{hotel.location.address}}, {{hotel.location.city}}, {{hotel.location.country}}
+                    </p>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="text-warning me-1">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <span>{{hotel.rating.average}}</span>
+                        <span class="text-muted ms-1">({{hotel.rating.count}} reviews)</span>
+                    </div>
+                    <p class="card-text">{{hotel.description}}</p>
+                    <h5 class="mt-4">Amenities</h5>
+                    <div class="row g-2 mb-4">
+                        {{#each hotel.amenities}}
+                        <div class="col-auto">
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-check-circle text-success me-1"></i>
+                                {{this}}
+                            </span>
+                        </div>
+                        {{/each}}
+                    </div>
+                    <h5>Policies</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-clock text-primary me-2"></i>
+                            Check-in: {{hotel.policies.checkInTime}}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-clock text-danger me-2"></i>
+                            Check-out: {{hotel.policies.checkOutTime}}
+                        </li>
+                        <li>
+                            <i class="fas fa-info-circle text-info me-2"></i>
+                            {{hotel.policies.cancellationPolicy}}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="mt-5 mb-4">Available Rooms</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
+        {{#each hotel.rooms}}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{type}}</h5>
+                    <p class="card-text">
+                        <i class="fas fa-user-friends me-1"></i>
+                        Up to {{capacity}} guests
+                    </p>
+                    <div class="mb-3">
+                        {{#each amenities}}
+                        <span class="badge bg-light text-dark me-1">{{this}}</span>
+                        {{/each}}
+                    </div>
+                    <p class="card-text">
+                        <small class="text-muted">Price per night</small>
+                        <br>
+                        <strong class="text-success">${{price}}</strong>
+                    </p>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    {{#if available}}
+                    <button class="btn btn-primary w-100" onclick="bookRoom('{{../_id}}', '{{_id}}')">
+                        Book Now
+                    </button>
+                    {{else}}
+                    <button class="btn btn-secondary w-100" disabled>
+                        Not Available
+                    </button>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</div>
+
+<script>
+function bookRoom(hotelId, roomId) {
+    // Add booking functionality
+    window.location.href = `/bookings/new?hotelId=${hotelId}&roomId=${roomId}`;
+}
+</script>

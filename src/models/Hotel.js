@@ -14,7 +14,7 @@ if (mongoose.models.Hotel) {
             type: String,
             required: true
         },
-        featured: {
+        isFeatured: {
             type: Boolean,
             default: false
         },
@@ -142,8 +142,7 @@ if (mongoose.models.Hotel) {
         },
         manager: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-            required: true
+            ref: 'User'
         },
         contacts: {
             phone: {
@@ -157,7 +156,9 @@ if (mongoose.models.Hotel) {
             website: String
         }
     }, {
-        timestamps: true
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
     });
 
     // Virtual for getting room availability
@@ -189,10 +190,10 @@ if (mongoose.models.Hotel) {
 
     // Index for searching
     hotelSchema.index({
-        'name': 'text',
+        name: 'text',
         'location.city': 'text',
         'location.country': 'text',
-        'description': 'text'
+        description: 'text'
     });
 
     const Hotel = mongoose.model('Hotel', hotelSchema);

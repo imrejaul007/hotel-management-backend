@@ -29,10 +29,6 @@ const userSchema = new mongoose.Schema({
         default: 'user',
         index: true
     },
-    isAdmin: {
-        type: Boolean,
-        default: false
-    },
     isActive: {
         type: Boolean,
         default: true,
@@ -86,54 +82,47 @@ const userSchema = new mongoose.Schema({
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-    const user = this;
-    if (user.isModified('password')) {
+    if (this.isModified('password')) {
         const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
+        this.password = await bcrypt.hash(this.password, salt);
     }
     next();
 });
 
 // Compare password
 userSchema.methods.comparePassword = async function(candidatePassword) {
-    const user = this;
-    return bcrypt.compare(candidatePassword, user.password);
+    return bcrypt.compare(candidatePassword, this.password);
 };
 
 // Generate auth token
-userSchema.methods.generateAuthToken = async function() {
-    const user = this;
-    const token = jwt.sign(
-        { userId: user._id.toString() },
+userSchema.methods.generateAuthToken = function() {
+    return jwt.sign(
+        { id: this._id, role: this.role },
         process.env.JWT_SECRET || 'your-secret-key-123',
         { expiresIn: '7d' }
     );
-    return token;
 };
 
 // Find user by credentials
-userSchema.statics.findByCredentials = async (email, password) => {
-    const user = await User.findOne({ email }).select('+password');
+userSchema.statics.findByCredentials = async function(email, password) {
+    const user = await this.findOne({ email }).select('+password');
     if (!user) {
         throw new Error('Invalid login credentials');
     }
-    
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
         throw new Error('Invalid login credentials');
     }
-    
+
     return user;
 };
 
 // Remove sensitive data when converting to JSON
 userSchema.methods.toJSON = function() {
-    const user = this;
-    const userObject = user.toObject();
-    
-    delete userObject.password;
-    
-    return userObject;
+    const user = this.toObject();
+    delete user.password;
+    return user;
 };
 
 const User = mongoose.model('User', userSchema);
